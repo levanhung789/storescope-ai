@@ -8,7 +8,6 @@ type Language = "en" | "vi" | "zh";
 type RankingGroup = {
   groupKey: string;
   groupName: string;
-  rankingType: "Top 10" | "Top 5";
   companies: string[];
 };
 
@@ -18,7 +17,7 @@ type ProductCard = {
   category: string;
   packSpec: string;
   aiStatus: "Matched" | "Review" | "Missing";
-  image: string;
+  images: string[];
   sourceUrl?: string;
 };
 
@@ -27,7 +26,7 @@ const content = {
     brandSub: "Retail Intelligence Platform",
     overview: "Admin Dashboard",
     overviewDesc:
-      "Manage ranked food & beverage companies by sector and prepare AI product discovery workflows.",
+      "Manage food and beverage companies by sector and verify local product image mapping.",
     navDashboard: "Dashboard",
     navStores: "Companies",
     navZones: "Sectors",
@@ -35,45 +34,40 @@ const content = {
     navReports: "Reports",
     navSettings: "Settings",
     welcome: "Welcome back, Admin",
-    search: "Search group, company, product...",
+    search: "Search sector, company, product...",
     export: "Export Report",
-    quickTitle: "Quick Actions",
-    quickDesc: "Access your most-used management tools.",
     logout: "Log out",
-    langLabel: "Language",
-    rankGroups: "Industry Ranking Groups",
-    rankGroupsDesc:
-      "Choose a sector first, then select a company within that ranking group.",
-    rankingType: "Ranking Type",
+    groupsTitle: "Industry Groups",
+    groupsDesc: "Choose a sector, then choose a company in that sector.",
     sectorName: "Sector",
     companyName: "Company",
     companyCount: "Number of companies",
     selectedCompany: "Selected company",
     aiTitle: "AI Suggested Product Display",
     aiDesc:
-      "This version uses product references from Bach Hoa Xanh for selected demo items and keeps the dashboard stable for testing.",
+      "This version reads local product images from your saved folder structure. Ajinomoto is configured first for validation.",
     productTitle: "AI Suggested Product Display",
     productDesc:
-      "Products below are mapped by sector and company. Some cards include Bach Hoa Xanh source links.",
-    status: "Status",
+      "Products below are loaded from your local folder structure for the selected company.",
     matched: "Matched",
     review: "Review",
     missing: "Missing",
-    packSpec: "Case Spec",
+    packSpec: "Pack Spec",
     sku: "SKU",
     category: "Category",
-    topCompanies: "Ranked Companies",
-    topCompaniesDesc: "The full list shown for the selected ranking group.",
-    rank: "Rank",
+    companyList: "Company List",
+    companyListDesc: "The full list shown for the selected sector.",
+    rank: "No.",
     action: "Action",
     open: "Open",
-    source: "View Bach Hoa Xanh source",
+    noProducts: "No product data for this company yet.",
+    imageCount: "images",
   },
   vi: {
     brandSub: "Nền tảng trí tuệ bán lẻ",
     overview: "Dashboard Quản Trị",
     overviewDesc:
-      "Quản lý các công ty thực phẩm - đồ uống theo từng nhóm ngành và chuẩn bị quy trình AI tìm sản phẩm.",
+      "Quản lý các công ty thực phẩm - đồ uống theo nhóm ngành và kiểm tra ánh xạ hình ảnh sản phẩm local.",
     navDashboard: "Dashboard",
     navStores: "Công ty",
     navZones: "Nhóm ngành",
@@ -83,43 +77,38 @@ const content = {
     welcome: "Chào mừng trở lại, Admin",
     search: "Tìm nhóm ngành, công ty, sản phẩm...",
     export: "Xuất báo cáo",
-    quickTitle: "Thao tác nhanh",
-    quickDesc: "Truy cập nhanh các công cụ quản trị thường dùng.",
     logout: "Đăng xuất",
-    langLabel: "Ngôn ngữ",
-    rankGroups: "Nhóm ngành xếp hạng",
-    rankGroupsDesc:
-      "Chọn nhóm ngành trước, sau đó chọn công ty nằm trong bảng xếp hạng của nhóm đó.",
-    rankingType: "Loại xếp hạng",
+    groupsTitle: "Nhóm ngành",
+    groupsDesc: "Chọn nhóm ngành trước, sau đó chọn công ty thuộc nhóm đó.",
     sectorName: "Nhóm ngành",
     companyName: "Tên công ty",
     companyCount: "Số lượng công ty",
     selectedCompany: "Công ty đang chọn",
     aiTitle: "Sản phẩm AI gợi ý hiển thị",
     aiDesc:
-      "Phiên bản này dùng tham chiếu sản phẩm từ Bách Hóa Xanh cho một số mặt hàng demo và giữ dashboard ổn định để kiểm tra.",
+      "Phiên bản này đọc ảnh local từ đúng cấu trúc thư mục bạn đã lưu. Hiện tại Ajinomoto được cấu hình trước để kiểm tra độ chính xác.",
     productTitle: "Sản phẩm AI gợi ý hiển thị",
     productDesc:
-      "Các sản phẩm bên dưới được gán theo nhóm ngành và công ty. Một số thẻ có link nguồn từ Bách Hóa Xanh.",
-    status: "Trạng thái",
+      "Các sản phẩm bên dưới được lấy từ cấu trúc thư mục local của công ty đang chọn.",
     matched: "Khớp",
     review: "Cần kiểm tra",
     missing: "Thiếu dữ liệu",
-    packSpec: "Quy cách thùng",
+    packSpec: "Quy cách",
     sku: "Mã SKU",
     category: "Danh mục",
-    topCompanies: "Danh sách công ty xếp hạng",
-    topCompaniesDesc: "Hiển thị đầy đủ danh sách của nhóm ngành đang chọn.",
-    rank: "Hạng",
+    companyList: "Danh sách công ty",
+    companyListDesc: "Hiển thị đầy đủ danh sách công ty của nhóm ngành đang chọn.",
+    rank: "STT",
     action: "Thao tác",
     open: "Mở",
-    source: "Xem nguồn Bách Hóa Xanh",
+    noProducts: "Chưa có dữ liệu sản phẩm cho công ty này.",
+    imageCount: "ảnh",
   },
   zh: {
     brandSub: "零售智能平台",
     overview: "管理仪表板",
     overviewDesc:
-      "按细分行业管理食品饮料企业，并准备 AI 商品发现流程。",
+      "按行业管理食品饮料公司，并检查本地商品图片映射。",
     navDashboard: "仪表板",
     navStores: "公司",
     navZones: "行业组",
@@ -127,478 +116,770 @@ const content = {
     navReports: "报告",
     navSettings: "设置",
     welcome: "欢迎回来，管理员",
-    search: "搜索行业组、公司、商品...",
+    search: "搜索行业、公司、商品...",
     export: "导出报告",
-    quickTitle: "快捷操作",
-    quickDesc: "快速访问常用管理工具。",
     logout: "退出登录",
-    langLabel: "语言",
-    rankGroups: "行业排名分组",
-    rankGroupsDesc: "先选择行业组，再选择该组中的公司。",
-    rankingType: "排名类型",
+    groupsTitle: "行业组",
+    groupsDesc: "先选择行业组，再选择该行业中的公司。",
     sectorName: "行业组",
     companyName: "公司名称",
     companyCount: "公司数量",
     selectedCompany: "当前公司",
     aiTitle: "AI 建议商品展示",
     aiDesc:
-      "此版本为演示版，部分商品引用自 Bach Hoa Xanh 页面，并保证界面稳定。",
+      "此版本从你保存的本地文件夹结构读取图片，目前先准确配置 Ajinomoto 用于验证。",
     productTitle: "AI 建议商品展示",
-    productDesc:
-      "下方商品根据行业组和公司映射，部分卡片带有 Bach Hoa Xanh 来源链接。",
-    status: "状态",
+    productDesc: "下方商品根据当前公司从本地文件夹结构中读取。",
     matched: "已匹配",
     review: "需检查",
     missing: "缺少数据",
-    packSpec: "箱规",
+    packSpec: "规格",
     sku: "SKU",
     category: "分类",
-    topCompanies: "排名公司列表",
-    topCompaniesDesc: "显示当前所选行业组的完整公司名单。",
-    rank: "排名",
+    companyList: "公司列表",
+    companyListDesc: "显示当前行业组的完整公司列表。",
+    rank: "序号",
     action: "操作",
     open: "打开",
-    source: "查看 Bach Hoa Xanh 来源",
+    noProducts: "该公司暂无商品数据。",
+    imageCount: "张",
   },
 };
 
-const fnbRankings2024: RankingGroup[] = [
+function productImagePath(
+  groupFolder: string,
+  companyFolder: string,
+  productFolder: string,
+  fileName: string
+) {
+  return encodeURI(
+    `/companies/${groupFolder}/${companyFolder}/${productFolder}/${fileName}`
+  );
+}
+
+function ProductImageViewer({
+  images,
+  alt,
+  badgeText,
+}: {
+  images: string[];
+  alt: string;
+  badgeText: string;
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const safeImages = images.length > 0 ? images : [];
+  const currentImage = safeImages[currentIndex];
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [images]);
+
+  if (safeImages.length === 0) {
+    return (
+      <div className="flex aspect-[4/3] items-center justify-center bg-slate-100 text-sm text-slate-400">
+        No image
+      </div>
+    );
+  }
+
+  const prevImage = () => {
+    setCurrentIndex((prev) => (prev === 0 ? safeImages.length - 1 : prev - 1));
+  };
+
+  const nextImage = () => {
+    setCurrentIndex((prev) => (prev === safeImages.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <div className="relative">
+      <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+        <img src={currentImage} alt={alt} className="h-full w-full object-cover" />
+      </div>
+
+      <div className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">
+        {badgeText}
+      </div>
+
+      {safeImages.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={prevImage}
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-sm font-bold text-white transition hover:bg-black/75"
+          >
+            ‹
+          </button>
+
+          <button
+            type="button"
+            onClick={nextImage}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-sm font-bold text-white transition hover:bg-black/75"
+          >
+            ›
+          </button>
+
+          <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/50 px-2 py-1">
+            {safeImages.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setCurrentIndex(index)}
+                className={`h-2.5 w-2.5 rounded-full ${
+                  index === currentIndex ? "bg-white" : "bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const groups: RankingGroup[] = [
+  {
+    groupKey: "condiments_oil",
+    groupName: "Dầu ăn, nước chấm, gia vị",
+    companies: [
+      "Công ty Ajinomoto Việt Nam",
+      "Công ty Cánh Đồng Vàng (Golden Farm)",
+      "Công ty Cổ phần Acecook Việt Nam",
+      "Công ty Cổ phần Chế biến Thủy hải sản Liên Thành",
+      "Công ty Cổ phần Công nghệ thực phẩm Châu Á (AFOTECH)",
+      "Công ty Cổ phần D-SHINING",
+      "Công ty Cổ phần Dầu Thực Vật Tường An",
+      "Công ty Cổ phần Hàng tiêu dùng Masan",
+      "Công ty Cổ phần Thực phẩm Cholimex",
+      "Công ty TNHH Calofic",
+    ],
+  },
   {
     groupKey: "dairy",
     groupName: "Sữa và sản phẩm từ sữa",
-    rankingType: "Top 10",
     companies: [
       "Công ty CP Sữa Việt Nam",
       "Công ty CP Sữa TH",
       "Công ty TNHH FrieslandCampina Việt Nam",
-      "Công ty Cổ phần Sữa Quốc tế LOF",
-      "Công ty CP Thực phẩm Dinh dưỡng Nutifood",
-      "Công ty Cổ phần Sữa Vitadairy Việt Nam",
-      "Công ty Cổ phần Giống Bò sữa Mộc Châu",
-      "Công ty Cổ phần Thực phẩm Đông lạnh Kido",
-      "Công ty Cổ phần Dinh dưỡng Nutricare",
-      "Công ty TNHH Mead Johnson Nutrition (Việt Nam)",
-    ],
-  },
-  {
-    groupKey: "nutrition_confectionery",
-    groupName: "Đường, bánh kẹo và sản phẩm dinh dưỡng",
-    rankingType: "Top 10",
-    companies: [
-      "Công ty TNHH Nestlé Viet Nam",
-      "Công ty TNHH Thực phẩm Orion Vina",
-      "Công ty Cổ phần Mondelez Kinh Đô Việt Nam",
-      "Công ty Cổ phần Thành Thành Công - Biên Hòa",
-      "Công ty Cổ phần Đường Quảng Ngãi",
-      "Công ty TNHH MTV Herbalife Việt Nam",
-      "Công ty TNHH Perfetti Van Melle (Việt Nam)",
-      "Công ty Cổ phần Liwayway Việt Nam",
-      "Công ty Cổ phần Bibica",
-      "Công ty Cổ phần Richy Group",
-    ],
-  },
-  {
-    groupKey: "condiments_oil",
-    groupName: "Nước chấm, gia vị, dầu ăn",
-    rankingType: "Top 10",
-    companies: [
-      "Công ty Cổ phần Hàng tiêu dùng Masan",
-      "Công ty Cổ phần Thực phẩm Cholimex",
-      "Công ty TNHH Calofic",
-      "Công ty Cổ phần Dầu Thực vật Tường An",
-      "Công ty Cổ phần hữu hạn Vedan Việt Nam",
-      "Công ty TNHH Thực phẩm Quốc tế Nam Dương",
-      "Công ty Cổ phần Thực phẩm An Long",
-      "Công ty TNHH Kewpie Việt Nam",
-      "Công ty TNHH Daesang Việt Nam",
-      "Công ty TNHH Nam Phương V.N",
     ],
   },
   {
     groupKey: "dry_instant",
     groupName: "Thực phẩm khô, đồ ăn liền",
-    rankingType: "Top 10",
     companies: [
       "Công ty Cổ phần Acecook Việt Nam",
       "Công ty Cổ phần Hàng tiêu dùng Masan",
-      "Công ty Cổ phần Thực phẩm Á Châu",
-      "Công ty TNHH Uni - President Việt Nam",
       "Công ty Cổ phần Uniben",
-      "Công ty Cổ phần Kỹ nghệ Thực phẩm Việt Nam",
-      "Công ty Cổ phần Lương thực Thực phẩm Safoco",
-      "Công ty Cổ phần Thực phẩm Bích Chi",
-      "Công ty Cổ phần Lương thực Thực phẩm Colusa - Miliket",
-      "Công ty Cổ phần Đồ hộp Hạ Long",
-    ],
-  },
-  {
-    groupKey: "fresh_frozen",
-    groupName: "Thực phẩm tươi, đông lạnh",
-    rankingType: "Top 10",
-    companies: [
-      "Công ty Cổ phần Chăn nuôi C.P Việt Nam",
-      "Công ty Cổ phần Greenfeed Việt Nam",
-      "Công ty Cổ phần Việt Nam Kỹ nghệ Súc sản (Vissan)",
-      "Công ty Cổ phần Vĩnh Hoàn",
-      "Công ty Cổ phần Thực phẩm Sao Ta",
-      "Công ty Cổ phần Tập đoàn Thủy sản Minh Phú",
-      "Công ty Cổ phần Tập đoàn Dabaco Việt Nam",
-      "Công ty Cổ phần Nam Việt",
-      "Công ty Cổ phần Ba Huân",
-      "Công ty Cổ phần Daesang Đức Việt",
-    ],
-  },
-  {
-    groupKey: "alcoholic",
-    groupName: "Đồ uống có cồn",
-    rankingType: "Top 10",
-    companies: [
-      "Công ty TNHH Nhà máy Bia Heineken Việt Nam",
-      "Tổng Công ty CP Bia Rượu Nước giải khát Sài Gòn",
-      "Tổng Công ty CP Bia - Rượu - Nước giải khát Hà Nội",
-      "Công ty Cổ phần Bia và Nước giải khát Hạ Long",
-      "Công ty TNHH Bia Carlsberg Việt Nam",
-      "Công ty TNHH Sapporo Việt Nam",
-      "Công ty TNHH Bia Anheuser-Busch Inbev Việt Nam",
-      "Công ty Cổ phần Tập đoàn Hương Sen",
-      "Công ty Cổ phần Thực phẩm Lâm Đồng",
-      "Công ty Cổ phần Tập đoàn Bia Sài Gòn Bình Tây",
-    ],
-  },
-  {
-    groupKey: "non_alcoholic",
-    groupName: "Đồ uống không cồn",
-    rankingType: "Top 10",
-    companies: [
-      "Công ty TNHH Nước giải khát Suntory Pepsico Việt Nam",
-      "Công ty TNHH Nước giải khát Coca-Cola Việt Nam",
-      "Tập đoàn Trung Nguyên Legend",
-      "Công ty TNHH URC Vietnam",
-      "Công ty Cổ phần Vinacafé Biên Hòa",
-      "Công ty TNHH Lavie",
-      "Công ty Cổ phần Thực phẩm Quốc tế",
-      "Công ty Cổ phần Nước giải khát Sanest Khánh Hòa",
-      "Công ty Cổ phần Xuất nhập khẩu Bến Tre",
-      "Công ty Cổ phần Sản phẩm Sinh thái Eco",
-    ],
-  },
-  {
-    groupKey: "restaurant_chain",
-    groupName: "Chuỗi nhà hàng, dịch vụ đồ ăn, nhượng quyền",
-    rankingType: "Top 5",
-    companies: [
-      "Công ty Cổ phần Tập đoàn Golden Gate",
-      "Công ty TNHH Jollibee Việt Nam",
-      "Công ty Cổ phần Pizza 4Ps",
-      "Công ty Liên doanh TNHH KFC Việt Nam",
-      "Công ty Cổ phần Pizza Ngon",
-    ],
-  },
-  {
-    groupKey: "cafe_chain",
-    groupName: "Chuỗi cửa hàng café, dịch vụ đồ uống, nhượng quyền",
-    rankingType: "Top 5",
-    companies: [
-      "Tập đoàn Trung Nguyên Legend",
-      "Công ty Cổ phần Dịch vụ Cà phê Cao Nguyên (Highlands Coffee)",
-      "Công ty Cổ phần Phúc Long Heritage",
-      "Công ty TNHH Thực phẩm & Nước giải khát Ý Tưởng Việt (Starbucks)",
-      "Công ty Cổ phần Phê La",
     ],
   },
 ];
 
-function buildDemoProducts(group: RankingGroup, company: string): ProductCard[] {
-  const presets: Record<string, ProductCard[]> = {
-    dairy: [
+const productLibrary: Record<string, Record<string, ProductCard[]>> = {
+  "Dầu ăn, nước chấm, gia vị": {
+    "Công ty Ajinomoto Việt Nam": [
       {
-        name: "Thùng 48 hộp sữa tươi TH true MILK 180ml",
-        sku: "BHX-DAIRY-001",
-        category: "Sữa nước",
-        packSpec: "Thùng 48 hộp x 180ml",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=80",
-        sourceUrl:
-          "https://www.bachhoaxanh.com/sua-tuoi/sua-tiet-trung-th-co-duong-180ml-thung-48-hop",
-      },
-      {
-        name: `${company} - Sữa chua uống`,
-        sku: "DAIRY-002",
-        category: "Sữa chua",
-        packSpec: "Lốc 4 chai / thùng 12 lốc",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1576186726115-4d51596775d1?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Sữa bột dinh dưỡng`,
-        sku: "DAIRY-003",
-        category: "Dinh dưỡng",
-        packSpec: "Thùng 12 lon",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    nutrition_confectionery: [
-      {
-        name: `${company} - Bánh quy dinh dưỡng`,
-        sku: "NC-001",
-        category: "Bánh kẹo",
-        packSpec: "Thùng 24 hộp",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Thanh năng lượng`,
-        sku: "NC-002",
-        category: "Dinh dưỡng",
-        packSpec: "Thùng 48 thanh",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Kẹo viên`,
-        sku: "NC-003",
-        category: "Kẹo",
-        packSpec: "Thùng 30 gói",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    condiments_oil: [
-      {
-        name: "Tương ớt Chin-su chai 250g",
-        sku: "BHX-COND-001",
-        category: "Nước chấm",
-        packSpec: "Chai 250g",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=1200&q=80",
-        sourceUrl:
-          "https://www.bachhoaxanh.com/tuong-ot-ca-den/tuong-ot-chinsu-chai-250g",
-      },
-      {
-        name: `${company} - Dầu ăn tinh luyện`,
-        sku: "COND-002",
-        category: "Dầu ăn",
-        packSpec: "12 chai/thùng",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Nước mắm / nước chấm`,
-        sku: "COND-003",
+        name: "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+        sku: "AJI-001",
         category: "Gia vị",
-        packSpec: "24 chai/thùng",
+        packSpec: "Gói 1kg",
         aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=1200&q=80",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+            "bot-ngot-ajinomoto-goi-1kg-201912111050340356.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+            "bot-ngot-ajinomoto-goi-1kg-201912111050342848.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+            "bot-ngot-ajinomoto-goi-1kg-201912111050344759.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+            "bot-ngot-ajinomoto-goi-1kg-201912111050346970.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+            "bot-ngot-ajinomoto-goi-1kg-201912111050349172.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 1kg",
+            "bot-ngot-hat-lon-ajinomoto-goi-1kg-202202110748243423.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Bột ngọt hạt lớn Ajinomoto gói 100g",
+        sku: "AJI-002",
+        category: "Gia vị",
+        packSpec: "Gói 100g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 100g",
+            "bot-ngot-ajinomoto-goi-100g-202006200905580100.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 100g",
+            "bot-ngot-ajinomoto-goi-100g-202006200905589866.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 100g",
+            "bot-ngot-ajinomoto-goi-100g-202006200905599332.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 100g",
+            "bot-ngot-ajinomoto-goi-100g-202006200906007317.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 100g",
+            "bot-ngot-hat-lon-ajinomoto-goi-100g-202202110757420757.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Bột ngọt hạt lớn Ajinomoto gói 454g",
+        sku: "AJI-003",
+        category: "Gia vị",
+        packSpec: "Gói 454g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 454g",
+            "bot-ngot-ajinomoto-goi-454g-202006172147088307.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 454g",
+            "bot-ngot-ajinomoto-goi-454g-202006172147094901.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 454g",
+            "bot-ngot-ajinomoto-goi-454g-202006172147105798.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 454g",
+            "bot-ngot-ajinomoto-goi-454g-202006172147111232.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 454g",
+            "bot-ngot-hat-lon-goi-454g_202511031322533742.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Bột ngọt hạt lớn Ajinomoto gói 454g",
+            "bot-ngot-ajinomoto-hat-lon-goi-454g_202511031327519972.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Gia vị lẩu nấm Aji-Quick gói 44g",
+        sku: "AJI-004",
+        category: "Gia vị hoàn chỉnh",
+        packSpec: "Gói 44g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị lẩu nấm Aji-Quick gói 44g",
+            "nuoc-lau-lau-nam-aji-quick-goi-544g_202506231035136200.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
+        sku: "AJI-005",
+        category: "Gia vị hoàn chỉnh",
+        packSpec: "Gói 54g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
+            "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310231400231271.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
+            "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310231400235137.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
+            "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310310958367972.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
+            "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310310958372127.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
+            "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310310958376136.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+        sku: "AJI-006",
+        category: "Gia vị hoàn chỉnh",
+        packSpec: "Gói 31g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+            "206064-ksp_202408290905550253.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321136757.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321142987.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321148878.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321157181.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321164273.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
+        sku: "AJI-007",
+        category: "Gia vị hoàn chỉnh",
+        packSpec: "Gói 59g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
+            "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523183669.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
+            "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523247009.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
+            "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523282841.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
+            "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523328570.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
+            "sellingpoint.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
+        sku: "AJI-008",
+        category: "Gia vị hoàn chỉnh",
+        packSpec: "Gói 31g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202312051438481310.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135077531.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135087156.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135097311.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
+            "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135106847.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Giấm gạo lên men Ajinomoto chai 400ml",
+        sku: "AJI-009",
+        category: "Gia vị",
+        packSpec: "Chai 400ml",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Giấm gạo lên men Ajinomoto chai 400ml",
+            "giam-gao-len-men-ajinomoto-chai-400ml-202006271626193612.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Giấm gạo lên men Ajinomoto chai 400ml",
+            "giam-gao-len-men-ajinomoto-chai-400ml-202006271626197385.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Giấm gạo lên men Ajinomoto chai 400ml",
+            "giam-gao-len-men-ajinomoto-chai-400ml-202006271626200607.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Giấm gạo lên men Ajinomoto chai 400ml",
+            "giam-gao-len-men-ajinomoto-chai-400ml-202006271626203859.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Giấm gạo lên men Ajinomoto chai 400ml",
+            "sellingpoint.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Hạt nêm Aji-ngon vị heo gói 170g",
+        sku: "AJI-010",
+        category: "Hạt nêm",
+        packSpec: "Gói 170g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 170g",
+            "177826-slide-moi_202409271647007891.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 170g",
+            "hat-nem-aji-ngon-vi-heo-goi-170g-202006172145128407.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 170g",
+            "hat-nem-aji-ngon-vi-heo-goi-170g-202407021018299777.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Hạt nêm Aji-ngon vị heo gói 400g",
+        sku: "AJI-011",
+        category: "Hạt nêm",
+        packSpec: "Gói 400g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 400g",
+            "82259-mat-sau_202409300935243227.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 400g",
+            "82259-slide_202409300935247986.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 400g",
+            "82259-slide-moi_202409300935251423.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 400g",
+            "hat-nem-vi-heo-aji-ngon-goi-400g-202303281033540192.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Hạt nêm Aji-ngon vị heo gói 900g",
+        sku: "AJI-012",
+        category: "Hạt nêm",
+        packSpec: "Gói 900g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 900g",
+            "77238-slide_202409300925114415.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 900g",
+            "77238-slide-moi_202409300922444575.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 900g",
+            "77238-slidee_202409300922440802.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 900g",
+            "77238-tem_202411191421591446.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Hạt nêm Aji-ngon vị heo gói 900g",
+            "77238-tem-2_202411191422000074.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Xốt mayonnaise Ajinomoto Aji-mayo chưa béo chai 130g",
+        sku: "AJI-013",
+        category: "Xốt",
+        packSpec: "Chai 130g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 130g",
+            "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516090787.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 130g",
+            "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516092767.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 130g",
+            "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516094683.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 130g",
+            "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516096578.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 130g",
+            "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516098318.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
+        sku: "AJI-014",
+        category: "Xốt",
+        packSpec: "Chai 260g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
+            "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241647567247.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
+            "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241648090871.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
+            "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241648093197.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
+            "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241648095255.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
+            "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202308091620330952.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 430g",
+        sku: "AJI-015",
+        category: "Xốt",
+        packSpec: "Chai 430g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 430g",
+            "330057-slide_202409191354134317.jpg"
+          ),
+        ],
+      },
+      {
+        name: "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
+        sku: "AJI-016",
+        category: "Xốt",
+        packSpec: "Chai 130g",
+        aiStatus: "Matched",
+        images: [
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
+            "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920242937.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
+            "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920249161.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
+            "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920258897.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
+            "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920263780.jpg"
+          ),
+          productImagePath(
+            "Dầu ăn, nước chấm, gia vị",
+            "Công ty Ajinomoto Việt Nam",
+            "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
+            "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202202162253503063.jpg"
+          ),
+        ],
       },
     ],
-    dry_instant: [
-      {
-        name: "Thùng 30 gói mì Hảo Hảo tôm chua cay 75g",
-        sku: "BHX-DRY-001",
-        category: "Đồ ăn liền",
-        packSpec: "Thùng 30 gói x 75g",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=1200&q=80",
-        sourceUrl:
-          "https://www.bachhoaxanh.com/mi/mi-hao-hao-tom-chua-cay-75g-30",
-      },
-      {
-        name: `${company} - Cháo ăn liền`,
-        sku: "DRY-002",
-        category: "Thực phẩm khô",
-        packSpec: "Thùng 24 ly",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Nui / mì khô`,
-        sku: "DRY-003",
-        category: "Thực phẩm khô",
-        packSpec: "20 gói/thùng",
-        aiStatus: "Missing",
-        image:
-          "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    fresh_frozen: [
-      {
-        name: `${company} - Thịt chế biến`,
-        sku: "FF-001",
-        category: "Thực phẩm tươi",
-        packSpec: "10 khay/thùng",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Hải sản đông lạnh`,
-        sku: "FF-002",
-        category: "Đông lạnh",
-        packSpec: "Thùng 5kg",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1510130387422-82bed34b37e9?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Trứng / gia cầm`,
-        sku: "FF-003",
-        category: "Tươi sống",
-        packSpec: "Khay 30 quả / thùng 12 khay",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    alcoholic: [
-      {
-        name: `${company} - Bia lon premium`,
-        sku: "ALC-001",
-        category: "Bia",
-        packSpec: "Thùng 24 lon x 330ml",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Bia chai`,
-        sku: "ALC-002",
-        category: "Bia",
-        packSpec: "Két 20 chai",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Đồ uống malt`,
-        sku: "ALC-003",
-        category: "Malt Beverage",
-        packSpec: "Thùng 24 lon",
-        aiStatus: "Missing",
-        image:
-          "https://images.unsplash.com/photo-1436076863939-06870fe779c2?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    non_alcoholic: [
-      {
-        name: "Thùng 24 lon nước ngọt Pepsi Cola 320ml",
-        sku: "BHX-NA-001",
-        category: "Nước giải khát",
-        packSpec: "Thùng 24 lon x 320ml",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=1200&q=80",
-        sourceUrl:
-          "https://www.bachhoaxanh.com/nuoc-ngot/nuoc-ngot-lon-pepsi-cola-sleek-330ml-th24",
-      },
-      {
-        name: `${company} - Nước tăng lực`,
-        sku: "NA-002",
-        category: "Đồ uống chức năng",
-        packSpec: "Thùng 24 chai",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1622543925917-763c34d1a86e?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Cà phê đóng chai`,
-        sku: "NA-003",
-        category: "Đồ uống RTD",
-        packSpec: "Thùng 24 chai",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    restaurant_chain: [
-      {
-        name: `${company} - Set combo nhà hàng`,
-        sku: "RST-001",
-        category: "Combo menu",
-        packSpec: "Không áp dụng quy cách thùng",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Món chủ lực`,
-        sku: "RST-002",
-        category: "Menu signature",
-        packSpec: "Không áp dụng quy cách thùng",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Dịch vụ buffet / set meal`,
-        sku: "RST-003",
-        category: "Food Service",
-        packSpec: "Quản lý theo suất / combo",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-    cafe_chain: [
-      {
-        name: `${company} - Cà phê signature`,
-        sku: "CAF-001",
-        category: "Coffee",
-        packSpec: "Không áp dụng quy cách thùng",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Trà sữa / tea line`,
-        sku: "CAF-002",
-        category: "Beverage Service",
-        packSpec: "Quản lý theo menu / size",
-        aiStatus: "Review",
-        image:
-          "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        name: `${company} - Hạt / gói cà phê bán lẻ`,
-        sku: "CAF-003",
-        category: "Retail Coffee",
-        packSpec: "Thùng 24 gói",
-        aiStatus: "Matched",
-        image:
-          "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1200&q=80",
-      },
-    ],
-  };
+  },
+};
 
-  return presets[group.groupKey] ?? presets.non_alcoholic;
+function getProducts(groupName: string, companyName: string): ProductCard[] {
+  return productLibrary[groupName]?.[companyName] ?? [];
 }
 
 function statusClass(status: ProductCard["aiStatus"]) {
-  if (status === "Matched") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (status === "Review") return "border-amber-200 bg-amber-50 text-amber-700";
+  if (status === "Matched") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (status === "Review") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
   return "border-red-200 bg-red-50 text-red-700";
 }
 
 export default function DashboardPage() {
   const [language, setLanguage] = useState<Language>("vi");
-  const [selectedGroupKey, setSelectedGroupKey] = useState(fnbRankings2024[0].groupKey);
-  const [selectedCompany, setSelectedCompany] = useState(fnbRankings2024[0].companies[0]);
+  const [selectedGroupKey, setSelectedGroupKey] = useState("condiments_oil");
+  const [selectedCompany, setSelectedCompany] = useState("Công ty Ajinomoto Việt Nam");
 
   const t = useMemo(() => content[language], [language]);
 
   const currentGroup = useMemo(() => {
-    return fnbRankings2024.find((item) => item.groupKey === selectedGroupKey) ?? fnbRankings2024[0];
+    return groups.find((item) => item.groupKey === selectedGroupKey) ?? groups[0];
   }, [selectedGroupKey]);
 
   useEffect(() => {
@@ -606,7 +887,7 @@ export default function DashboardPage() {
   }, [currentGroup]);
 
   const productCards = useMemo(() => {
-    return buildDemoProducts(currentGroup, selectedCompany);
+    return getProducts(currentGroup.groupName, selectedCompany);
   }, [currentGroup, selectedCompany]);
 
   const localizedStatus = (status: ProductCard["aiStatus"]) => {
@@ -734,8 +1015,8 @@ export default function DashboardPage() {
           <div className="p-6 lg:p-8">
             <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
               <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <h3 className="text-xl font-bold text-slate-900">{t.rankGroups}</h3>
-                <p className="mt-1 text-sm text-slate-500">{t.rankGroupsDesc}</p>
+                <h3 className="text-xl font-bold text-slate-900">{t.groupsTitle}</h3>
+                <p className="mt-1 text-sm text-slate-500">{t.groupsDesc}</p>
 
                 <div className="mt-6 space-y-5">
                   <div>
@@ -747,24 +1028,12 @@ export default function DashboardPage() {
                       onChange={(e) => setSelectedGroupKey(e.target.value)}
                       className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
                     >
-                      {fnbRankings2024.map((group) => (
+                      {groups.map((group) => (
                         <option key={group.groupKey} value={group.groupKey}>
-                          {group.rankingType} - {group.groupName}
+                          {group.groupName}
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      {t.rankingType}
-                    </label>
-                    <input
-                      type="text"
-                      value={currentGroup.rankingType}
-                      readOnly
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none"
-                    />
                   </div>
 
                   <div>
@@ -810,70 +1079,66 @@ export default function DashboardPage() {
                     <p className="mt-1 text-sm text-slate-500">{t.productDesc}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                    {t.selectedCompany}
+                    {t.selectedCompany}: {selectedCompany}
                   </div>
                 </div>
 
                 <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {productCards.map((product) => (
-                    <div
-                      key={product.sku}
-                      className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                    >
-                      <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-                        <img
-                          src={product.image}
+                  {productCards.length > 0 ? (
+                    productCards.map((product) => (
+                      <div
+                        key={product.sku}
+                        className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        <ProductImageViewer
+                          images={product.images}
                           alt={product.name}
-                          className="h-full w-full object-cover"
+                          badgeText={`${product.images.length} ${t.imageCount}`}
                         />
-                      </div>
 
-                      <div className="p-5">
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <h4 className="line-clamp-2 text-base font-bold text-slate-900">
-                            {product.name}
-                          </h4>
-                          <span
-                            className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(
-                              product.aiStatus
-                            )}`}
+                        <div className="p-5">
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <h4 className="line-clamp-2 text-base font-bold text-slate-900">
+                              {product.name}
+                            </h4>
+                            <span
+                              className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(
+                                product.aiStatus
+                              )}`}
+                            >
+                              {localizedStatus(product.aiStatus)}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2 text-sm text-slate-600">
+                            <p>
+                              <span className="font-semibold text-slate-800">{t.sku}:</span>{" "}
+                              {product.sku}
+                            </p>
+                            <p>
+                              <span className="font-semibold text-slate-800">{t.category}:</span>{" "}
+                              {product.category}
+                            </p>
+                            <p>
+                              <span className="font-semibold text-slate-800">{t.packSpec}:</span>{" "}
+                              {product.packSpec}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="mt-3 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                           >
-                            {localizedStatus(product.aiStatus)}
-                          </span>
+                            {t.open}
+                          </button>
                         </div>
-
-                        <div className="space-y-2 text-sm text-slate-600">
-                          <p>
-                            <span className="font-semibold text-slate-800">{t.sku}:</span>{" "}
-                            {product.sku}
-                          </p>
-                          <p>
-                            <span className="font-semibold text-slate-800">{t.category}:</span>{" "}
-                            {product.category}
-                          </p>
-                          <p>
-                            <span className="font-semibold text-slate-800">{t.packSpec}:</span>{" "}
-                            {product.packSpec}
-                          </p>
-                        </div>
-
-                        {product.sourceUrl && (
-                          <a
-                            href={product.sourceUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-4 block rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-center text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100"
-                          >
-                            {t.source}
-                          </a>
-                        )}
-
-                        <button className="mt-3 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                          {t.open}
-                        </button>
                       </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+                      {t.noProducts}
                     </div>
-                  ))}
+                  )}
                 </div>
               </section>
             </div>
@@ -881,11 +1146,11 @@ export default function DashboardPage() {
             <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">{t.topCompanies}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{t.topCompaniesDesc}</p>
+                  <h3 className="text-xl font-bold text-slate-900">{t.companyList}</h3>
+                  <p className="mt-1 text-sm text-slate-500">{t.companyListDesc}</p>
                 </div>
                 <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                  {currentGroup.rankingType}
+                  {currentGroup.companies.length} công ty
                 </div>
               </div>
 
@@ -896,19 +1161,18 @@ export default function DashboardPage() {
                       <th className="px-3 py-3 font-semibold">{t.rank}</th>
                       <th className="px-3 py-3 font-semibold">{t.companyName}</th>
                       <th className="px-3 py-3 font-semibold">{t.sectorName}</th>
-                      <th className="px-3 py-3 font-semibold">{t.rankingType}</th>
                       <th className="px-3 py-3 font-semibold">{t.action}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentGroup.companies.map((company, index) => (
                       <tr key={company} className="border-b border-slate-100 last:border-0">
-                        <td className="px-3 py-4 font-semibold text-slate-900">#{index + 1}</td>
+                        <td className="px-3 py-4 font-semibold text-slate-900">{index + 1}</td>
                         <td className="px-3 py-4 font-semibold text-slate-900">{company}</td>
                         <td className="px-3 py-4 text-slate-600">{currentGroup.groupName}</td>
-                        <td className="px-3 py-4 text-slate-600">{currentGroup.rankingType}</td>
                         <td className="px-3 py-4">
                           <button
+                            type="button"
                             onClick={() => setSelectedCompany(company)}
                             className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
                           >
