@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(npm run *)",
+      "Bash(npx playwright *)",
+      "Bash(node scripts/screenshot.js)",
+      "Bash(npm install *)",
+      "Bash(start chrome *)",
+      "WebFetch(domain:dala.craftedbygc.com)",
+      "Bash(node -e ' *)",
+      "WebFetch(domain:docs.arc.network)",
+      "Bash(curl -sL \"https://docs.arc.network\" --max-time 15)",
+      "Bash(curl -sL \"https://docs.arc.network/network-information\" --max-time 15)",
+      "Bash(node -e \"require\\('wagmi'\\); console.log\\('wagmi ok'\\)\")",
+      "Bash(node -e \"require\\('viem'\\); console.log\\('viem ok'\\)\")",
+      "Bash(node -e \"const {useBalance} = require\\('wagmi'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"const pkg = require\\('wagmi/package.json'\\); console.log\\('wagmi version:', pkg.version\\)\")",
+      "Bash(sed -i 's/Đóng/Close/g; s/Thử lại/Try again/g; s/Lỗi không xác định/Unknown error/g; s/Mint Layout lên On-chain/Mint Layout On-chain/g; s/Ví:/Wallet:/g; s/Chưa kết nối ví — bấm Mint sẽ yêu cầu kết nối/No wallet connected — clicking Mint will prompt connection/g' app/_components/LayoutEditor/MintModal.tsx)",
+      "Bash(sed -i 's/placeholder=\"VD: Siêu thị mini 80m².*\"/placeholder=\"e.g. Mini mart 80m² — optimized traffic flow\"/g; s/placeholder=\"Description layout, kinh nghiệm, kết quả thực tế\\\\.\\\\.\\\\.\"/placeholder=\"Describe your layout, insights, real-world results...\"/g; s/Xác nhận \\\\& Mua/Confirm \\\\& Buy/g' app/_components/LayoutEditor/MintModal.tsx)",
+      "Bash(taskkill /PID 41180 /F)",
+      "PowerShell(Stop-Process -Id 41180 -Force -ErrorAction SilentlyContinue; Start-Sleep 2; Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Remove-Item \"c:\\\\Users\\\\Admin\\\\OneDrive\\\\Máy tính\\\\storescope-ai-Shelby\\\\.next\\\\dev\\\\lock\" -Force -ErrorAction SilentlyContinue; Write-Output \"Cleaned up\")",
+      "Bash(git add *)"
+    ]
+  }
+}

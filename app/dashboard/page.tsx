@@ -1,946 +1,404 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
-type Language = "en" | "vi" | "zh";
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-type Company = {
+interface Product {
+  productName: string;
+  productFolder: string;
+  images: string[];
+}
+
+interface Company {
   companyKey: string;
   companyName: string;
   companyFolder: string;
-};
-
-type RankingGroup = {
-  groupKey: string;
-  groupName: string;
-  groupFolder: string;
-  companies: Company[];
-};
-
-type ProductCard = {
-  name: string;
-  sku: string;
-  category: string;
-  packSpec: string;
-  aiStatus: "Matched" | "Review" | "Missing";
-  productFolder: string;
-  images: string[];
-  sourceUrl?: string;
-};
-
-const content = {
-  en: {
-    brandSub: "Retail Intelligence Platform",
-    overview: "Admin Dashboard",
-    overviewDesc:
-      "Manage food and beverage companies by sector and verify local product image mapping.",
-    navDashboard: "Dashboard",
-    navStores: "Companies",
-    navZones: "Sectors",
-    navInventory: "Products",
-    navReports: "Reports",
-    navSettings: "Settings",
-    welcome: "Welcome back, Admin",
-    search: "Search sector, company, product...",
-    export: "Export Report",
-    logout: "Log out",
-    groupsTitle: "Industry Groups",
-    groupsDesc: "Choose a sector, then choose a company in that sector.",
-    sectorName: "Sector",
-    companyName: "Company",
-    companyCount: "Number of companies",
-    selectedCompany: "Selected company",
-    aiTitle: "AI Suggested Product Display",
-    aiDesc:
-      "This version reads local product images from your saved folder structure. Ajinomoto is configured first for validation.",
-    productTitle: "AI Suggested Product Display",
-    productDesc:
-      "Products below are loaded from your local folder structure for the selected company.",
-    matched: "Matched",
-    review: "Review",
-    missing: "Missing",
-    packSpec: "Pack Spec",
-    sku: "SKU",
-    category: "Category",
-    companyList: "Company List",
-    companyListDesc: "The full list shown for the selected sector.",
-    rank: "No.",
-    action: "Action",
-    open: "Open",
-    noProducts: "No product data for this company yet.",
-    imageCount: "images",
-    noImage: "No image",
-  },
-  vi: {
-    brandSub: "Nền tảng trí tuệ bán lẻ",
-    overview: "Dashboard Quản Trị",
-    overviewDesc:
-      "Quản lý các công ty thực phẩm - đồ uống theo nhóm ngành và kiểm tra ánh xạ hình ảnh sản phẩm local.",
-    navDashboard: "Dashboard",
-    navStores: "Công ty",
-    navZones: "Nhóm ngành",
-    navInventory: "Sản phẩm",
-    navReports: "Báo cáo",
-    navSettings: "Cài đặt",
-    welcome: "Chào mừng trở lại, Admin",
-    search: "Tìm nhóm ngành, công ty, sản phẩm...",
-    export: "Xuất báo cáo",
-    logout: "Đăng xuất",
-    groupsTitle: "Nhóm ngành",
-    groupsDesc: "Chọn nhóm ngành trước, sau đó chọn công ty thuộc nhóm đó.",
-    sectorName: "Nhóm ngành",
-    companyName: "Tên công ty",
-    companyCount: "Số lượng công ty",
-    selectedCompany: "Công ty đang chọn",
-    aiTitle: "Sản phẩm AI gợi ý hiển thị",
-    aiDesc:
-      "Phiên bản này đọc ảnh local từ đúng cấu trúc thư mục bạn đã lưu. Ajinomoto được cấu hình trước để kiểm tra độ chính xác.",
-    productTitle: "Sản phẩm AI gợi ý hiển thị",
-    productDesc:
-      "Các sản phẩm bên dưới được lấy từ cấu trúc thư mục local của công ty đang chọn.",
-    matched: "Khớp",
-    review: "Cần kiểm tra",
-    missing: "Thiếu dữ liệu",
-    packSpec: "Quy cách",
-    sku: "Mã SKU",
-    category: "Danh mục",
-    companyList: "Danh sách công ty",
-    companyListDesc: "Hiển thị đầy đủ danh sách công ty của nhóm ngành đang chọn.",
-    rank: "STT",
-    action: "Thao tác",
-    open: "Mở",
-    noProducts: "Chưa có dữ liệu sản phẩm cho công ty này.",
-    imageCount: "ảnh",
-    noImage: "Không có ảnh",
-  },
-  zh: {
-    brandSub: "零售智能平台",
-    overview: "管理仪表板",
-    overviewDesc:
-      "按行业管理食品饮料公司，并检查本地商品图片映射。",
-    navDashboard: "仪表板",
-    navStores: "公司",
-    navZones: "行业组",
-    navInventory: "商品",
-    navReports: "报告",
-    navSettings: "设置",
-    welcome: "欢迎回来，管理员",
-    search: "搜索行业、公司、商品...",
-    export: "导出报告",
-    logout: "退出登录",
-    groupsTitle: "行业组",
-    groupsDesc: "先选择行业组，再选择该行业中的公司。",
-    sectorName: "行业组",
-    companyName: "公司名称",
-    companyCount: "公司数量",
-    selectedCompany: "当前公司",
-    aiTitle: "AI 建议商品展示",
-    aiDesc:
-      "此版本从你保存的本地文件夹结构读取图片，目前先准确配置 Ajinomoto 用于验证。",
-    productTitle: "AI 建议商品展示",
-    productDesc: "下方商品根据当前公司从本地文件夹结构中读取。",
-    matched: "已匹配",
-    review: "需检查",
-    missing: "缺少数据",
-    packSpec: "规格",
-    sku: "SKU",
-    category: "分类",
-    companyList: "公司列表",
-    companyListDesc: "显示当前行业组的完整公司列表。",
-    rank: "序号",
-    action: "操作",
-    open: "打开",
-    noProducts: "该公司暂无商品数据。",
-    imageCount: "张",
-    noImage: "无图片",
-  },
-};
-
-function productImagePath(
-  groupFolder: string,
-  companyFolder: string,
-  productFolder: string,
-  fileName: string
-) {
-  return encodeURI(
-    `/companies/${groupFolder}/${companyFolder}/${productFolder}/${fileName}`
-  );
+  products: Product[];
 }
 
-function ProductImageViewer({
-  images,
-  alt,
-  badgeText,
-  emptyText,
-}: {
-  images: string[];
-  alt: string;
-  badgeText: string;
-  emptyText: string;
-}) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const safeImages = images ?? [];
-  const currentImage = safeImages[currentIndex];
+interface Sector {
+  sectorKey: string;
+  sectorLabel: string;
+  sectorFolder: string;
+  companies: Company[];
+}
 
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [images]);
+// ── Image viewer ──────────────────────────────────────────────────────────────
 
-  if (safeImages.length === 0) {
+function ImageViewer({ src, alt }: { src: string; alt: string }) {
+  const [err, setErr] = useState(false);
+  if (err) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center bg-slate-100 text-sm text-slate-400">
-        {emptyText}
+      <div style={{ width: "100%", height: "100%", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+        </svg>
       </div>
     );
   }
+  return <img src={src} alt={alt} onError={() => setErr(true)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+}
 
-  const prevImage = () => {
-    setCurrentIndex((prev) => (prev === 0 ? safeImages.length - 1 : prev - 1));
-  };
+function ProductCard({ product, sectorFolder, companyFolder, sectorLabel }: {
+  product: Product;
+  sectorFolder: string;
+  companyFolder: string;
+  sectorLabel: string;
+}) {
+  const [imgIdx, setImgIdx] = useState(0);
+  useEffect(() => setImgIdx(0), [product]);
 
-  const nextImage = () => {
-    setCurrentIndex((prev) => (prev === safeImages.length - 1 ? 0 : prev + 1));
-  };
+  const buildUrl = (img: string) =>
+    encodeURI(`/companies/${sectorFolder}/${companyFolder}/${product.productFolder}/${img}`);
+
+  const detailUrl = `/dashboard/product?sector=${encodeURIComponent(sectorFolder)}&company=${encodeURIComponent(companyFolder)}&product=${encodeURIComponent(product.productFolder)}&sLabel=${encodeURIComponent(sectorLabel)}&images=${product.images.map(encodeURIComponent).join(",")}`;
+
+  const total = product.images.length;
 
   return (
-    <div className="relative">
-      <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-        <img src={currentImage} alt={alt} className="h-full w-full object-cover" />
+    <div style={{
+      background: "#0a0a0a", border: "1px solid #1f1f1f", borderRadius: 14,
+      overflow: "hidden", transition: "border-color 0.2s, transform 0.15s", cursor: "pointer",
+    }}
+      onClick={() => window.location.href = detailUrl}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "#7c3aed"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "#1f1f1f"; e.currentTarget.style.transform = "translateY(0)"; }}
+    >
+      {/* Image */}
+      <div style={{ position: "relative", height: 160, background: "#050505", overflow: "hidden" }}>
+        <ImageViewer src={buildUrl(product.images[imgIdx])} alt={product.productName} />
+
+        {/* Badge */}
+        <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", color: "#888", fontSize: 10, padding: "2px 8px", borderRadius: 999 }}>
+          {total} photo{total > 1 ? "s" : ""}
+        </div>
+
+        {/* Arrows */}
+        {total > 1 && (
+          <>
+            <button onClick={e => { e.stopPropagation(); setImgIdx(p => (p - 1 + total) % total); }}
+              style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              ‹
+            </button>
+            <button onClick={e => { e.stopPropagation(); setImgIdx(p => (p + 1) % total); }}
+              style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              ›
+            </button>
+            {/* Dots */}
+            <div style={{ position: "absolute", bottom: 6, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 3 }}>
+              {product.images.map((_, i) => (
+                <button key={i} onClick={e => { e.stopPropagation(); setImgIdx(i); }}
+                  style={{ width: 5, height: 5, borderRadius: "50%", border: "none", cursor: "pointer", background: i === imgIdx ? "#fff" : "rgba(255,255,255,0.3)", padding: 0 }} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">
-        {badgeText}
+      {/* Info */}
+      <div style={{ padding: "10px 12px" }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: "#e0e0e0", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: 34 }}>
+          {product.productName}
+        </div>
+        <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 10, background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", padding: "2px 8px", borderRadius: 999, color: "#7c6aaa" }}>
+            Matched
+          </span>
+          <span style={{ fontSize: 11, color: "#a78bfa" }}>View →</span>
+        </div>
       </div>
-
-      {safeImages.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={prevImage}
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-sm font-bold text-white transition hover:bg-black/75"
-          >
-            ‹
-          </button>
-
-          <button
-            type="button"
-            onClick={nextImage}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-sm font-bold text-white transition hover:bg-black/75"
-          >
-            ›
-          </button>
-
-          <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/50 px-2 py-1">
-            {safeImages.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => setCurrentIndex(index)}
-                className={`h-2.5 w-2.5 rounded-full ${
-                  index === currentIndex ? "bg-white" : "bg-white/40"
-                }`}
-              />
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
 
-const groups: RankingGroup[] = [
-  {
-    groupKey: "condiments_oil",
-    groupName: "Dầu ăn, nước chấm, gia vị",
-    groupFolder: "dau-an-nuoc-cham-gia-vi",
-    companies: [
-      {
-        companyKey: "ajinomoto",
-        companyName: "Công ty Ajinomoto Việt Nam",
-        companyFolder: "cong-ty-ajinomoto-viet-nam",
-      },
-      {
-        companyKey: "golden_farm",
-        companyName: "Công ty Cánh Đồng Vàng (Golden Farm)",
-        companyFolder: "cong-ty-canh-dong-vang-golden-farm",
-      },
-      {
-        companyKey: "acecook",
-        companyName: "Công ty Cổ phần Acecook Việt Nam",
-        companyFolder: "cong-ty-co-phan-acecook-viet-nam",
-      },
-      {
-        companyKey: "lien_thanh",
-        companyName: "Công ty Cổ phần Chế biến Thủy hải sản Liên Thành",
-        companyFolder: "cong-ty-co-phan-che-bien-thuy-hai-san-lien-thanh",
-      },
-      {
-        companyKey: "afotech",
-        companyName: "Công ty Cổ phần Công nghệ thực phẩm Châu Á (AFOTECH)",
-        companyFolder: "cong-ty-co-phan-cong-nghe-thuc-pham-chau-a-afotech",
-      },
-      {
-        companyKey: "d_shining",
-        companyName: "Công ty Cổ phần D-SHINING",
-        companyFolder: "cong-ty-co-phan-d-shining",
-      },
-      {
-        companyKey: "tuong_an",
-        companyName: "Công ty Cổ phần Dầu Thực Vật Tường An",
-        companyFolder: "cong-ty-co-phan-dau-thuc-vat-tuong-an",
-      },
-      {
-        companyKey: "masan",
-        companyName: "Công ty Cổ phần Hàng tiêu dùng Masan",
-        companyFolder: "cong-ty-co-phan-hang-tieu-dung-masan",
-      },
-      {
-        companyKey: "cholimex",
-        companyName: "Công ty Cổ phần Thực phẩm Cholimex",
-        companyFolder: "cong-ty-co-phan-thuc-pham-cholimex",
-      },
-      {
-        companyKey: "calofic",
-        companyName: "Công ty TNHH Calofic",
-        companyFolder: "cong-ty-tnhh-calofic",
-      },
-    ],
-  },
-  {
-    groupKey: "dairy",
-    groupName: "Sữa và sản phẩm từ sữa",
-    groupFolder: "sua-va-san-pham-tu-sua",
-    companies: [
-      {
-        companyKey: "vinamilk",
-        companyName: "Công ty CP Sữa Việt Nam",
-        companyFolder: "cong-ty-cp-sua-viet-nam",
-      },
-      {
-        companyKey: "th_true_milk",
-        companyName: "Công ty CP Sữa TH",
-        companyFolder: "cong-ty-cp-sua-th",
-      },
-      {
-        companyKey: "frieslandcampina",
-        companyName: "Công ty TNHH FrieslandCampina Việt Nam",
-        companyFolder: "cong-ty-tnhh-frieslandcampina-viet-nam",
-      },
-    ],
-  },
-  {
-    groupKey: "dry_instant",
-    groupName: "Thực phẩm khô, đồ ăn liền",
-    groupFolder: "thuc-pham-kho-do-an-lien",
-    companies: [
-      {
-        companyKey: "acecook",
-        companyName: "Công ty Cổ phần Acecook Việt Nam",
-        companyFolder: "cong-ty-co-phan-acecook-viet-nam",
-      },
-      {
-        companyKey: "masan",
-        companyName: "Công ty Cổ phần Hàng tiêu dùng Masan",
-        companyFolder: "cong-ty-co-phan-hang-tieu-dung-masan",
-      },
-      {
-        companyKey: "uniben",
-        companyName: "Công ty Cổ phần Uniben",
-        companyFolder: "cong-ty-co-phan-uniben",
-      },
-    ],
-  },
+// ── Nav ────────────────────────────────────────────────────────────────────────
+
+const NAV = [
+  { label: "Dashboard",   href: "/dashboard",          active: true  },
+  { label: "AI Analysis", href: "/dashboard/analysis", active: false },
+  { label: "My Reports",  href: "/dashboard/reports",  active: false },
+  { label: "Store Layout",href: "/layout-editor",      active: false },
+  { label: "Forum",       href: "/forum",              active: false },
+  { label: "Settings",    href: "#",                   active: false },
 ];
 
-const productLibrary: Record<string, Record<string, ProductCard[]>> = {
-  condiments_oil: {
-    ajinomoto: [
-      {
-        name: "Bột ngọt hạt lớn Ajinomoto gói 1kg",
-        sku: "AJI-001",
-        category: "Gia vị",
-        packSpec: "Gói 1kg",
-        aiStatus: "Matched",
-        productFolder: "bot-ngot-hat-lon-ajinomoto-goi-1kg",
-        images: [
-          "bot-ngot-ajinomoto-goi-1kg-201912111050340356.jpg",
-          "bot-ngot-ajinomoto-goi-1kg-201912111050342848.jpg",
-          "bot-ngot-ajinomoto-goi-1kg-201912111050344759.jpg",
-          "bot-ngot-ajinomoto-goi-1kg-201912111050346970.jpg",
-          "bot-ngot-ajinomoto-goi-1kg-201912111050349172.jpg",
-          "bot-ngot-hat-lon-ajinomoto-goi-1kg-202202110748243423.jpg",
-        ],
-      },
-      {
-        name: "Bột ngọt hạt lớn Ajinomoto gói 100g",
-        sku: "AJI-002",
-        category: "Gia vị",
-        packSpec: "Gói 100g",
-        aiStatus: "Matched",
-        productFolder: "bot-ngot-hat-lon-ajinomoto-goi-100g",
-        images: [
-          "bot-ngot-ajinomoto-goi-100g-202006200905580100.jpg",
-          "bot-ngot-ajinomoto-goi-100g-202006200905589866.jpg",
-          "bot-ngot-ajinomoto-goi-100g-202006200905599332.jpg",
-          "bot-ngot-ajinomoto-goi-100g-202006200906007317.jpg",
-          "bot-ngot-hat-lon-ajinomoto-goi-100g-202202110757420757.jpg",
-        ],
-      },
-      {
-        name: "Bột ngọt hạt lớn Ajinomoto gói 454g",
-        sku: "AJI-003",
-        category: "Gia vị",
-        packSpec: "Gói 454g",
-        aiStatus: "Matched",
-        productFolder: "bot-ngot-hat-lon-ajinomoto-goi-454g",
-        images: [
-          "bot-ngot-ajinomoto-goi-454g-202006172147088307.jpg",
-          "bot-ngot-ajinomoto-goi-454g-202006172147094901.jpg",
-          "bot-ngot-ajinomoto-goi-454g-202006172147105798.jpg",
-          "bot-ngot-ajinomoto-goi-454g-202006172147111232.jpg",
-          "bot-ngot-hat-lon-goi-454g_202511031322533742.jpg",
-          "bot-ngot-ajinomoto-hat-lon-goi-454g_202511031327519972.jpg",
-        ],
-      },
-      {
-        name: "Gia vị lẩu nấm Aji-Quick gói 44g",
-        sku: "AJI-004",
-        category: "Gia vị hoàn chỉnh",
-        packSpec: "Gói 44g",
-        aiStatus: "Matched",
-        productFolder: "gia-vi-lau-nam-aji-quick-goi-44g",
-        images: ["nuoc-lau-lau-nam-aji-quick-goi-544g_202506231035136200.jpg"],
-      },
-      {
-        name: "Gia vị nêm sẵn bún riêu cua Aji-Quick gói 54g",
-        sku: "AJI-005",
-        category: "Gia vị hoàn chỉnh",
-        packSpec: "Gói 54g",
-        aiStatus: "Matched",
-        productFolder: "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g",
-        images: [
-          "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310231400231271.jpg",
-          "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310231400235137.jpg",
-          "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310310958367972.jpg",
-          "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310310958372127.jpg",
-          "gia-vi-nem-san-bun-rieu-cua-aji-quick-goi-54g-202310310958376136.jpg",
-        ],
-      },
-      {
-        name: "Gia vị nêm sẵn cá kho Aji-Quick gói 31g",
-        sku: "AJI-006",
-        category: "Gia vị hoàn chỉnh",
-        packSpec: "Gói 31g",
-        aiStatus: "Matched",
-        productFolder: "gia-vi-nem-san-ca-kho-aji-quick-goi-31g",
-        images: [
-          "206064-ksp_202408290905550253.jpg",
-          "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321136757.jpg",
-          "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321142987.jpg",
-          "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321148878.jpg",
-          "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321157181.jpg",
-          "gia-vi-nem-san-ca-kho-aji-quick-goi-31g-202407091321164273.jpg",
-        ],
-      },
-      {
-        name: "Gia vị nêm sẵn nấu bún bò Huế Aji-Quick gói 59g",
-        sku: "AJI-007",
-        category: "Gia vị hoàn chỉnh",
-        packSpec: "Gói 59g",
-        aiStatus: "Matched",
-        productFolder: "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g",
-        images: [
-          "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523183669.jpg",
-          "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523247009.jpg",
-          "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523282841.jpg",
-          "gia-vi-nem-san-nau-bun-bo-hue-aji-quick-goi-59g-201909251523328570.jpg",
-          "sellingpoint.jpg",
-        ],
-      },
-      {
-        name: "Gia vị nêm sẵn thịt kho Aji-Quick gói 31g",
-        sku: "AJI-008",
-        category: "Gia vị hoàn chỉnh",
-        packSpec: "Gói 31g",
-        aiStatus: "Matched",
-        productFolder: "gia-vi-nem-san-thit-kho-aji-quick-goi-31g",
-        images: [
-          "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202312051438481310.jpg",
-          "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135077531.jpg",
-          "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135087156.jpg",
-          "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135097311.jpg",
-          "gia-vi-nem-san-thit-kho-aji-quick-goi-31g-202407091135106847.jpg",
-        ],
-      },
-      {
-        name: "Giấm gạo lên men Ajinomoto chai 400ml",
-        sku: "AJI-009",
-        category: "Gia vị",
-        packSpec: "Chai 400ml",
-        aiStatus: "Matched",
-        productFolder: "giam-gao-len-men-ajinomoto-chai-400ml",
-        images: [
-          "giam-gao-len-men-ajinomoto-chai-400ml-202006271626193612.jpg",
-          "giam-gao-len-men-ajinomoto-chai-400ml-202006271626197385.jpg",
-          "giam-gao-len-men-ajinomoto-chai-400ml-202006271626200607.jpg",
-          "giam-gao-len-men-ajinomoto-chai-400ml-202006271626203859.jpg",
-          "sellingpoint.jpg",
-        ],
-      },
-      {
-        name: "Hạt nêm Aji-ngon vị heo gói 170g",
-        sku: "AJI-010",
-        category: "Hạt nêm",
-        packSpec: "Gói 170g",
-        aiStatus: "Matched",
-        productFolder: "hat-nem-aji-ngon-vi-heo-goi-170g",
-        images: [
-          "177826-slide-moi_202409271647007891.jpg",
-          "hat-nem-aji-ngon-vi-heo-goi-170g-202006172145128407.jpg",
-          "hat-nem-aji-ngon-vi-heo-goi-170g-202407021018299777.jpg",
-        ],
-      },
-      {
-        name: "Hạt nêm Aji-ngon vị heo gói 400g",
-        sku: "AJI-011",
-        category: "Hạt nêm",
-        packSpec: "Gói 400g",
-        aiStatus: "Matched",
-        productFolder: "hat-nem-aji-ngon-vi-heo-goi-400g",
-        images: [
-          "82259-mat-sau_202409300935243227.jpg",
-          "82259-slide_202409300935247986.jpg",
-          "82259-slide-moi_202409300935251423.jpg",
-          "hat-nem-vi-heo-aji-ngon-goi-400g-202303281033540192.jpg",
-        ],
-      },
-      {
-        name: "Hạt nêm Aji-ngon vị heo gói 900g",
-        sku: "AJI-012",
-        category: "Hạt nêm",
-        packSpec: "Gói 900g",
-        aiStatus: "Matched",
-        productFolder: "hat-nem-aji-ngon-vi-heo-goi-900g",
-        images: [
-          "77238-slide_202409300925114415.jpg",
-          "77238-slide-moi_202409300922444575.jpg",
-          "77238-slidee_202409300922440802.jpg",
-          "77238-tem_202411191421591446.jpg",
-          "77238-tem-2_202411191422000074.jpg",
-        ],
-      },
-      {
-        name: "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 130g",
-        sku: "AJI-013",
-        category: "Xốt",
-        packSpec: "Chai 130g",
-        aiStatus: "Matched",
-        productFolder: "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g",
-        images: [
-          "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516090787.jpg",
-          "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516092767.jpg",
-          "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516094683.jpg",
-          "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516096578.jpg",
-          "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-130g-202407121516098318.jpg",
-        ],
-      },
-      {
-        name: "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 260g",
-        sku: "AJI-014",
-        category: "Xốt",
-        packSpec: "Chai 260g",
-        aiStatus: "Matched",
-        productFolder: "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-260g",
-        images: [
-          "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241647567247.jpg",
-          "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241648090871.jpg",
-          "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241648093197.jpg",
-          "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202304241648095255.jpg",
-          "xot-mayonnaise-ajinomoto-vi-chua-beo-chai-260g-202308091620330952.jpg",
-        ],
-      },
-      {
-        name: "Xốt mayonnaise Ajinomoto Aji-mayo chua béo chai 430g",
-        sku: "AJI-015",
-        category: "Xốt",
-        packSpec: "Chai 430g",
-        aiStatus: "Matched",
-        productFolder: "xot-mayonnaise-ajinomoto-aji-mayo-chua-beo-chai-430g",
-        images: ["330057-slide_202409191354134317.jpg"],
-      },
-      {
-        name: "Xốt mayonnaise Ajinomoto Aji-mayo ngọt dịu chai 130g",
-        sku: "AJI-016",
-        category: "Xốt",
-        packSpec: "Chai 130g",
-        aiStatus: "Matched",
-        productFolder: "xot-mayonnaise-ajinomoto-aji-mayo-ngot-diu-chai-130g",
-        images: [
-          "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920242937.jpg",
-          "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920249161.jpg",
-          "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920258897.jpg",
-          "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202006200920263780.jpg",
-          "sot-mayonnaise-aji-mayo-ajinomoto-ngot-diu-chai-130g-202202162253503063.jpg",
-        ],
-      },
-    ],
-  },
-};
-
-function getProducts(groupKey: string, companyKey: string): ProductCard[] {
-  return productLibrary[groupKey]?.[companyKey] ?? [];
-}
-
-function statusClass(status: ProductCard["aiStatus"]) {
-  if (status === "Matched") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-  if (status === "Review") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
-  return "border-red-200 bg-red-50 text-red-700";
-}
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [language, setLanguage] = useState<Language>("vi");
-  const [selectedGroupKey, setSelectedGroupKey] = useState("condiments_oil");
-  const [selectedCompanyKey, setSelectedCompanyKey] = useState("ajinomoto");
+  const [sectors, setSectors] = useState<Sector[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState("");
 
-  const t = useMemo(() => content[language], [language]);
-
-  const currentGroup = useMemo(() => {
-    return groups.find((item) => item.groupKey === selectedGroupKey) ?? groups[0];
-  }, [selectedGroupKey]);
-
-  const currentCompany = useMemo(() => {
-    return (
-      currentGroup.companies.find((item) => item.companyKey === selectedCompanyKey) ??
-      currentGroup.companies[0]
-    );
-  }, [currentGroup, selectedCompanyKey]);
+  const [selectedSectorKey,  setSelectedSectorKey]  = useState("");
+  const [selectedCompanyKey, setSelectedCompanyKey] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    setSelectedCompanyKey(currentGroup.companies[0]?.companyKey ?? "");
-  }, [currentGroup]);
+    fetch("/api/companies")
+      .then(r => r.json())
+      .then((data: Sector[]) => {
+        setSectors(data);
+        if (data.length > 0) {
+          setSelectedSectorKey(data[0].sectorKey);
+          setSelectedCompanyKey(data[0].companies[0]?.companyKey ?? "");
+        }
+        setLoading(false);
+      })
+      .catch(() => { setError("Failed to load catalog."); setLoading(false); });
+  }, []);
 
-  const productCards = useMemo(() => {
-    const rawProducts = getProducts(currentGroup.groupKey, currentCompany.companyKey);
+  const currentSector  = useMemo(() => sectors.find(s => s.sectorKey === selectedSectorKey) ?? sectors[0], [sectors, selectedSectorKey]);
+  const currentCompany = useMemo(() => currentSector?.companies.find(c => c.companyKey === selectedCompanyKey) ?? currentSector?.companies[0], [currentSector, selectedCompanyKey]);
 
-    return rawProducts.map((product) => ({
-      ...product,
-      images: product.images.map((fileName) =>
-        productImagePath(
-          currentGroup.groupFolder,
-          currentCompany.companyFolder,
-          product.productFolder,
-          fileName
-        )
-      ),
-    }));
-  }, [currentGroup, currentCompany]);
+  // When sector changes, auto-select first company
+  useEffect(() => {
+    if (currentSector?.companies.length) {
+      setSelectedCompanyKey(currentSector.companies[0].companyKey);
+    }
+  }, [selectedSectorKey]);
 
-  const localizedStatus = (status: ProductCard["aiStatus"]) => {
-    if (status === "Matched") return t.matched;
-    if (status === "Review") return t.review;
-    return t.missing;
-  };
+  const filteredProducts = useMemo(() => {
+    if (!currentCompany) return [];
+    if (!search.trim()) return currentCompany.products;
+    const q = search.toLowerCase();
+    return currentCompany.products.filter(p => p.productName.toLowerCase().includes(q));
+  }, [currentCompany, search]);
+
+  // Stats
+  const totalProducts = useMemo(() => sectors.reduce((a, s) => a + s.companies.reduce((b, c) => b + c.products.length, 0), 0), [sectors]);
+  const totalCompanies = useMemo(() => sectors.reduce((a, s) => a + s.companies.length, 0), [sectors]);
+  const totalImages = useMemo(() => sectors.reduce((a, s) => a + s.companies.reduce((b, c) => b + c.products.reduce((d, p) => d + p.images.length, 0), 0), 0), [sectors]);
+
+  const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 16 };
+  const selectStyle: React.CSSProperties = { width: "100%", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "10px 14px", color: "#f0f0f0", fontSize: 13, outline: "none", cursor: "pointer" };
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-72 flex-col border-r border-slate-200 bg-slate-950 text-white lg:flex">
-          <div className="border-b border-white/10 p-6">
-            <div className="flex items-center gap-4">
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-400 via-blue-500 to-slate-900 shadow-xl shadow-cyan-500/30 ring-1 ring-white/20">
-                <div className="absolute inset-1 rounded-[20px] border border-white/20" />
-                <div className="relative text-xl font-black text-white">S</div>
-                <div className="absolute -right-1 -top-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold tracking-widest text-slate-900">
-                  AI
-                </div>
-              </div>
+    <div style={{ minHeight: "100vh", display: "flex", background: "#080808", color: "#f0f0f0", fontFamily: "inherit" }}>
 
-              <div>
-                <h1 className="text-2xl font-extrabold tracking-tight">
-                  Shelf<span className="text-cyan-300">Sight</span> AI
-                </h1>
-                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t.brandSub}
-                </p>
-              </div>
-            </div>
+      {/* ── Sidebar ── */}
+      <aside style={{ width: 220, flexShrink: 0, background: "#0a0a0a", borderRight: "1px solid #1f1f1f", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid #1f1f1f" }}>
+          <a href="/" style={{ textDecoration: "none" }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.04em" }}>storescope</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#7c3aed", letterSpacing: "-0.04em" }}>.ai</span>
+          </a>
+          <div style={{ fontSize: 10, color: "#444", marginTop: 3, letterSpacing: "0.08em" }}>Retail Intelligence</div>
+        </div>
+
+        <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
+          {NAV.map(item => (
+            <Link key={item.label} href={item.href} style={{
+              display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none",
+              fontSize: 13, fontWeight: item.active ? 600 : 400,
+              background: item.active ? "rgba(124,58,237,0.12)" : "transparent",
+              color: item.active ? "#a78bfa" : "#666",
+              border: item.active ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent",
+            }}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Sector quick-select */}
+        <div style={{ padding: "12px 10px", borderTop: "1px solid #1f1f1f" }}>
+          <div style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, padding: "0 4px" }}>Sectors</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {sectors.map(s => (
+              <button key={s.sectorKey} onClick={() => setSelectedSectorKey(s.sectorKey)}
+                style={{
+                  textAlign: "left", padding: "7px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11,
+                  background: selectedSectorKey === s.sectorKey ? "rgba(124,58,237,0.1)" : "transparent",
+                  color: selectedSectorKey === s.sectorKey ? "#a78bfa" : "#555",
+                  transition: "all 0.15s",
+                }}>
+                {s.sectorLabel}
+              </button>
+            ))}
           </div>
+        </div>
 
-          <nav className="flex-1 px-4 py-6">
-            <div className="space-y-2">
-              <div className="rounded-2xl bg-white/10 px-4 py-3 font-semibold text-cyan-200">
-                {t.navDashboard}
-              </div>
-              <div className="rounded-2xl px-4 py-3 text-slate-300 transition hover:bg-white/5">
-                {t.navStores}
-              </div>
-              <div className="rounded-2xl px-4 py-3 text-slate-300 transition hover:bg-white/5">
-                {t.navZones}
-              </div>
-              <div className="rounded-2xl px-4 py-3 text-slate-300 transition hover:bg-white/5">
-                {t.navInventory}
-              </div>
-              <div className="rounded-2xl px-4 py-3 text-slate-300 transition hover:bg-white/5">
-                {t.navReports}
-              </div>
-              <div className="rounded-2xl px-4 py-3 text-slate-300 transition hover:bg-white/5">
-                {t.navSettings}
-              </div>
+        <div style={{ padding: "12px 10px", borderTop: "1px solid #1f1f1f" }}>
+          <Link href="/" style={{ display: "block", padding: "8px 12px", fontSize: 12, color: "#555", textDecoration: "none" }}>Log out</Link>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
+
+        {/* Header */}
+        <header style={{ borderBottom: "1px solid #1f1f1f", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>Admin Dashboard</div>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>Product Catalog</h2>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ position: "relative" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)}
+                style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px 8px 32px", color: "#f0f0f0", fontSize: 13, outline: "none", width: 240 }}
+                onFocus={e => (e.currentTarget.style.borderColor = "#7c3aed")}
+                onBlur={e => (e.currentTarget.style.borderColor = "#2a2a2a")} />
             </div>
-          </nav>
-
-          <div className="border-t border-white/10 p-4">
-            <Link
-              href="/"
-              className="block rounded-2xl bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
-            >
-              {t.logout}
+            <Link href="/dashboard/analysis" style={{ background: "#7c3aed", color: "#fff", textDecoration: "none", borderRadius: 10, padding: "8px 16px", fontSize: 13, fontWeight: 600 }}>
+              AI Analysis
             </Link>
           </div>
-        </aside>
+        </header>
 
-        <main className="flex-1">
-          <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
-            <div className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
-                  {t.overview}
-                </p>
-                <h2 className="mt-1 text-3xl font-bold text-slate-900">{t.welcome}</h2>
-                <p className="mt-2 max-w-3xl text-sm text-slate-500">{t.overviewDesc}</p>
-              </div>
+        <div style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  placeholder={t.search}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100 sm:w-80"
-                />
-
-                <div className="grid grid-cols-3 rounded-2xl bg-slate-100 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setLanguage("en")}
-                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                      language === "en" ? "bg-slate-900 text-white shadow" : "text-slate-600 hover:bg-white"
-                    }`}
-                  >
-                    EN
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage("vi")}
-                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                      language === "vi" ? "bg-slate-900 text-white shadow" : "text-slate-600 hover:bg-white"
-                    }`}
-                  >
-                    VI
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage("zh")}
-                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                      language === "zh" ? "bg-slate-900 text-white shadow" : "text-slate-600 hover:bg-white"
-                    }`}
-                  >
-                    中文
-                  </button>
+          {/* Stats */}
+          {!loading && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              {[
+                { label: "Sectors",   value: sectors.length },
+                { label: "Companies", value: totalCompanies },
+                { label: "Products",  value: totalProducts },
+                { label: "Images",    value: totalImages },
+              ].map(s => (
+                <div key={s.label} style={{ ...card, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "#a78bfa" }}>{s.value.toLocaleString()}</div>
+                  <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
                 </div>
-
-                <button
-                  type="button"
-                  className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  {t.export}
-                </button>
-              </div>
+              ))}
             </div>
-          </header>
+          )}
 
-          <div className="p-6 lg:p-8">
-            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-              <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <h3 className="text-xl font-bold text-slate-900">{t.groupsTitle}</h3>
-                <p className="mt-1 text-sm text-slate-500">{t.groupsDesc}</p>
-
-                <div className="mt-6 space-y-5">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      {t.sectorName}
-                    </label>
-                    <select
-                      value={selectedGroupKey}
-                      onChange={(e) => setSelectedGroupKey(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-                    >
-                      {groups.map((group) => (
-                        <option key={group.groupKey} value={group.groupKey}>
-                          {group.groupName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      {t.companyName}
-                    </label>
-                    <select
-                      value={selectedCompanyKey}
-                      onChange={(e) => setSelectedCompanyKey(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-                    >
-                      {currentGroup.companies.map((company) => (
-                        <option key={company.companyKey} value={company.companyKey}>
-                          {company.companyName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      {t.companyCount}
-                    </label>
-                    <input
-                      type="text"
-                      value={`${currentGroup.companies.length}`}
-                      readOnly
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none"
-                    />
-                  </div>
-
-                  <div className="rounded-3xl border border-cyan-100 bg-cyan-50 p-5">
-                    <p className="text-sm font-semibold text-cyan-700">{t.aiTitle}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{t.aiDesc}</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900">{t.productTitle}</h3>
-                    <p className="mt-1 text-sm text-slate-500">{t.productDesc}</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                    {t.selectedCompany}: {currentCompany.companyName}
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {productCards.length > 0 ? (
-                    productCards.map((product) => (
-                      <div
-                        key={product.sku}
-                        className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                      >
-                        <ProductImageViewer
-                          images={product.images}
-                          alt={product.name}
-                          badgeText={`${product.images.length} ${t.imageCount}`}
-                          emptyText={t.noImage}
-                        />
-
-                        <div className="p-5">
-                          <div className="mb-3 flex items-start justify-between gap-3">
-                            <h4 className="line-clamp-2 text-base font-bold text-slate-900">
-                              {product.name}
-                            </h4>
-                            <span
-                              className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(
-                                product.aiStatus
-                              )}`}
-                            >
-                              {localizedStatus(product.aiStatus)}
-                            </span>
-                          </div>
-
-                          <div className="space-y-2 text-sm text-slate-600">
-                            <p>
-                              <span className="font-semibold text-slate-800">{t.sku}:</span>{" "}
-                              {product.sku}
-                            </p>
-                            <p>
-                              <span className="font-semibold text-slate-800">{t.category}:</span>{" "}
-                              {product.category}
-                            </p>
-                            <p>
-                              <span className="font-semibold text-slate-800">{t.packSpec}:</span>{" "}
-                              {product.packSpec}
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="mt-3 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                          >
-                            {t.open}
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
-                      {t.noProducts}
-                    </div>
-                  )}
-                </div>
-              </section>
+          {/* Selectors + Products */}
+          {loading ? (
+            <div style={{ ...card, padding: 48, textAlign: "center", color: "#555" }}>
+              <div style={{ marginBottom: 12, fontSize: 13 }}>Loading catalog from file system…</div>
+              <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "#7c3aed", animation: `pulse 1s ease ${i * 0.2}s infinite` }} />
+                ))}
+              </div>
+              <style>{`@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }`}</style>
             </div>
+          ) : error ? (
+            <div style={{ ...card, padding: 32, textAlign: "center", color: "#f87171" }}>{error}</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, alignItems: "start" }}>
 
-            <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <div className="flex items-center justify-between">
+              {/* Left — selectors */}
+              <div style={{ ...card, padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">{t.companyList}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{t.companyListDesc}</p>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Filter</div>
+
+                  <label style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7, display: "block" }}>Sector</label>
+                  <select value={selectedSectorKey} onChange={e => setSelectedSectorKey(e.target.value)} style={selectStyle}>
+                    {sectors.map(s => <option key={s.sectorKey} value={s.sectorKey}>{s.sectorLabel}</option>)}
+                  </select>
                 </div>
-                <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                  {currentGroup.companies.length} công ty
+
+                <div>
+                  <label style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7, display: "block" }}>Company</label>
+                  <select value={selectedCompanyKey} onChange={e => setSelectedCompanyKey(e.target.value)} style={selectStyle}>
+                    {currentSector?.companies.map(c => (
+                      <option key={c.companyKey} value={c.companyKey}>{c.companyName}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Stats for selection */}
+                <div style={{ background: "#0a0a0a", border: "1px solid #1f1f1f", borderRadius: 10, padding: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: "#555" }}>Products</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#a78bfa" }}>{currentCompany?.products.length ?? 0}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: "#555" }}>Images</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#a78bfa" }}>
+                      {currentCompany?.products.reduce((a, p) => a + p.images.length, 0) ?? 0}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 11, color: "#555" }}>Companies in sector</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#a78bfa" }}>{currentSector?.companies.length ?? 0}</span>
+                  </div>
+                </div>
+
+                {/* AI note */}
+                <div style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#a78bfa", marginBottom: 5 }}>AI Suggested Display</div>
+                  <div style={{ fontSize: 11, color: "#555", lineHeight: 1.6 }}>
+                    Images loaded from local folder structure. Upload a shelf photo to run AI matching.
+                  </div>
+                  <Link href="/dashboard/analysis" style={{ display: "inline-block", marginTop: 8, fontSize: 11, color: "#7c3aed", textDecoration: "none" }}>
+                    Run Analysis →
+                  </Link>
                 </div>
               </div>
 
-              <div className="mt-6 overflow-x-auto">
-                <table className="min-w-full text-left">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-sm text-slate-500">
-                      <th className="px-3 py-3 font-semibold">{t.rank}</th>
-                      <th className="px-3 py-3 font-semibold">{t.companyName}</th>
-                      <th className="px-3 py-3 font-semibold">{t.sectorName}</th>
-                      <th className="px-3 py-3 font-semibold">{t.action}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentGroup.companies.map((company, index) => (
-                      <tr key={company.companyKey} className="border-b border-slate-100 last:border-0">
-                        <td className="px-3 py-4 font-semibold text-slate-900">{index + 1}</td>
-                        <td className="px-3 py-4 font-semibold text-slate-900">
-                          {company.companyName}
-                        </td>
-                        <td className="px-3 py-4 text-slate-600">{currentGroup.groupName}</td>
-                        <td className="px-3 py-4">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedCompanyKey(company.companyKey)}
-                            className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                          >
-                            {t.open}
-                          </button>
-                        </td>
-                      </tr>
+              {/* Right — product grid */}
+              <div style={{ ...card, padding: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{currentCompany?.companyName}</div>
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>
+                      {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
+                      {search ? ` matching "${search}"` : ""}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#555" }}>{currentSector?.sectorLabel}</div>
+                </div>
+
+                {filteredProducts.length > 0 ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 12 }}>
+                    {filteredProducts.map(product => (
+                      <ProductCard
+                        key={product.productFolder}
+                        product={product}
+                        sectorFolder={currentSector!.sectorFolder}
+                        companyFolder={currentCompany!.companyFolder}
+                        sectorLabel={currentSector!.sectorLabel}
+                      />
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                ) : (
+                  <div style={{ padding: "40px 0", textAlign: "center", color: "#555", fontSize: 13 }}>
+                    {search ? `No products match "${search}"` : "No products with images for this company."}
+                  </div>
+                )}
               </div>
-            </section>
-          </div>
-        </main>
-      </div>
+            </div>
+          )}
+
+          {/* Company list */}
+          {!loading && currentSector && (
+            <div style={{ ...card, padding: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Companies in {currentSector.sectorLabel}</div>
+                <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600 }}>{currentSector.companies.length} companies</div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 8 }}>
+                {currentSector.companies.map((c, i) => (
+                  <button key={c.companyKey} onClick={() => setSelectedCompanyKey(c.companyKey)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 14px", borderRadius: 10, border: "1px solid",
+                      borderColor: selectedCompanyKey === c.companyKey ? "rgba(124,58,237,0.3)" : "#1f1f1f",
+                      background: selectedCompanyKey === c.companyKey ? "rgba(124,58,237,0.08)" : "#0a0a0a",
+                      cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                    }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 11, color: "#555", minWidth: 18 }}>{i + 1}</span>
+                      <span style={{ fontSize: 12, color: selectedCompanyKey === c.companyKey ? "#a78bfa" : "#e0e0e0", fontWeight: 500 }}>
+                        {c.companyName}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 11, color: "#555" }}>{c.products.length} SKUs</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
