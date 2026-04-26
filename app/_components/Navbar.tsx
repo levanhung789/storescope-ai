@@ -8,7 +8,6 @@ const WalletButton = dynamic(() => import("./WalletButton"), { ssr: false });
 const links = [
   { label: "Services", href: "#services" },
   { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
   { label: "Forum", href: "/forum" },
   { label: "Contact", href: "/contact" },
 ];
@@ -105,7 +104,7 @@ export default function Navbar() {
             Sign in
           </a>
           <a
-            href="#pricing"
+            href="/login"
             style={{
               fontSize: 12,
               fontWeight: 600,
