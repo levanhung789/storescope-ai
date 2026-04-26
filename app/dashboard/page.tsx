@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
+import dynamic from "next/dynamic";
+import { loadAnonUser, type AnonUser } from "../_lib/anonymousAuth";
+
+const AnonBadge = dynamic(() => import("../_components/AnonBadge"), { ssr: false });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -130,10 +134,14 @@ export default function DashboardPage() {
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState("");
+  const [anonUser, setAnonUser] = useState<AnonUser | null>(null);
 
   const [selectedSectorKey,  setSelectedSectorKey]  = useState("");
   const [selectedCompanyKey, setSelectedCompanyKey] = useState("");
   const [search, setSearch] = useState("");
+
+  // Load anonymous session if present
+  useEffect(() => { setAnonUser(loadAnonUser()); }, []);
 
   useEffect(() => {
     fetch("/api/companies")
@@ -246,6 +254,9 @@ export default function DashboardPage() {
             <Link href="/dashboard/analysis" style={{ background: "#7c3aed", color: "#fff", textDecoration: "none", borderRadius: 10, padding: "8px 16px", fontSize: 13, fontWeight: 600 }}>
               AI Analysis
             </Link>
+            {anonUser && (
+              <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />
+            )}
           </div>
         </header>
 

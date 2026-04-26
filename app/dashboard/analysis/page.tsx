@@ -6,6 +6,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ANALYSIS_TASKS, TOTAL_ANALYSIS_PRICE, toUSDCUnits, arcTestnet, ARC_CONTRACTS, ERC20_ABI, type TaskId } from "../../_lib/arc";
 import AnalysisReport, { type ReportData, saveReport } from "../../_components/AnalysisReport";
+import { loadAnonUser, type AnonUser } from "../../_lib/anonymousAuth";
+
+const AnonBadge = dynamic(() => import("../../_components/AnonBadge"), { ssr: false });
 
 const WalletButton = dynamic(() => import("../../_components/WalletButton"), { ssr: false });
 
@@ -221,6 +224,8 @@ function PaymentGateModal({ onPaid, onClose }: { onPaid: () => void; onClose: ()
 export default function AnalysisPage() {
   const { isConnected, chain, address } = useAccount();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [anonUser, setAnonUser] = useState<AnonUser | null>(null);
+  useEffect(() => { setAnonUser(loadAnonUser()); }, []);
 
   const [imageUrl,   setImageUrl]   = useState<string | null>(null);
   const [imageName,  setImageName]  = useState("");
@@ -372,7 +377,10 @@ export default function AnalysisPage() {
             <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>10 Micro-Tasks · ARC Testnet</div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>Shelf Image Analysis</h2>
           </div>
-          <WalletButton />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
+            <WalletButton />
+          </div>
         </header>
 
         <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>

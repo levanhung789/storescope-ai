@@ -22,7 +22,8 @@
       "Bash(sed -i 's/placeholder=\"VD: Siêu thị mini 80m².*\"/placeholder=\"e.g. Mini mart 80m² — optimized traffic flow\"/g; s/placeholder=\"Description layout, kinh nghiệm, kết quả thực tế\\\\.\\\\.\\\\.\"/placeholder=\"Describe your layout, insights, real-world results...\"/g; s/Xác nhận \\\\& Mua/Confirm \\\\& Buy/g' app/_components/LayoutEditor/MintModal.tsx)",
       "Bash(taskkill /PID 41180 /F)",
       "PowerShell(Stop-Process -Id 41180 -Force -ErrorAction SilentlyContinue; Start-Sleep 2; Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Remove-Item \"c:\\\\Users\\\\Admin\\\\OneDrive\\\\Máy tính\\\\storescope-ai-Shelby\\\\.next\\\\dev\\\\lock\" -Force -ErrorAction SilentlyContinue; Write-Output \"Cleaned up\")",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

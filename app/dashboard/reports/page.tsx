@@ -5,14 +5,19 @@ import { useAccount } from "wagmi";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { loadReports, deleteReport, exportCSV, exportJSON, printReport, type ReportData } from "../../_components/AnalysisReport";
+import { loadAnonUser, type AnonUser } from "../../_lib/anonymousAuth";
 
 const AnalysisReport = dynamic(() => import("../../_components/AnalysisReport"), { ssr: false });
 const WalletButton   = dynamic(() => import("../../_components/WalletButton"),    { ssr: false });
+const AnonBadge      = dynamic(() => import("../../_components/AnonBadge"),       { ssr: false });
 
 export default function ReportsPage() {
   const { address, isConnected } = useAccount();
-  const [reports, setReports]   = useState<ReportData[]>([]);
+  const [reports,  setReports]  = useState<ReportData[]>([]);
   const [selected, setSelected] = useState<ReportData | null>(null);
+  const [anonUser, setAnonUser] = useState<AnonUser | null>(null);
+
+  useEffect(() => { setAnonUser(loadAnonUser()); }, []);
 
   useEffect(() => {
     if (address) setReports(loadReports(address));
@@ -65,7 +70,10 @@ export default function ReportsPage() {
             <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>Personal Account</div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>My Reports</h2>
           </div>
-          <WalletButton />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
+            <WalletButton />
+          </div>
         </header>
 
         <div style={{ padding: 24, display: "flex", gap: 20, minHeight: 0 }}>

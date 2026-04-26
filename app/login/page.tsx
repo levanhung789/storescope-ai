@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { generateAnonUser, saveAnonUser } from "../_lib/anonymousAuth";
 
 const DEMO_USERNAME = "ADmin123";
 const DEMO_PASSWORD = "888000";
@@ -39,10 +40,19 @@ const FEATURES = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [username,  setUsername]  = useState("");
+  const [password,  setPassword]  = useState("");
+  const [showPass,  setShowPass]  = useState(false);
+  const [status,    setStatus]    = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [anonLoading, setAnonLoading] = useState(false);
+
+  const handleAnonymous = async () => {
+    setAnonLoading(true);
+    await new Promise(r => setTimeout(r, 600));
+    const user = generateAnonUser();
+    saveAnonUser(user);
+    router.push("/dashboard");
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -305,8 +315,52 @@ export default function LoginPage() {
           </form>
 
           {/* Demo hint */}
+          {/* Divider */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4 }}>
+            <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
+            <span style={{ fontSize: 11, color: "#444" }}>or</span>
+            <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
+          </div>
+
+          {/* Anonymous access button */}
+          <button
+            type="button"
+            onClick={handleAnonymous}
+            disabled={anonLoading}
+            style={{
+              width: "100%", padding: "13px 0",
+              background: "transparent",
+              border: "1px solid #2a2a2a",
+              borderRadius: 12, fontSize: 13, fontWeight: 600,
+              color: anonLoading ? "#555" : "#888",
+              cursor: anonLoading ? "wait" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              transition: "border-color 0.2s, color 0.2s",
+            }}
+            onMouseEnter={e => { if (!anonLoading) { e.currentTarget.style.borderColor = "#444"; e.currentTarget.style.color = "#f0f0f0"; } }}
+            onMouseLeave={e => { if (!anonLoading) { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888"; } }}
+          >
+            {/* Mask icon */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+            {anonLoading ? "Creating identity…" : "Access Anonymously"}
+          </button>
+
+          {/* Anonymous info */}
           <div style={{
-            marginTop: 20, padding: "11px 16px", borderRadius: 10,
+            padding: "11px 14px", borderRadius: 10,
+            background: "rgba(255,255,255,0.02)", border: "1px solid #1a1a1a",
+            fontSize: 11, color: "#444", lineHeight: 1.6,
+          }}>
+            <strong style={{ color: "#666" }}>Anonymous access:</strong> The system will generate a random identity for you. Full access, no registration required. Your real identity is never stored.
+          </div>
+
+          <div style={{
+            padding: "11px 16px", borderRadius: 10,
             background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)",
             fontSize: 12, color: "#666",
           }}>
