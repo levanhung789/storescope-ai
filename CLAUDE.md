@@ -146,24 +146,33 @@ Trước khi báo hoàn thành UI task: mở browser kiểm tra golden path + re
 
 ---
 
-## Trạng thái dự án (cập nhật 2026-04-25)
+## Trạng thái dự án (cập nhật 2026-04-26)
 
 ### Đã hoàn thành
 
 | Phần | Trạng thái | Ghi chú |
 |---|---|---|
-| Landing page (9 sections) | Hoàn thành | Navbar, Hero, Stats, HowItWorks, Services, UseCases, Pricing, CtaBanner, Footer |
+| Landing page (8 sections) | Hoàn thành | Navbar, Hero, Stats, HowItWorks, Services, UseCases, CtaBanner, Footer — **Pricing đã xóa** |
 | ParticleSphere (Canvas 3D) | Hoàn thành | 520 particles, gold/white/purple, xoay auto |
-| `.claude/rules/` (01–07) | Hoàn thành | Tách từ CLAUDE.md, mỗi file có `description` frontmatter |
-| `.claude/agents/researcher.md` | Hoàn thành | Research agent, model claude-sonnet-4-6, tóm tắt ≤500 từ + Recommendation |
-| `.claude/skills/tao-bai-viet.md` | Hoàn thành | Skill fetch 6 trang Bách Hóa Xanh, tạo bài viết có cấu trúc |
-| Trang `/contact` | Hoàn thành | Form 4 trường, validation 2 lớp, success card, responsive mobile |
-| API route `/api/contact` | Placeholder | Validate + log console, **chưa gửi email thật** |
-| Layout Editor `/layout-editor` | Hoàn thành | Konva 2D drag-drop → **đã chuyển sang 3D (React Three Fiber)** |
-| Layout Editor — Vẽ tường | Hoàn thành | Click-click vẽ đường tường đen, chain segments, chọn/xóa tường, ESC thoát |
-| Layout Editor — Store size editor | Hoàn thành | Popover nhập W×H (m), lưu vào `doc.canvas.width/height` |
-| Layout Editor — Toon/Cartoon 3D | Hoàn thành | MeshToonMaterial + Outline postprocessing, 2-step gradient, dark outlines |
-| Dashboard link | Hoàn thành | Sidebar "Bố trí cửa hàng" → `/layout-editor` |
+| Trang `/contact` | Hoàn thành | Form 4 trường, validation 2 lớp, success card |
+| API route `/api/contact` | Placeholder | Validate + log console, chưa gửi email thật |
+| Layout Editor `/layout-editor` | Hoàn thành | React Three Fiber 3D, toon shading, drag/rotate, annotation notes |
+| Layout Editor — Vẽ tường | Hoàn thành | Click-click chain segments, chọn/xóa, ESC thoát |
+| Layout Editor — Store size editor | Hoàn thành | Popover W×H (m) |
+| Layout Editor — Toon/Cartoon 3D | Hoàn thành | MeshToonMaterial, 2-step gradient, dark outlines, dark background |
+| Layout Editor — Annotation/Note | Hoàn thành | Pin vàng 3D, click mở modal nhập title + text + ảnh |
+| Layout Editor — English labels | Hoàn thành | Tên fixture tiếng Anh, font to hơn, layout ngang icon+text |
+| Dashboard `/dashboard` | Hoàn thành | Dark theme, catalog auto-load từ `public/companies/` qua API |
+| Dashboard — AI Analysis | Hoàn thành | 10 micro-task pipeline, USDC payment on ARC, report export |
+| Dashboard — Product detail | Hoàn thành | `/dashboard/product` — mô tả, giá bán lẻ, đối thủ, khuyến mãi |
+| Dashboard — My Reports | Hoàn thành | `/dashboard/reports` — lưu/xem/xóa/export CSV/JSON/PDF per wallet |
+| Forum & Marketplace | Hoàn thành | `/forum` — mua/bán layout USDC, discussion |
+| Login page | Hoàn thành | Dark theme, storescope.ai brand, show/hide password |
+| Anonymous Access | Hoàn thành | Tạo danh tính ngẫu nhiên (VD: SwiftAnalyst#7F2A), toàn quyền |
+| Wallet — Connect & Verify | Hoàn thành | SIWE: ký message xác nhận chủ ví mỗi session, nonce ngẫu nhiên |
+| Wallet — Balance display | Hoàn thành | xx.xx USDC (6 decimals đúng cho ARC), dropdown gọn |
+| ARC Network integration | Hoàn thành | wagmi v3, viem, Chain ID 5042002, USDC native gas |
+| Deploy | Hoàn thành | GitHub: storescope-ai + storescope-ai-ARC, Vercel: storescope-ai.vercel.app |
 
 ### File cấu trúc Layout Editor (3D)
 
@@ -210,35 +219,112 @@ app/_components/LayoutEditor/
 
 ### Bước tiếp theo
 
-1. **Kết nối gửi email thật** — Cần chọn 1 trong 2:
-   - **Resend** (`npm install resend`) — đơn giản nhất cho Next.js, miễn phí 3000 email/tháng. Cần `RESEND_API_KEY` trong `.env.local`
-   - **Nodemailer + SMTP** — dùng Gmail/SMTP của công ty. Cần `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`
-   - Khi có credentials, chỉnh sửa `app/api/contact/route.ts` để thay thế `console.log`
+1. **Smart contract thật cho Layout Mint** — `MintModal.tsx` hiện dùng mock tx. Cần deploy `LayoutRegistry.sol` lên ARC testnet và thay `writeContract` thật.
 
-2. **Deploy** — Nghiên cứu đã xác định: Vercel Hobby miễn phí nhưng **cấm dùng thương mại** (B2B). Phải nâng lên Pro ($20/tháng) hoặc dùng Cloudflare Pages (miễn phí, không giới hạn thương mại).
+2. **Smart contract cho Analysis payment** — `PaymentGateModal` gọi `USDC.transfer` thật nhưng chưa có contract nhận và ghi log on-chain.
 
-3. **Logo** — Navbar hiện dùng text `storescope.ai`. Nếu có file logo SVG/PNG, thêm vào `public/` và dùng `<Image>` trong Navbar.
+3. **Kết nối gửi email thật** — `app/api/contact/route.ts` chỉ log console. Cần Resend API key hoặc SMTP credentials.
 
-4. **OG image** — `app/opengraph-image.png` chưa có. Cần tạo để social share hiển thị đúng.
+4. **Logo** — Navbar dùng text `storescope.ai`. Nếu có SVG/PNG, thêm vào `public/` và dùng `<Image>`.
 
-5. **Layout Editor — cải thiện tiếp:**
-   - Màu sản phẩm bên trong tủ mát còn nhạt — cần tăng độ tương phản
-   - Có thể thêm shadow dưới chân fixture cho chiều sâu
-   - Xem xét thêm "Auto-arrange" để fixtures tự xếp thành hàng
+5. **OG image** — `app/opengraph-image.png` chưa có.
+
+6. **`public/companies/` trên Vercel** — 203MB ảnh sản phẩm bị gitignore, không deploy được. Cần upload lên Cloudinary/S3 hoặc dùng Vercel Blob Storage.
 
 ### Quyết định quan trọng đã đưa ra
 
 | Quyết định | Lý do |
 |---|---|
-| API `/api/contact` chỉ log console, không gửi email | Không cài npm package (Resend/Nodemailer) khi chưa có credentials — tránh setup thừa |
-| Phone field là optional | Thông tin liên lạc bổ sung, không nên block người dùng nếu không có SĐT |
-| Navbar dùng `<a>` thay `<Link>` cho link /contact | Giữ nhất quán với pattern hiện tại — Navbar đã dùng `<a>` cho tất cả links |
-| Contact page là Server Component, chỉ ContactForm là client | Giảm JS bundle — form cần state/event nhưng wrapper page không cần |
-| Vercel Hobby không phù hợp cho sản phẩm B2B thương mại | Terms of Service cấm commercial use trên Hobby plan — cần Pro hoặc Cloudflare |
-| Layout Editor canvas 20000×15000mm | Fixtures trong JSON export vượt 12000mm — canvas cũ quá nhỏ |
-| Wall drawing dùng click-click chain (không end-on-click) | UX tự nhiên hơn: mỗi click hoàn thành 1 đoạn và bắt đầu đoạn tiếp theo, giống pen tool |
-| Dashboard dùng `<a>` thay `<Link>` cho link layout-editor | Next.js Link gây lỗi navigation với trang có Konva canvas |
-| Layout Editor chuyển từ Konva 2D → React Three Fiber 3D | Yêu cầu hiển thị toon/cartoon 3D như reference image — không thể làm với Konva |
-| Dùng `meshToonMaterial` thay `meshStandardMaterial` | Flat cartoon look, không cần PBR — nhẹ hơn, consistent hơn với design intent |
-| `useMemo` cho floor grid phải đặt ngoài JSX return | React hooks rule: không được gọi hook bên trong JSX expression |
-| `emissiveIntensity` tối đa 0.6 với toon material | Toon material cộng emissive trực tiếp lên màu, không bị scale bởi lighting → dễ overexpose |
+| API `/api/contact` chỉ log console | Không cài Resend/Nodemailer khi chưa có credentials |
+| Layout Editor chuyển Konva 2D → R3F 3D | Yêu cầu toon/cartoon 3D — không thể làm với Konva |
+| `meshToonMaterial` + 2-step gradient | Flat cartoon look, nhẹ hơn PBR |
+| `useMemo` floor grid đặt ngoài JSX | React hooks rule — không gọi hook trong JSX |
+| `emissiveIntensity` ≤ 0.6 với toon | Toon cộng emissive trực tiếp, dễ overexpose |
+| ARC USDC = 6 decimals, không phải 18 | wagmi mặc định 18 cho native token — phải override |
+| SIWE ký message mỗi session | Xác nhận chủ ví, nonce ngẫu nhiên ngăn replay attack |
+| Anonymous access = localStorage only | Không cần backend, danh tính sinh client-side |
+| `public/companies/` gitignored | 203MB quá lớn cho GitHub — lưu local, cần CDN cho production |
+| Pricing section xóa | Demo phase — chưa thu phí, tránh gây hiểu nhầm |
+| ARC Analysis = 10 micro-tasks × USDC | Mỗi task là 1 tx riêng biệt, verifiable on-chain |
+| Report lưu localStorage theo wallet | Mỗi ví có data riêng, không cần backend auth |
+| Anonymous identity 24×18 combos + hex | Hàng triệu tên không trùng, đủ cho demo scale |
+
+### File cấu trúc đầy đủ (2026-04-26)
+
+```
+app/
+  page.tsx                        ← Landing (8 sections, Pricing đã xóa)
+  layout.tsx                      ← Root layout + ArcProvider (wagmi)
+  globals.css
+  _lib/
+    arc.ts                        ← ARC chain config, ANALYSIS_TASKS, pricing
+    anonymousAuth.ts              ← Anonymous identity generator + localStorage
+  _components/
+    Navbar.tsx                    ← "Request access" → /login
+    Hero.tsx, Stats.tsx, HowItWorks.tsx, Services.tsx, UseCases.tsx
+    CtaBanner.tsx, Footer.tsx
+    ParticleSphere.tsx            ← Canvas 3D particle
+    ContactForm.tsx
+    ArcProvider.tsx               ← wagmi + react-query provider
+    WalletButton.tsx              ← Connect + SIWE verify + balance xx.xx
+    AnonBadge.tsx                 ← Anonymous identity badge
+    AnalysisReport.tsx            ← Report view + exportCSV/JSON/print + saveReport
+    LayoutEditor/
+      LayoutEditor.tsx            ← Orchestrator, toolbar, MintModal, AnnotationEditor
+      LayoutCanvas3D.tsx          ← R3F scene, toon shading, 15 fixture models
+      FixturePanel.tsx            ← English labels, icon+text horizontal layout
+      Inspector.tsx               ← Properties panel
+      AnnotationEditor.tsx        ← Note modal (title + text + image)
+      MintModal.tsx               ← Mint layout on ARC
+      fixtureLibrary.ts           ← 15 fixtures (incl. annotation)
+      types.ts                    ← FixtureInstance với note/noteImageUrl fields
+  api/
+    contact/route.ts              ← POST contact form (console log)
+    companies/route.ts            ← GET catalog từ public/companies/ (graceful fallback)
+  login/page.tsx                  ← Dark theme + Anonymous access button
+  contact/page.tsx
+  dashboard/
+    page.tsx                      ← Catalog, AnonBadge, auto-load sectors
+    analysis/page.tsx             ← 10 micro-tasks, USDC payment, report generation
+    product/page.tsx              ← Product detail (prices, competitors, promos)
+    reports/page.tsx              ← My Reports per wallet
+  forum/
+    page.tsx + ForumClient.tsx    ← Marketplace + Discussion
+  layout-editor/page.tsx
+```
+
+### ARC Network — Technical Details
+
+| Thuộc tính | Giá trị |
+|---|---|
+| Network | ARC Testnet |
+| Chain ID | 5042002 |
+| RPC | https://rpc.testnet.arc.network |
+| USDC | 0x3600000000000000000000000000000000000000 (6 decimals) |
+| Explorer | https://testnet.arcscan.app |
+| Faucet | https://faucet.circle.com |
+| Service wallet | 0x1234567890123456789012345678901234567890 (placeholder) |
+
+### Analysis pricing (10 micro-tasks)
+
+| Task | USDC |
+|---|---|
+| Upload / Register | $0.001 |
+| Image quality check | $0.001 |
+| Shelf object detection | $0.003 |
+| SKU / product detection | $0.004 |
+| Competitor visibility | $0.003 |
+| Stock risk analysis | $0.002 |
+| Store layout simulation | $0.004 |
+| Recommendation generation | $0.003 |
+| Human review request | $0.002 |
+| Final report / proof record | $0.002 |
+| **Total** | **$0.025** |
+
+### GitHub remotes
+
+| Remote | URL | Dùng cho |
+|---|---|---|
+| `vercel-repo` | github.com/levanhung789/storescope-ai | Vercel deployment |
+| `arc` | github.com/levanhung789/storescope-ai-ARC | ARC hackathon submission |
+| `origin` | github.com/levanhung789/storescope-ai-Shelby | Original repo |
