@@ -21,6 +21,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-konva": "^19.2.3",
+    "tesseract.js": "^7.0.0",
     "three": "^0.184.0",
     "viem": "^2.48.4",
     "wagmi": "^3.6.4",

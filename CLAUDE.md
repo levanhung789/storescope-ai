@@ -146,7 +146,7 @@ Trước khi báo hoàn thành UI task: mở browser kiểm tra golden path + re
 
 ---
 
-## Trạng thái dự án (cập nhật 2026-04-26)
+## Trạng thái dự án (cập nhật 2026-04-30)
 
 ### Đã hoàn thành
 
@@ -219,17 +219,42 @@ app/_components/LayoutEditor/
 
 ### Bước tiếp theo
 
-1. **Smart contract thật cho Layout Mint** — `MintModal.tsx` hiện dùng mock tx. Cần deploy `LayoutRegistry.sol` lên ARC testnet và thay `writeContract` thật.
+1. **Roboflow model training** — 1001 ảnh đã upload lên `fmcg-project`. Auto-label đang chạy trong UI. Sau khi xong: Generate → Train → điền `RF_VERSION=1` vào `.env.local`.
 
-2. **Smart contract cho Analysis payment** — `PaymentGateModal` gọi `USDC.transfer` thật nhưng chưa có contract nhận và ghi log on-chain.
+2. **Roboflow annotation API** — `/dataset/{project}/annotate/{id}` endpoint không nhận bất kỳ format nào qua REST API (XML, YOLO, JSON, text đều fail). Chỉ annotation qua Roboflow UI hoặc Python SDK mới hoạt động.
 
-3. **Kết nối gửi email thật** — `app/api/contact/route.ts` chỉ log console. Cần Resend API key hoặc SMTP credentials.
+3. **Smart contract thật cho Layout Mint** — `MintModal.tsx` dùng mock tx. Cần deploy `LayoutRegistry.sol` lên ARC testnet.
 
-4. **Logo** — Navbar dùng text `storescope.ai`. Nếu có SVG/PNG, thêm vào `public/` và dùng `<Image>`.
+4. **Smart contract cho Analysis payment** — `PaymentGateModal` gọi `USDC.transfer` thật nhưng chưa có contract nhận on-chain.
 
-5. **OG image** — `app/opengraph-image.png` chưa có.
+5. **Kết nối gửi email thật** — `app/api/contact/route.ts` chỉ log console.
 
-6. **`public/companies/` trên Vercel** — 203MB ảnh sản phẩm bị gitignore, không deploy được. Cần upload lên Cloudinary/S3 hoặc dùng Vercel Blob Storage.
+6. **`public/companies/` trên Vercel** — 203MB gitignored. Cần CDN.
+
+### Roboflow Integration (2026-04-30)
+
+| Item | Trạng thái |
+|---|---|
+| API Key | `QH9U94r31RusAz0TaO3O` |
+| Workspace | `levanhungs-workspace` |
+| Project | `fmcg-project` |
+| Images uploaded | 1001 ảnh |
+| Annotated | 0 (Auto-label đang chạy) |
+| Model version | Chưa có |
+| Inference endpoint | `https://detect.roboflow.com/fmcg-project/{version}` |
+
+**Files liên quan:**
+- `app/api/analyze/route.ts` — API route: Roboflow inference + OCR brand matching
+- `app/.env.local` — `RF_PROJECT=fmcg-project`, `RF_VERSION` cần điền sau train
+- `scripts/upload-to-roboflow.js` — Upload 1001 ảnh (đã chạy xong)
+- `scripts/annotate-roboflow.js` — Script annotate (duplicate detection block, chưa dùng được)
+
+**Pipeline hiện tại:**
+```
+Upload ảnh → Tesseract.js OCR (client-side) → /api/analyze
+  → Roboflow detect (nếu có model) + OCR brand matching
+  → Kết quả: brands, prices, shelf share
+```
 
 ### Quyết định quan trọng đã đưa ra
 

@@ -5,7 +5,39 @@
       "Bash(git commit -m 'chore: add vercel.json for deployment config *)",
       "Bash(git commit -m 'fix: graceful fallback when companies/ folder absent \\(Vercel\\) *)",
       "Bash(git commit -m 'feat: anonymous access with auto-generated identity *)",
-      "Bash(git commit -m 'remove: Pricing section — demo phase, not charging yet *)"
+      "Bash(git commit -m 'remove: Pricing section — demo phase, not charging yet *)",
+      "Bash(git commit -m 'docs: update CLAUDE.md with full project state 2026-04-26 *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Admin\\\\OneDrive\\\\Máy tính\\\\MeetYourBuild\")",
+      "Read(//c/Users/Admin/OneDrive/Máy tính/MeetYourBuild/**)",
+      "Bash(npx create-next-app@latest windtune-ai --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(curl -s \"https://api.roboflow.com/?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s \"https://api.roboflow.com/universe/search?q=retail+shelf+product+detection&api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s -X POST https://api.roboflow.com/dataset -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s -X POST https://api.roboflow.com/levanhungs-workspace/datasets -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/projects?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s \"https://api.roboflow.com/test-o9s8x/retail-shelf-detection-l8dgl/1?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s \"https://detect.roboflow.com/retail-shelf-detection-l8dgl/1?api_key=QH9U94r31RusAz0TaO3O&image=https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1200px-Good_Food_Display_-_NCI_Visuals_Online.jpg\")",
+      "Bash(curl -s \"https://detect.roboflow.com/retail-product-xeisr/5?api_key=QH9U94r31RusAz0TaO3O\" -H \"Content-Type: application/x-www-form-urlencoded\" --data-urlencode \"image=https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800\")",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const j=JSON.parse\\(d\\); console.log\\(JSON.stringify\\(j.workspace?.projects || j, null, 2\\)\\)\")",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/fmcg-project?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/FMCG-Project?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(node scripts/upload-to-roboflow.js fmcg-project)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const j=JSON.parse\\(d\\);console.log\\('Images uploaded:',j.project.images,'| Versions:',j.project.versions\\)\")",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/fmcg-project/images?api_key=QH9U94r31RusAz0TaO3O&split=train\")",
+      "Bash(node -e \"process.stdin.resume\\(\\);let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('Total:',j.total,'Images:',JSON.stringify\\(j.images?.slice\\(0,2\\),null,2\\)\\)}\\)\")",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/fmcg-project/images?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/fmcg-project/search?api_key=QH9U94r31RusAz0TaO3O&limit=5\")",
+      "Bash(curl -s \"https://api.roboflow.com/levanhungs-workspace/fmcg-project/annotations?api_key=QH9U94r31RusAz0TaO3O\")",
+      "Bash(curl -s -X POST 'https://api.roboflow.com/dataset/fmcg-project/upload?api_key=QH9U94r31RusAz0TaO3O&name=test2.jpg&split=train&annotation=%3Cannotation%3E%3Cobject%3E%3Cname%3Eajinomoto%3C%2Fname%3E%3Cbndbox%3E%3Cxmin%3E0%3C%2Fxmin%3E%3Cymin%3E0%3C%2Fymin%3E%3Cxmax%3E100%3C%2Fxmax%3E%3Cymax%3E100%3C%2Fymax%3E%3C%2Fbndbox%3E%3C%2Fobject%3E%3C%2Fannotation%3E' -H 'Content-Type: application/x-www-form-urlencoded' --data-binary '@c:/Users/Admin/OneDrive/Máy tính/storescope-ai-Shelby/public/companies/dau-an-nuoc-cham-gia-vi/cong-ty-ajinomoto-viet-nam/bot-ngot-hat-lon-ajinomoto-goi-100g/bot-ngot-ajinomoto-goi-100g-202006200905580100.jpg')"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Admin\\.claude\\projects\\c--Users-Admin-OneDrive-M-y-t-nh-storescope-ai-Shelby",
+      "C:\\Users\\Admin\\OneDrive\\Máy tính\\MeetYourBuild\\windtune-ai\\app",
+      "c:\\Users\\Admin\\OneDrive\\Máy tính\\storescope-ai-Shelby\\app\\api"
     ]
   }
 }

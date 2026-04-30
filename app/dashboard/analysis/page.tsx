@@ -246,8 +246,11 @@ export default function AnalysisPage() {
   const updateTask = (id: TaskId, patch: Partial<TaskState>) =>
     setTaskStates(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }));
 
+  const fileObjRef = useRef<File | null>(null);
+
   const loadFile = (file: File) => {
     if (!file.type.startsWith("image/")) return;
+    fileObjRef.current = file;
     setImageName(file.name);
     setImageUrl(URL.createObjectURL(file));
     setDone(false); setApproved(false); setSpentTotal(0);
@@ -265,14 +268,65 @@ export default function AnalysisPage() {
     setSavedOk(false);
 
     const completedTasks: ReportData["tasks"] = [];
+    let apiData: { detections?: { brand: string; company: string; confidence: number; source: string }[]; prices?: number[]; shelfShare?: { brand: string; pct: number }[]; summary?: { topBrand: string; priceRange?: { min: number; max: number } | null } } = {};
+    let ocrText = "";
 
     for (const task of ANALYSIS_TASKS) {
       updateTask(task.id, { status: "paying" });
       await new Promise(r => setTimeout(r, 400));
       const txHash = mockTx();
       updateTask(task.id, { status: "processing", txHash });
+      let result = TASK_RESULTS[task.id];
+
+      // ── Upload + OCR (chạy client-side Tesseract) ─────────────────────────
+      if (task.id === "upload" && fileObjRef.current) {
+        try {
+          const { createWorker } = await import("tesseract.js");
+          const worker = await createWorker("vie+eng");
+          const { data } = await worker.recognize(fileObjRef.current);
+          await worker.terminate();
+          ocrText = data.text || "";
+          const wordCount = ocrText.split(/\s+/).filter(Boolean).length;
+          result = `Image registered · OCR extracted ${wordCount} words`;
+        } catch {
+          result = "Image registered · OCR unavailable";
+        }
+      }
+
+      // ── SKU Detection → gửi image + OCR lên API ──────────────────────────
+      if (task.id === "sku_detect" && fileObjRef.current) {
+        try {
+          const fd = new FormData();
+          fd.append("image", fileObjRef.current);
+          fd.append("ocrText", ocrText);
+          const res = await fetch("/api/analyze", { method: "POST", body: fd });
+          if (res.ok) {
+            apiData = await res.json();
+            const det = apiData.detections || [];
+            if (det.length > 0) {
+              result = det.slice(0, 5).map(d => `${d.brand} (${d.confidence}%)`).join(" · ");
+            } else {
+              result = "No products detected — try a clearer shelf photo";
+            }
+          }
+        } catch {
+          result = "Detection API unavailable";
+        }
+      }
+
+      // ── Competitor analysis ───────────────────────────────────────────────
+      if (task.id === "competitor" && apiData.shelfShare?.length) {
+        const top2 = apiData.shelfShare.slice(0, 2);
+        result = top2.map(s => `${s.brand} ${s.pct}%`).join(" vs ");
+      }
+
+      // ── Stock risk from price data ─────────────────────────────────────────
+      if (task.id === "stock_risk" && apiData.prices?.length) {
+        const p = apiData.prices;
+        result = `Price range: ${p[0].toLocaleString()}đ – ${p[p.length - 1].toLocaleString()}đ · ${p.length} price points detected`;
+      }
+
       await new Promise(r => setTimeout(r, TASK_DURATION[task.id]));
-      const result = TASK_RESULTS[task.id];
       updateTask(task.id, { status: "done", txHash, result });
       completedTasks.push({ id: task.id, label: task.label, price: task.price, txHash, result });
       setSpentTotal(prev => +(prev + task.price).toFixed(6));
@@ -290,12 +344,25 @@ export default function AnalysisPage() {
       totalPaid: TOTAL_ANALYSIS_PRICE,
       proofTxHash: reportTx,
       tasks: completedTasks,
-      skus: MOCK_SKUS.map(s => ({
-        sku: s.sku, product: s.product, brand: s.brand, category: s.category,
-        packSpec: s.packSpec, facings: s.facings, priceVND: s.priceVND,
-        matchedCompany: s.matchedCompany, status: s.status,
-        confidence: s.scores.brand + s.scores.text + s.scores.size + s.scores.category + s.scores.visual,
-      })),
+      skus: apiData.detections?.length
+        ? apiData.detections.map((d, i) => ({
+            sku: `SKU-${String(i + 1).padStart(3, "0")}`,
+            product: d.brand,
+            brand: d.brand,
+            category: (d as { sector?: string }).sector || "FMCG",
+            packSpec: "—",
+            facings: 1,
+            priceVND: apiData.prices?.[i] || null,
+            matchedCompany: d.company,
+            status: (d.confidence >= 75 ? "Matched" : "Review") as "Matched" | "Review" | "Missing",
+            confidence: d.confidence,
+          }))
+        : MOCK_SKUS.map(s => ({
+            sku: s.sku, product: s.product, brand: s.brand, category: s.category,
+            packSpec: s.packSpec, facings: s.facings, priceVND: s.priceVND,
+            matchedCompany: s.matchedCompany, status: s.status,
+            confidence: s.scores.brand + s.scores.text + s.scores.size + s.scores.category + s.scores.visual,
+          })),
       shelfShare: [
         { brand: "Calofic (Meizan + Cái Lân)", pct: 55 },
         { brand: "Tường An (Neptune Light)",   pct: 30 },
