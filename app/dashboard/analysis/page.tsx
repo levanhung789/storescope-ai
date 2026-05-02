@@ -5,7 +5,7 @@ import { useAccount, useConnect, useSwitchChain, useWriteContract, useWaitForTra
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ANALYSIS_TASKS, TOTAL_ANALYSIS_PRICE, toUSDCUnits, arcTestnet, ARC_CONTRACTS, ERC20_ABI, type TaskId } from "../../_lib/arc";
-import AnalysisReport, { type ReportData, saveReport } from "../../_components/AnalysisReport";
+import AnalysisReport, { type ReportData } from "../../_components/AnalysisReport";
 import { loadAnonUser, type AnonUser } from "../../_lib/anonymousAuth";
 
 const AnonBadge = dynamic(() => import("../../_components/AnonBadge"), { ssr: false });
@@ -363,20 +363,37 @@ export default function AnalysisPage() {
             matchedCompany: s.matchedCompany, status: s.status,
             confidence: s.scores.brand + s.scores.text + s.scores.size + s.scores.category + s.scores.visual,
           })),
-      shelfShare: [
-        { brand: "Calofic (Meizan + Cái Lân)", pct: 55 },
-        { brand: "Tường An (Neptune Light)",   pct: 30 },
-        { brand: "Unknown brand",              pct: 15 },
-      ],
-      recommendations: [
-        "Move Neptune Light to eye-level row 1 — maximize premium brand visibility",
-        "Expand Calofic shelf space by 2 facings — current 55% share under-represented",
-        "Identify unknown left-column brand — send field audit to capture SKU details",
-        "Reorder Neptune Light row 3 — stock level critical (2 facings only)",
-      ],
-      stockRisk: [
-        "Neptune Light row 3: only 2 facings remaining — reorder recommended",
-      ],
+      shelfShare: apiData.shelfShare?.length
+        ? apiData.shelfShare
+        : [{ brand: "Unknown", pct: 100 }],
+      recommendations: (() => {
+        const recs: string[] = [];
+        const det = apiData.detections || [];
+        const topBrand = apiData.summary?.topBrand;
+        const prices = apiData.prices || [];
+
+        if (topBrand) recs.push(`${topBrand} is the dominant brand detected — verify planogram compliance`);
+        if (det.length > 1) recs.push(`${det.length} brands detected on shelf — review competitor positioning`);
+        if (prices.length >= 2) {
+          const spread = prices[prices.length - 1] - prices[0];
+          if (spread > 10000) recs.push(`Price spread of ${spread.toLocaleString()}đ detected — potential pricing inconsistency`);
+        }
+        if (det.some(d => d.confidence < 75)) recs.push("Some SKUs have low confidence score — retake photo with better lighting");
+        if (det.length === 0) recs.push("No brands detected — ensure shelf photo is clear, well-lit, and taken from the front");
+        if (recs.length === 0) recs.push("Analysis complete — no critical issues found");
+        return recs;
+      })(),
+      stockRisk: (() => {
+        const risks: string[] = [];
+        const prices = apiData.prices || [];
+        if (prices.length === 0 && (apiData.detections?.length || 0) > 0) {
+          risks.push("No price tags detected — verify price labels are visible and up to date");
+        }
+        if ((apiData.detections?.length || 0) === 0) {
+          risks.push("No products detected — shelf may be empty or image quality insufficient");
+        }
+        return risks;
+      })(),
     };
 
     setReport(newReport);
@@ -680,45 +697,82 @@ export default function AnalysisPage() {
                   </div>
                 )}
 
-                {activeTab === "report" && (
+                {activeTab === "report" && report && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+
+                    {/* Summary stats */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                       {[
-                        { label: "Image ID",       value: "IMG-20260426-0091" },
-                        { label: "Report ID",       value: "RPT-5042002-0091" },
-                        { label: "SKUs Detected",   value: "7 SKUs" },
-                        { label: "Shelf Rows",       value: "3 rows · 40 facings" },
-                        { label: "Shelf Share #1",   value: "Calofic — 55%" },
-                        { label: "Stock Risk",       value: "Neptune Light row 3" },
+                        { label: "Report ID",       value: report.reportId },
+                        { label: "Image File",      value: report.imageName || "—" },
+                        { label: "SKUs Detected",   value: `${report.skus.length} brands` },
+                        { label: "Top Brand",       value: report.shelfShare[0]?.brand || "—" },
+                        { label: "Price Range",     value: report.skus.some(s => s.priceVND) ? `${Math.min(...report.skus.filter(s=>s.priceVND).map(s=>s.priceVND!)).toLocaleString()}đ – ${Math.max(...report.skus.filter(s=>s.priceVND).map(s=>s.priceVND!)).toLocaleString()}đ` : "No prices detected" },
+                        { label: "Analysis Cost",   value: `$${report.totalPaid.toFixed(3)} USDC` },
                       ].map(s => (
                         <div key={s.label} style={{ padding: "12px 14px", background: "#0a0a0a", borderRadius: 10 }}>
                           <div style={{ fontSize: 10, color: "#555", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em" }}>{s.label}</div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{s.value}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0", wordBreak: "break-all" }}>{s.value}</div>
                         </div>
                       ))}
                     </div>
 
+                    {/* Brands detected */}
+                    {report.skus.length > 0 && (
+                      <div style={{ padding: "16px 18px", background: "#0a0a0a", borderRadius: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 12 }}>Brands Detected</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {report.skus.map((s, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: "#111", borderRadius: 8 }}>
+                              <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.status === "Matched" ? "#4ade80" : "#fbbf24", flexShrink: 0 }} />
+                              <div style={{ flex: 1 }}>
+                                <span style={{ fontSize: 13, color: "#f0f0f0", fontWeight: 600 }}>{s.brand}</span>
+                                <span style={{ fontSize: 11, color: "#555", marginLeft: 8 }}>{s.matchedCompany}</span>
+                              </div>
+                              <span style={{ fontSize: 12, color: "#888" }}>{s.category}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: s.status === "Matched" ? "#4ade80" : "#fbbf24" }}>{s.confidence}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Shelf share */}
+                    {report.shelfShare.length > 0 && (
+                      <div style={{ padding: "16px 18px", background: "#0a0a0a", borderRadius: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 12 }}>Shelf Share</div>
+                        {report.shelfShare.map(s => (
+                          <div key={s.brand} style={{ marginBottom: 10 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                              <span style={{ color: "#e0e0e0" }}>{s.brand}</span>
+                              <span style={{ color: "#a78bfa", fontWeight: 700 }}>{s.pct}%</span>
+                            </div>
+                            <div style={{ height: 6, background: "#1a1a1a", borderRadius: 99, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${s.pct}%`, background: "#7c3aed", borderRadius: 99 }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
                     <div style={{ padding: "16px 18px", background: "#0a0a0a", borderRadius: 12 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 10 }}>AI Recommendations</div>
-                      {[
-                        "Move Neptune Light to eye-level (row 1) to maximize premium brand visibility",
-                        "Expand Calofic shelf space by 2 facings — current 55% share under-represented at row 3",
-                        "Identify unknown left-column brand — send field audit to capture SKU details",
-                        "Reorder Neptune Light row 3: stock level critical (2 facings only)",
-                      ].map((r, i) => (
-                        <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < 3 ? 8 : 0, fontSize: 13, color: "#ccc", lineHeight: 1.5 }}>
+                      {report.recommendations.map((r, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < report.recommendations.length - 1 ? 8 : 0, fontSize: 13, color: "#ccc", lineHeight: 1.5 }}>
                           <span style={{ color: "#7c3aed", flexShrink: 0 }}>→</span>
                           {r}
                         </div>
                       ))}
                     </div>
 
+                    {/* Blockchain Proof */}
                     <div style={{ padding: "14px 16px", background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#4ade80", marginBottom: 8 }}>Blockchain Proof</div>
-                      <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>Final report hash recorded on ARC Testnet. Immutable, verifiable.</div>
-                      <a href={`https://testnet.arcscan.app/tx/${reportTask.txHash}`} target="_blank" rel="noreferrer"
+                      <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>Final report hash recorded on ARC Testnet.</div>
+                      <a href={`https://testnet.arcscan.app/tx/${report.proofTxHash}`} target="_blank" rel="noreferrer"
                         style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", wordBreak: "break-all", textDecoration: "none" }}>
-                        {reportTask.txHash} ↗
+                        {report.proofTxHash} ↗
                       </a>
                     </div>
                   </div>
