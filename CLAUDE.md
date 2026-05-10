@@ -405,3 +405,94 @@ app/
 | `vercel-repo` | github.com/levanhung789/storescope-ai | Vercel deployment |
 | `arc` | github.com/levanhung789/storescope-ai-ARC | ARC hackathon submission |
 | `origin` | github.com/levanhung789/storescope-ai-Shelby | Original repo |
+
+---
+
+## Nhật ký làm việc — 2026-05-10
+
+### Sửa lỗi server chớp (Turbopack + OneDrive)
+
+**Vấn đề:** Turbopack crash liên tục (`FATAL: Failed to write app endpoint /page`) vì project nằm trên OneDrive — OneDrive sync xung đột với việc Turbopack ghi file hàng nghìn lần/giây vào `.next/`.
+
+**Giải pháp:**
+- Tạo directory junction `.next` → `C:\next-cache\storescope-ai` (ngoài OneDrive)
+- Tạo junction `node_modules` trong cache → project's `node_modules` để module resolution hoạt động
+- Server chạy ổn định, không còn FATAL error
+
+```powershell
+# Tạo một lần duy nhất nếu cache bị xóa
+cmd /c "mklink /J .next C:\next-cache\storescope-ai"
+cmd /c "mklink /J C:\next-cache\storescope-ai\node_modules .\node_modules"
+```
+
+**Lưu ý:** `next.config.ts` giữ nguyên trống — `distDir` không hoạt động với Turbopack trên Windows.
+
+---
+
+### Tích hợp Circle Wallets
+
+**Mục tiêu:** Thêm Circle Developer-Controlled Wallets như phương thức thanh toán thứ hai bên cạnh MetaMask — không cần cài MetaMask.
+
+#### Files mới tạo
+
+| File | Mục đích |
+|------|---------|
+| `app/_lib/circle.ts` | Types, localStorage helpers cho Circle session |
+| `app/api/circle/wallet/route.ts` | POST tạo ví / GET lấy ví |
+| `app/api/circle/balance/route.ts` | GET USDC balance |
+| `app/api/circle/transfer/route.ts` | POST gửi USDC |
+| `app/_components/CircleWalletButton.tsx` | UI dropdown ví — balance, address, faucet link |
+| `scripts/setup-circle.js` | Script setup one-time (đã chạy xong) |
+
+#### Files đã sửa
+
+| File | Thay đổi |
+|------|---------|
+| `app/login/page.tsx` | Thêm 3 tab: **Sign In** / **Circle Wallet** / **Anonymous** |
+| `app/dashboard/analysis/page.tsx` | Hỗ trợ thanh toán Circle hoặc MetaMask trong `PaymentGateModal` |
+| `.env.local` | Thêm Circle keys |
+| `package.json` | Thêm `@circle-fin/developer-controlled-wallets` |
+
+#### Circle credentials (đã cấu hình trong .env.local)
+
+| Key | Giá trị |
+|-----|---------|
+| `CIRCLE_API_KEY` | `TEST_API_KEY:faae16f361b2e93162402784c4121311:...` |
+| `CIRCLE_ENTITY_SECRET` | `231bf96c8c06aedc35bf9e65f723f3bec736a6f5d684cd2151f9a01212cc738a` |
+| `CIRCLE_WALLET_SET_ID` | `18a95eda-b8b8-5418-8e90-4e51438b2243` |
+| Recovery file | `recovery_file_2026-05-10.dat` — **giữ an toàn, không commit** |
+
+#### Demo Mode
+
+Khi `CIRCLE_API_KEY` trống → tất cả API routes tự fallback sang **demo mode**:
+- Wallet address sinh từ hash của userId (deterministic)
+- Balance = `0.00 USDC`
+- Transfer trả về mock txHash
+- UI hiển thị badge **Demo** màu vàng
+
+#### Flow người dùng
+
+```
+Login → Tab "Circle Wallet" → Nhập email → POST /api/circle/wallet
+  → Circle tạo ví MPC trên ARC Testnet → lưu session vào localStorage
+  → Dashboard: CircleWalletButton hiện balance + address
+  → Analysis: chọn "Circle Wallet" trong payment modal → POST /api/circle/transfer
+  → Circle gửi $0.025 USDC → analysis chạy
+```
+
+#### Quyết định kỹ thuật
+
+| Quyết định | Lý do |
+|---|---|
+| Demo mode fallback khi không có API key | Cho phép dev/demo mà không cần Circle account |
+| Circle session lưu localStorage | Nhất quán với anonymous session pattern đã có |
+| Giữ wagmi/MetaMask song song | Không breaking change với user cũ |
+| `generateEntitySecretCiphertext()` mỗi lần cần | Circle yêu cầu fresh ciphertext để chống replay attack |
+| Entity secret tự generate (không dùng Circle tạo) | Bảo mật cao hơn — Circle không bao giờ biết secret |
+
+#### Giao diện Circle Wallet
+
+- **Ngôn ngữ**: English hoàn toàn
+- **Font size**: tăng 30% so với phần còn lại của app
+- **Màu accent Circle**: `#6366f1` (indigo) — phân biệt với `#7c3aed` (violet) của MetaMask flow
+- Badge **Demo** (amber) hiện khi chưa có real API key

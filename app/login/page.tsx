@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { generateAnonUser, saveAnonUser } from "../_lib/anonymousAuth";
+import { saveCircleSession } from "../_lib/circle";
 
 const DEMO_USERNAME = "ADmin123";
 const DEMO_PASSWORD = "888000";
@@ -38,13 +39,25 @@ const FEATURES = [
   },
 ];
 
+type Tab = "signin" | "circle" | "anon";
+
 export default function LoginPage() {
   const router = useRouter();
+  const [tab, setTab] = useState<Tab>("signin");
+
+  // Sign in state
   const [username,  setUsername]  = useState("");
   const [password,  setPassword]  = useState("");
   const [showPass,  setShowPass]  = useState(false);
   const [status,    setStatus]    = useState<"idle" | "loading" | "error" | "success">("idle");
+
+  // Anonymous state
   const [anonLoading, setAnonLoading] = useState(false);
+
+  // Circle wallet state
+  const [circleEmail, setCircleEmail] = useState("");
+  const [circleStatus, setCircleStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [circleError, setCircleError] = useState("");
 
   const handleAnonymous = async () => {
     setAnonLoading(true);
@@ -52,6 +65,36 @@ export default function LoginPage() {
     const user = generateAnonUser();
     saveAnonUser(user);
     router.push("/dashboard");
+  };
+
+  const handleCircleWallet = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!circleEmail.trim()) return;
+    setCircleStatus("loading");
+    setCircleError("");
+    try {
+      const userId = circleEmail.trim().toLowerCase().replace(/[^a-z0-9@._-]/g, "");
+      const res = await fetch("/api/circle/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Loi tao Circle Wallet");
+      saveCircleSession({
+        walletId: data.walletId,
+        walletAddress: data.walletAddress,
+        walletSetId: data.walletSetId,
+        userId: data.userId,
+      });
+      setCircleStatus("success");
+      // Danh dau vua tao vi de analysis page hien profile modal
+      sessionStorage.setItem("justCreatedWallet", "1");
+      setTimeout(() => router.push("/dashboard/analysis"), 600);
+    } catch (err) {
+      setCircleError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setCircleStatus("error");
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -101,13 +144,10 @@ export default function LoginPage() {
 
         {/* Brand */}
         <div style={{ position: "relative", zIndex: 1 }}>
-          <a href="/" style={{ textDecoration: "none", display: "inline-flex", alignItems: "baseline", gap: 2 }}>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.04em" }}>storescope</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#7c3aed", letterSpacing: "-0.04em" }}>.ai</span>
+          <a href="/" style={{ textDecoration: "none", display: "inline-flex" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="StoreScope AI" style={{ height: 100, width: "auto", objectFit: "contain", filter: "invert(1)" }} />
           </a>
-          <div style={{ marginTop: 4, fontSize: 12, color: "#555", letterSpacing: "0.08em" }}>
-            Retail Intelligence Platform
-          </div>
         </div>
 
         {/* Hero text */}
@@ -184,12 +224,12 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div style={{ marginBottom: 40, display: "none" }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: "#f0f0f0" }}>storescope</span>
-            <span style={{ fontSize: 20, fontWeight: 800, color: "#7c3aed" }}>.ai</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="StoreScope AI" style={{ height: 91, width: "auto", objectFit: "contain", filter: "invert(1)" }} />
           </div>
 
           {/* Form header */}
-          <div style={{ marginBottom: 36 }}>
+          <div style={{ marginBottom: 28 }}>
             <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 8px", color: "#f0f0f0" }}>
               Welcome back
             </h1>
@@ -198,6 +238,125 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Tab switcher */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 4, marginBottom: 28,
+            background: "#0a0a0a", borderRadius: 12, padding: 4,
+            border: "1px solid #1f1f1f",
+          }}>
+            {([
+              { id: "signin", label: "Sign In" },
+              { id: "circle", label: "Circle Wallet" },
+              { id: "anon",   label: "Anonymous" },
+            ] as { id: Tab; label: string }[]).map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{
+                  padding: "8px 4px", border: "none", borderRadius: 9, cursor: "pointer",
+                  fontSize: 12, fontWeight: 600, transition: "all 0.2s",
+                  background: tab === t.id ? (t.id === "circle" ? "rgba(99,102,241,0.15)" : "#1a1a1a") : "transparent",
+                  color: tab === t.id ? (t.id === "circle" ? "#818cf8" : "#f0f0f0") : "#555",
+                  borderColor: tab === t.id ? "rgba(99,102,241,0.3)" : "transparent",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Circle Wallet tab ── */}
+          {tab === "circle" && (
+            <div>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "14px 18px", borderRadius: 12, marginBottom: 24,
+                background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)",
+              }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="rgba(99,102,241,0.15)" stroke="#6366f1" strokeWidth="1.5"/>
+                  <path d="M8 12h8M12 8v8" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <p style={{ margin: 0, fontSize: 17, fontWeight: 600, color: "#a5b4fc" }}>Circle Wallet</p>
+                  <p style={{ margin: 0, fontSize: 14, color: "#555" }}>Create a USDC wallet on ARC Testnet — no MetaMask needed</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleCircleWallet} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 16, color: "#888", marginBottom: 8, fontWeight: 500 }}>
+                    Email or username
+                  </label>
+                  <input
+                    type="text"
+                    value={circleEmail}
+                    onChange={e => setCircleEmail(e.target.value)}
+                    placeholder="e.g. user@email.com"
+                    required
+                    style={{ ...inputBase, fontSize: 16 }}
+                    onFocus={e => (e.currentTarget.style.borderColor = "#6366f1")}
+                    onBlur={e => (e.currentTarget.style.borderColor = "#2a2a2a")}
+                  />
+                  <p style={{ margin: "8px 0 0", fontSize: 14, color: "#444" }}>
+                    Used to identify your wallet. No password required.
+                  </p>
+                </div>
+
+                {circleStatus === "error" && (
+                  <div style={{
+                    padding: "12px 16px", borderRadius: 10, fontSize: 16,
+                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                    color: "#f87171",
+                  }}>
+                    {circleError}
+                  </div>
+                )}
+                {circleStatus === "success" && (
+                  <div style={{
+                    padding: "12px 16px", borderRadius: 10, fontSize: 16,
+                    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
+                    color: "#4ade80",
+                  }}>
+                    Wallet created successfully! Redirecting…
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={circleStatus === "loading" || circleStatus === "success"}
+                  style={{
+                    width: "100%", padding: "14px 0",
+                    background: circleStatus === "loading" || circleStatus === "success"
+                      ? "rgba(99,102,241,0.4)" : "rgba(99,102,241,0.85)",
+                    color: "#fff", border: "1px solid rgba(99,102,241,0.5)",
+                    borderRadius: 12, fontSize: 18, fontWeight: 600,
+                    cursor: circleStatus === "idle" || circleStatus === "error" ? "pointer" : "not-allowed",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  {circleStatus === "loading" ? "Creating wallet…" :
+                   circleStatus === "success" ? "Success!" : "Create Circle Wallet"}
+                </button>
+              </form>
+
+              <div style={{
+                marginTop: 18, padding: "12px 16px", borderRadius: 10,
+                background: "rgba(255,255,255,0.02)", border: "1px solid #1a1a1a",
+                fontSize: 14, color: "#444", lineHeight: 1.7,
+              }}>
+                <strong style={{ color: "#555" }}>Circle Developer Wallet</strong> — MPC-secured wallet managed by Circle.
+                After creation, get testnet USDC at{" "}
+                <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer"
+                  style={{ color: "#6366f1", textDecoration: "none" }}>faucet.circle.com</a>.
+              </div>
+            </div>
+          )}
+
+          {/* ── Sign in tab ── */}
+          {tab === "signin" && (
+          <div>
           {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
@@ -314,51 +473,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo hint */}
-          {/* Divider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4 }}>
-            <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
-            <span style={{ fontSize: 11, color: "#444" }}>or</span>
-            <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
-          </div>
-
-          {/* Anonymous access button */}
-          <button
-            type="button"
-            onClick={handleAnonymous}
-            disabled={anonLoading}
-            style={{
-              width: "100%", padding: "13px 0",
-              background: "transparent",
-              border: "1px solid #2a2a2a",
-              borderRadius: 12, fontSize: 13, fontWeight: 600,
-              color: anonLoading ? "#555" : "#888",
-              cursor: anonLoading ? "wait" : "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              transition: "border-color 0.2s, color 0.2s",
-            }}
-            onMouseEnter={e => { if (!anonLoading) { e.currentTarget.style.borderColor = "#444"; e.currentTarget.style.color = "#f0f0f0"; } }}
-            onMouseLeave={e => { if (!anonLoading) { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888"; } }}
-          >
-            {/* Mask icon */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
-              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-              <line x1="9" y1="9" x2="9.01" y2="9"/>
-              <line x1="15" y1="9" x2="15.01" y2="9"/>
-            </svg>
-            {anonLoading ? "Creating identity…" : "Access Anonymously"}
-          </button>
-
-          {/* Anonymous info */}
-          <div style={{
-            padding: "11px 14px", borderRadius: 10,
-            background: "rgba(255,255,255,0.02)", border: "1px solid #1a1a1a",
-            fontSize: 11, color: "#444", lineHeight: 1.6,
-          }}>
-            <strong style={{ color: "#666" }}>Anonymous access:</strong> The system will generate a random identity for you. Full access, no registration required. Your real identity is never stored.
-          </div>
-
           <div style={{
             padding: "11px 16px", borderRadius: 10,
             background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)",
@@ -366,6 +480,56 @@ export default function LoginPage() {
           }}>
             Demo account enabled for testing.
           </div>
+          </div>
+          )} {/* end signin tab */}
+
+          {/* ── Anonymous tab ── */}
+          {tab === "anon" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "14px 18px", borderRadius: 12,
+                background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f",
+              }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.5">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                  <line x1="9" y1="9" x2="9.01" y2="9"/>
+                  <line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+                <div>
+                  <p style={{ margin: 0, fontSize: 17, fontWeight: 600, color: "#888" }}>Anonymous Access</p>
+                  <p style={{ margin: 0, fontSize: 14, color: "#555" }}>No registration — system generates a random identity</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAnonymous}
+                disabled={anonLoading}
+                style={{
+                  width: "100%", padding: "14px 0",
+                  background: "transparent", border: "1px solid #2a2a2a",
+                  borderRadius: 12, fontSize: 18, fontWeight: 600,
+                  color: anonLoading ? "#555" : "#888", cursor: anonLoading ? "wait" : "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                  transition: "border-color 0.2s, color 0.2s",
+                }}
+                onMouseEnter={e => { if (!anonLoading) { e.currentTarget.style.borderColor = "#444"; e.currentTarget.style.color = "#f0f0f0"; }}}
+                onMouseLeave={e => { if (!anonLoading) { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888"; }}}
+              >
+                {anonLoading ? "Creating identity…" : "Access Anonymously"}
+              </button>
+
+              <div style={{
+                padding: "12px 16px", borderRadius: 10,
+                background: "rgba(255,255,255,0.02)", border: "1px solid #1a1a1a",
+                fontSize: 14, color: "#444", lineHeight: 1.7,
+              }}>
+                <strong style={{ color: "#666" }}>Anonymous access:</strong> The system generates a random identity for you. Full access, no registration required. Your real identity is never stored.
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <p style={{ marginTop: 28, textAlign: "center", fontSize: 13, color: "#444" }}>

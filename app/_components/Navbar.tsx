@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-
-const WalletButton = dynamic(() => import("./WalletButton"), { ssr: false });
 
 const links = [
   { label: "Services", href: "#services" },
@@ -41,27 +38,25 @@ export default function Navbar() {
           maxWidth: 1200,
           margin: "0 auto",
           padding: "0 32px",
-          height: 56,
+          height: 104,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
-        {/* Logo — text only */}
+        {/* Logo */}
         <a
-          href="#"
-          style={{
-            fontSize: 18,
-            fontWeight: 700,
-            color: "#fff",
-            textDecoration: "none",
-            letterSpacing: "-0.03em",
-            transition: "opacity 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.75")}
+          href="/"
+          style={{ textDecoration: "none", display: "flex", alignItems: "center", transition: "opacity 0.2s", marginLeft: "-151px" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          storescope<span style={{ color: "rgba(255,255,255,0.35)" }}>.ai</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="StoreScope AI"
+            style={{ height: 82, width: "auto", objectFit: "contain", filter: "invert(1)" }}
+          />
         </a>
 
         {/* Desktop nav */}
@@ -71,7 +66,7 @@ export default function Navbar() {
               key={l.href}
               href={l.href}
               style={{
-                fontSize: 13,
+                fontSize: 17,
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.45)",
                 textDecoration: "none",
@@ -88,48 +83,32 @@ export default function Navbar() {
 
         {/* CTA */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <WalletButton />
           <a
             href="/login"
             style={{
               fontSize: 13,
-              color: "rgba(255,255,255,0.4)",
-              textDecoration: "none",
-              transition: "color 0.2s",
-            }}
-            className="nav-desktop"
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
-          >
-            Sign in
-          </a>
-          <a
-            href="/login"
-            style={{
-              fontSize: 12,
               fontWeight: 600,
               color: "#fff",
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.18)",
-              padding: "7px 16px",
+              background: "#7c3aed",
+              padding: "9px 22px",
               borderRadius: 999,
               textDecoration: "none",
-              letterSpacing: "0.02em",
-              transition: "border-color 0.25s, background 0.25s, transform 0.2s",
+              letterSpacing: "0.01em",
+              transition: "background 0.25s, transform 0.2s, box-shadow 0.25s",
               display: "inline-block",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.45)";
-              e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+              e.currentTarget.style.background = "#6d28d9";
               e.currentTarget.style.transform = "translateY(-1px) scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(124,58,237,0.35)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
-              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.background = "#7c3aed";
               e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
-            Request access
+            Let&apos;s get started
           </a>
 
           {/* Mobile hamburger */}

@@ -7,10 +7,14 @@ import Link from "next/link";
 import { ANALYSIS_TASKS, TOTAL_ANALYSIS_PRICE, toUSDCUnits, arcTestnet, ARC_CONTRACTS, ERC20_ABI, type TaskId } from "../../_lib/arc";
 import AnalysisReport, { type ReportData } from "../../_components/AnalysisReport";
 import { loadAnonUser, type AnonUser } from "../../_lib/anonymousAuth";
+import { loadCircleSession, type CircleSession } from "../../_lib/circle";
+import { loadProfile, type UserProfile } from "../../_lib/profile";
+
+const ProfileModal = dynamic(() => import("../../_components/ProfileModal"), { ssr: false });
 
 const AnonBadge = dynamic(() => import("../../_components/AnonBadge"), { ssr: false });
-
 const WalletButton = dynamic(() => import("../../_components/WalletButton"), { ssr: false });
+const CircleWalletButton = dynamic(() => import("../../_components/CircleWalletButton"), { ssr: false });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,22 +62,33 @@ const MOCK_SKUS = [
 
 // ── Payment Gate Modal ─────────────────────────────────────────────────────────
 
-function PaymentGateModal({ onPaid, onClose }: { onPaid: () => void; onClose: () => void }) {
+function PaymentGateModal({ onPaid, onClose, circleSession }: {
+  onPaid: () => void;
+  onClose: () => void;
+  circleSession: CircleSession | null;
+}) {
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors } = useConnect();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
+
+  // Chon phuong thuc thanh toan: 'metamask' hoac 'circle'
+  const [payMethod, setPayMethod] = useState<"metamask" | "circle">(() =>
+    circleSession ? "circle" : "metamask"
+  );
+
   const [step, setStep] = useState<PayStep>(() => {
+    if (circleSession) return "confirm";
     if (!isConnected) return "connect";
     if (chain?.id !== arcTestnet.id) return "wrong_chain";
     return "confirm";
   });
   const [errMsg, setErrMsg] = useState("");
+  const [circleTxHash, setCircleTxHash] = useState<string | null>(null);
 
-  // Real USDC transfer
+  // MetaMask USDC transfer
   const { writeContract, data: txHash, isPending: isSending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // Watch for confirmation
   useEffect(() => {
     if (isConfirmed) setStep("paid");
   }, [isConfirmed]);
@@ -87,16 +102,54 @@ function PaymentGateModal({ onPaid, onClose }: { onPaid: () => void; onClose: ()
   }, [writeError]);
 
   const handleApprove = () => {
-    setStep("approving");
-    writeContract({
-      address: ARC_CONTRACTS.USDC,
-      abi: ERC20_ABI,
-      functionName: "transfer",
-      args: [ARC_CONTRACTS.SERVICE_WALLET, toUSDCUnits(TOTAL_ANALYSIS_PRICE)],
-      chainId: arcTestnet.id,
-    });
+    if (payMethod === "circle" && circleSession) {
+      handleCirclePay();
+    } else {
+      setStep("approving");
+      writeContract({
+        address: ARC_CONTRACTS.USDC,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [ARC_CONTRACTS.SERVICE_WALLET, toUSDCUnits(TOTAL_ANALYSIS_PRICE)],
+        chainId: arcTestnet.id,
+      });
+    }
   };
 
+  const handleCirclePay = async () => {
+    if (!circleSession) return;
+    setStep("approving");
+    try {
+      const res = await fetch("/api/circle/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletId: circleSession.walletId,
+          destinationAddress: ARC_CONTRACTS.SERVICE_WALLET,
+          amount: TOTAL_ANALYSIS_PRICE.toString(),
+          taskName: "analysis-full",
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 402) {
+        setErrMsg(
+          `Your Circle Wallet has no USDC yet.\n\n` +
+          `Address: ${circleSession.walletAddress}\n\n` +
+          `Steps:\n1. Go to faucet.circle.com\n2. Select "ARC Testnet"\n3. Paste your address above\n4. Request USDC\n5. Wait ~30s then retry`
+        );
+        setStep("error");
+        return;
+      }
+      if (!res.ok) throw new Error(data.error ?? "Circle transfer failed");
+      setCircleTxHash(data.txHash ?? data.txId);
+      setStep("paid");
+    } catch (err) {
+      setErrMsg(err instanceof Error ? err.message : "Circle payment failed");
+      setStep("error");
+    }
+  };
+
+  const effectiveTxHash = payMethod === "circle" ? circleTxHash : (txHash ?? null);
   const isProcessing = isSending || isConfirming || step === "approving";
 
   const inputStyle: React.CSSProperties = { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 12 };
@@ -111,13 +164,16 @@ function PaymentGateModal({ onPaid, onClose }: { onPaid: () => void; onClose: ()
           <div style={{ textAlign: "center" }}>
             <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 26, color: "#4ade80" }}>✓</div>
             <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#4ade80" }}>Payment Confirmed!</h3>
-            <p style={{ color: "#888", fontSize: 13, lineHeight: 1.6, margin: "0 0 12px" }}>
-              <strong style={{ color: "#f0f0f0" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> deducted from your wallet on ARC Testnet.
+            <p style={{ color: "#888", fontSize: 17, lineHeight: 1.6, margin: "0 0 4px" }}>
+              <strong style={{ color: "#f0f0f0" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> deducted via{" "}
+              <span style={{ color: payMethod === "circle" ? "#818cf8" : "#f0f0f0" }}>
+                {payMethod === "circle" ? "Circle Wallet" : "MetaMask"}
+              </span>
             </p>
-            {txHash && (
-              <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noreferrer"
+            {effectiveTxHash && (
+              <a href={`https://testnet.arcscan.app/tx/${effectiveTxHash}`} target="_blank" rel="noreferrer"
                 style={{ display: "inline-block", fontSize: 11, color: "#7c3aed", fontFamily: "monospace", wordBreak: "break-all", marginBottom: 20, textDecoration: "none" }}>
-                {txHash.slice(0, 28)}…{txHash.slice(-8)} ↗
+                {effectiveTxHash.slice(0, 28)}…{effectiveTxHash.slice(-8)} ↗
               </a>
             )}
             <button onClick={onPaid} style={{ width: "100%", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "13px 0", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
@@ -190,13 +246,33 @@ function PaymentGateModal({ onPaid, onClose }: { onPaid: () => void; onClose: ()
               </div>
             </div>
 
-            {/* Wallet */}
-            {isConnected && (
-              <div style={{ fontSize: 12, color: "#555", padding: "9px 12px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 8, marginBottom: 16 }}>
-                <span style={{ color: "#4ade80" }}>●</span> {address?.slice(0, 8)}…{address?.slice(-6)} · ARC Testnet
-                <span style={{ marginLeft: 12, color: "#444" }}>USDC contract: {ARC_CONTRACTS.USDC.slice(0, 12)}…</span>
+            {/* Payment method selector */}
+            {circleSession && isConnected && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+                {(["circle", "metamask"] as const).map(m => (
+                  <button key={m} onClick={() => setPayMethod(m)}
+                    style={{
+                      padding: "10px 12px", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer",
+                      border: `1px solid ${payMethod === m ? (m === "circle" ? "rgba(99,102,241,0.5)" : "rgba(124,58,237,0.5)") : "#2a2a2a"}`,
+                      background: payMethod === m ? (m === "circle" ? "rgba(99,102,241,0.1)" : "rgba(124,58,237,0.1)") : "transparent",
+                      color: payMethod === m ? (m === "circle" ? "#818cf8" : "#a78bfa") : "#555",
+                    }}>
+                    {m === "circle" ? "Circle Wallet" : "MetaMask"}
+                  </button>
+                ))}
               </div>
             )}
+
+            {/* Wallet info */}
+            {payMethod === "circle" && circleSession ? (
+              <div style={{ fontSize: 15, color: "#555", padding: "10px 14px", background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 8, marginBottom: 16 }}>
+                <span style={{ color: "#818cf8" }}>●</span> {circleSession.walletAddress.slice(0, 8)}…{circleSession.walletAddress.slice(-6)} · Circle Wallet · ARC Testnet
+              </div>
+            ) : isConnected ? (
+              <div style={{ fontSize: 15, color: "#555", padding: "10px 14px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 8, marginBottom: 16 }}>
+                <span style={{ color: "#4ade80" }}>●</span> {address?.slice(0, 8)}…{address?.slice(-6)} · MetaMask · ARC Testnet
+              </div>
+            ) : null}
 
             {txHash && isConfirming && (
               <div style={{ fontSize: 11, color: "#fbbf24", marginBottom: 12, fontFamily: "monospace", wordBreak: "break-all" }}>
@@ -225,7 +301,21 @@ export default function AnalysisPage() {
   const { isConnected, chain, address } = useAccount();
   const fileRef = useRef<HTMLInputElement>(null);
   const [anonUser, setAnonUser] = useState<AnonUser | null>(null);
-  useEffect(() => { setAnonUser(loadAnonUser()); }, []);
+  const [circleSession, setCircleSession] = useState<CircleSession | null>(null);
+  const [profile, setProfile]             = useState<UserProfile | null>(null);
+  const [showProfile, setShowProfile]     = useState(false);
+  useEffect(() => {
+    setAnonUser(loadAnonUser());
+    const cs = loadCircleSession();
+    setCircleSession(cs);
+    setProfile(loadProfile());
+    // Chi mo profile modal ngay sau khi tao vi Circle Wallet moi
+    const justCreated = sessionStorage.getItem("justCreatedWallet");
+    if (cs && justCreated === "1") {
+      sessionStorage.removeItem("justCreatedWallet");
+      setTimeout(() => setShowProfile(true), 800);
+    }
+  }, []);
 
   const [imageUrl,   setImageUrl]   = useState<string | null>(null);
   const [imageName,  setImageName]  = useState("");
@@ -424,15 +514,19 @@ export default function AnalysisPage() {
         <PaymentGateModal
           onPaid={() => { setApproved(true); runAllTasks(); }}
           onClose={() => setShowGate(false)}
+          circleSession={circleSession}
         />
+      )}
+
+      {showProfile && (
+        <ProfileModal onClose={() => { setShowProfile(false); setProfile(loadProfile()); }} />
       )}
 
       {/* Sidebar */}
       <aside style={{ width: 220, flexShrink: 0, background: "#0a0a0a", borderRight: "1px solid #1f1f1f", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid #1f1f1f" }}>
-          <a href="/" style={{ textDecoration: "none" }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.04em" }}>storescope</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#7c3aed", letterSpacing: "-0.04em" }}>.ai</span>
+        <div style={{ padding: "16px 14px", borderBottom: "1px solid #1f1f1f" }}>
+          <a href="/" style={{ textDecoration: "none", display: "flex" }}>
+            <img src="/logo.png" alt="StoreScope AI" style={{ height: 73, width: "auto", objectFit: "contain", filter: "invert(1)" }} />
           </a>
         </div>
         <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
@@ -447,8 +541,43 @@ export default function AnalysisPage() {
             </Link>
           ))}
         </nav>
-        <div style={{ padding: "12px 10px", borderTop: "1px solid #1f1f1f" }}>
-          <Link href="/" style={{ display: "block", padding: "8px 12px", fontSize: 12, color: "#555", textDecoration: "none" }}>Log out</Link>
+        {/* Profile button — bottom left */}
+        <div style={{ padding: "10px 10px 14px", borderTop: "1px solid #1f1f1f" }}>
+          {circleSession && (
+            <button
+              onClick={() => setShowProfile(true)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 12px", borderRadius: 12, cursor: "pointer",
+                background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)",
+                transition: "background 0.2s, border-color 0.2s", textAlign: "left",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(124,58,237,0.12)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.3)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(124,58,237,0.06)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.15)"; }}
+            >
+              {/* Avatar */}
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 13, fontWeight: 700, color: "#a78bfa",
+              }}>
+                {(profile?.username ?? circleSession.userId).slice(0, 1).toUpperCase()}
+              </div>
+              <div style={{ overflow: "hidden" }}>
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#e0e0e0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {profile?.username ?? "Set up profile"}
+                </p>
+                <p style={{ margin: 0, fontSize: 11, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {circleSession.userId}
+                </p>
+              </div>
+              {!profile && (
+                <span style={{ marginLeft: "auto", flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: "#f59e0b" }} title="Profile incomplete" />
+              )}
+            </button>
+          )}
+          <Link href="/" style={{ display: "block", padding: "8px 12px", marginTop: 4, fontSize: 12, color: "#555", textDecoration: "none" }}>Log out</Link>
         </div>
       </aside>
 
@@ -461,8 +590,9 @@ export default function AnalysisPage() {
             <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>10 Micro-Tasks · ARC Testnet</div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>Shelf Image Analysis</h2>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
+            <CircleWalletButton onDisconnect={() => setCircleSession(null)} />
             <WalletButton />
           </div>
         </header>
