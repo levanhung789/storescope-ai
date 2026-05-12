@@ -15,6 +15,8 @@
     "@react-three/fiber": "^9.6.0",
     "@react-three/postprocessing": "^3.0.4",
     "@tanstack/react-query": "^5.100.2",
+    "@x402/core": "^2.11.0",
+    "ethers": "^6.16.0",
     "konva": "^10.2.5",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
@@ -26,6 +28,7 @@
     "three": "^0.184.0",
     "viem": "^2.48.4",
     "wagmi": "^3.6.4",
+    "x402-next": "^1.2.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

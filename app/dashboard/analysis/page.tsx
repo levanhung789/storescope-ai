@@ -533,6 +533,7 @@ export default function AnalysisPage() {
           {[
             { label: "Dashboard",   href: "/dashboard",          active: false },
             { label: "AI Analysis", href: "/dashboard/analysis", active: true  },
+            { label: "AI Agent",    href: "/dashboard/agent",    active: false },
             { label: "Store Layout",href: "/layout-editor",      active: false },
             { label: "Forum",       href: "/forum",              active: false },
           ].map(item => (
