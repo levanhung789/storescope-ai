@@ -496,3 +496,135 @@ Login → Tab "Circle Wallet" → Nhập email → POST /api/circle/wallet
 - **Font size**: tăng 30% so với phần còn lại của app
 - **Màu accent Circle**: `#6366f1` (indigo) — phân biệt với `#7c3aed` (violet) của MetaMask flow
 - Badge **Demo** (amber) hiện khi chưa có real API key
+
+---
+
+## Nhật ký làm việc — 2026-05-12
+
+### Fixes Circle Wallet
+
+| Vấn đề | Nguyên nhân | Fix |
+|---|---|---|
+| Balance hiện `0.00` dù có 20 USDC | Circle trả display unit (`"20"`), code chia nhầm `/1,000,000` | Bỏ phép chia — dùng trực tiếp |
+| `API parameter invalid` khi transfer | `feeLevel: 'MEDIUM'` lỗi SDK + `idempotencyKey` không đúng UUID | Đổi `'LOW'` + dùng `crypto.randomUUID()` |
+| Tạo ví mới mỗi lần login | Không check ví cũ | Ưu tiên ví đã có, chọn ví có nhiều USDC nhất |
+| Balance không cập nhật sau faucet | Circle API chỉ track ví do nó tạo | Thêm fallback query ARC RPC trực tiếp (`eth_call` balanceOf) |
+| Faucet vào sai địa chỉ | User faucet vào MetaMask address, không phải Circle wallet | Thêm `/api/circle/find?address=0x...` để lookup walletId theo address |
+
+**USDC tokenId trên ARC Testnet (Circle):** `15dc2b5d-0994-58b0-bf8c-3a0501148ee8`
+
+**Files mới — 2026-05-12:**
+- `app/api/circle/find/route.ts` — lookup walletId bằng address
+- `app/_lib/profile.ts` — UserProfile localStorage
+- `app/_components/ProfileModal.tsx` — form username/password sau khi tạo ví
+- `app/_components/CircleWalletButton.tsx` — auto-poll balance mỗi 10s
+
+### Navbar & Logo
+
+- Logo: `public/logo.png` (ChatGPT Image 09_46_41 10 thg 5, 2026)
+- Xử lý: dùng `filter: invert(1)` để hiện logo trên nền đen
+- Tất cả nơi dùng logo: Navbar, login page, dashboard sidebar
+- Navbar height: 104px để chứa logo 82px
+- Đã xóa 3 button cũ (Connect Wallet / Sign In / Request access) → thay bằng 1 nút **"Let's get started"**
+
+### Circle Agent Stack Integration
+
+**Reference:** https://developers.circle.com/agent-stack (ra mắt 11/5/2026)
+
+**Files mới:**
+| File | Mục đích |
+|---|---|
+| `app/_lib/agent.ts` | `AgentPolicy`, `AgentTx` types, spending controls, log helpers |
+| `app/api/agent/analyze/route.ts` | x402-style protected endpoint — trả 402 nếu không có `X-Agent-Wallet-Id` header |
+| `app/api/agent/run/route.ts` | Autonomous trigger — validate policy → pay → analyze |
+| `app/dashboard/agent/page.tsx` | Agent Dashboard UI |
+
+**x402 endpoint:**
+- `GET /api/agent/analyze` → trả 402 với payment requirements (`circle-arc` scheme)
+- `POST /api/agent/analyze` + header `X-Agent-Wallet-Id: <walletId>` → verify balance → pay $0.025 USDC → run analysis
+
+**Agent Dashboard features:**
+- Policy editor: maxPerTx, maxPerDay, auto-run toggle
+- Stats: status, spent today, daily limit, wallet balance
+- Image upload + agent run với real-time status
+- Transaction log với ArcScan TX link
+- "Get TX hash" button để fetch on-chain hash từ Circle (txHash null khi INITIATED)
+
+**Spending Policy flow:**
+```
+User sets policy → Agent checks withinPolicy() → pay via /api/circle/transfer → log tx
+```
+
+**Transaction Log TX links:**
+- Nếu có `txHash` → link `https://testnet.arcscan.app/tx/{txHash}`
+- Nếu chỉ có Circle `txId` → nút "Get TX hash" → fetch `/api/circle/transfer?txId=` → update hash
+
+**Packages thêm:**
+- `x402-next@^1.2.0`
+- `@x402/core@^2.11.0`
+- `ethers@^6.16.0`
+
+---
+
+## Nhật ký làm việc — 2026-05-12 (phần 2)
+
+### Smart Contracts — ARC Testnet (deployed)
+
+**Foundry project:** `C:\Users\Admin\storescope-contracts\`
+
+| Contract | Address | TX Hash |
+|---|---|---|
+| `PaymentVerifier` | `0xeC595fE964be09854B6F5fa5FED0a814dacD6AcC` | `0xdbfc71b03ec01bde5b8e6f920d28d7d79fbae836f3928de520a1c9177a15ab2f` |
+| `RetailLayoutNFT` | `0x18B434352c1ff1BdAde1E7871823b7bC6eed00dB` | `0x4ccbfcbe7d7622f1d73daaa26f53d078e42f641f8289a79e486795f97cd73852` |
+| `AnalysisRegistry` | `0x3974Ce11d3c656a8A0faB63BC498441D8a6423Bd` | `0xe402a34f3f35ace20746d9ab4e54643e2f1cd39140d855c23e0e8f05ee932912` |
+
+**Deployer wallet:**
+- Address: `0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c`
+- Key: in `.env.local` as `DEPLOYER_KEY`
+- Balance: ~20 USDC (đủ cho hàng nghìn tx)
+
+**Explorer:** https://testnet.arcscan.app
+
+### Files mới — smart contract integration
+
+| File | Mục đích |
+|---|---|
+| `app/_lib/contracts.ts` | ABIs, addresses, viem clients, helpers (server-side only) |
+| `app/api/contracts/record/route.ts` | Gọi AnalysisRegistry on-chain: request/payment/result/failed |
+| `storescope-contracts/src/PaymentVerifier.sol` | Ghi proof of payment |
+| `storescope-contracts/src/RetailLayoutNFT.sol` | NFT cho layout marketplace |
+| `storescope-contracts/src/AnalysisRegistry.sol` | Vòng đời phân tích on-chain |
+
+### On-chain analysis pipeline
+
+```
+Upload ảnh → requestAnalysis() [TX1 → hiện link ArcScan]
+     ↓
+Circle pay $0.025 → confirmPayment() [TX2]
+     ↓
+AI analysis xong → submitResult(resultHash) [TX3]
+```
+
+`verifyResult(analysisId, resultHash)` — ai cũng có thể xác minh kết quả không bị giả mạo.
+
+### Env vars mới (.env.local)
+
+```
+ANALYSIS_REGISTRY_ADDRESS=0x3974Ce11d3c656a8A0faB63BC498441D8a6423Bd
+PAYMENT_VERIFIER_ADDRESS=0xeC595fE964be09854B6F5fa5FED0a814dacD6AcC
+RETAIL_LAYOUT_NFT_ADDRESS=0x18B434352c1ff1BdAde1E7871823b7bC6eed00dB
+DEPLOYER_ADDRESS=0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c
+DEPLOYER_KEY=0xd302f59709feeaa147c77f657616f7e17dc3087c37d5f14d14953b9c4b27672f
+```
+
+### Việc cần làm tiếp
+
+**Ưu tiên cao:**
+1. **Tích hợp RetailLayoutNFT vào `/forum`** — mint NFT khi user save layout, bán layout qua on-chain
+2. **Push lên GitHub** — chưa commit phần contracts + integration hôm nay
+3. **Test pipeline đầy đủ** — upload ảnh → trả USDC → xem TX trên ArcScan
+
+**Ưu tiên vừa:**
+4. **Verify contract trên ArcScan** — upload source code Solidity để mọi người đọc được
+5. **Tích hợp Agent Stack vào forum** — agent tự mua/bán layout qua x402
+6. **Roboflow model** — vào https://app.roboflow.com/levanhungs-workspace/fmcg-project/annotate → Generate → Train → điền `RF_VERSION` vào `.env.local`

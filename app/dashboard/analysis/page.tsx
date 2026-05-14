@@ -39,7 +39,7 @@ const TASK_RESULTS: Record<TaskId, string> = {
   layout_sim:   "Store layout updated · Cooler wall segment synced · 3 fixture positions logged",
   recommend:    "Move Neptune Light to eye-level row 1 · Expand Calofic 2 facings · Investigate unknown brand",
   human_review: "No human review needed · All confidence scores ≥ 84%",
-  report:       "Report ID: RPT-5042002-0091 · PDF ready · Proof hash recorded on ArcScan",
+  report:       "Report ID: RPT-5042002-0091 · PDF ready · Result hash recorded on ARC Testnet",
 };
 
 const TASK_DURATION: Record<TaskId, number> = {
@@ -62,10 +62,11 @@ const MOCK_SKUS = [
 
 // ── Payment Gate Modal ─────────────────────────────────────────────────────────
 
-function PaymentGateModal({ onPaid, onClose, circleSession }: {
+function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
   onPaid: () => void;
   onClose: () => void;
   circleSession: CircleSession | null;
+  onCirclePaid?: (circleTxId: string) => void;
 }) {
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors } = useConnect();
@@ -143,6 +144,7 @@ function PaymentGateModal({ onPaid, onClose, circleSession }: {
       if (!res.ok) throw new Error(data.error ?? "Circle transfer failed");
       setCircleTxHash(data.txHash ?? data.txId);
       setStep("paid");
+      onCirclePaid?.(data.txId ?? "");
     } catch (err) {
       setErrMsg(err instanceof Error ? err.message : "Circle payment failed");
       setStep("error");
@@ -317,9 +319,12 @@ export default function AnalysisPage() {
     }
   }, []);
 
-  const [imageUrl,   setImageUrl]   = useState<string | null>(null);
-  const [imageName,  setImageName]  = useState("");
-  const [showGate,   setShowGate]   = useState(false);
+  const [imageUrl,    setImageUrl]    = useState<string | null>(null);
+  const [imageName,   setImageName]   = useState("");
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [showGate,    setShowGate]    = useState(false);
+  const [analysisId,  setAnalysisId]  = useState<string | null>(null);
+  const [onChainTx,   setOnChainTx]   = useState<string | null>(null);
   const [approved,   setApproved]   = useState(false);
   const [running,    setRunning]     = useState(false);
   const [done,       setDone]        = useState(false);
@@ -344,7 +349,23 @@ export default function AnalysisPage() {
     setImageName(file.name);
     setImageUrl(URL.createObjectURL(file));
     setDone(false); setApproved(false); setSpentTotal(0);
+    setAnalysisId(null); setOnChainTx(null);
     setTaskStates(Object.fromEntries(ANALYSIS_TASKS.map(t => [t.id, { status: "waiting" }])) as Record<TaskId, TaskState>);
+    // Read base64 for on-chain hash
+    const reader = new FileReader();
+    reader.onload = e => setImageBase64((e.target?.result as string)?.split(",")[1] ?? null);
+    reader.readAsDataURL(file);
+  };
+
+  // Helper: call on-chain record endpoint (fire-and-forget, no blocking)
+  const recordOnChain = async (stage: string, extra: Record<string, unknown> = {}) => {
+    try {
+      await fetch("/api/contracts/record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage, ...extra }),
+      });
+    } catch { /* non-blocking */ }
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -356,6 +377,16 @@ export default function AnalysisPage() {
     setShowGate(false);
     setRunning(true);
     setSavedOk(false);
+
+    // ── Stage 1: Record analysis request on-chain ────────────────────────
+    const payer = circleSession?.walletAddress ?? address ?? "0x0000000000000000000000000000000000000000";
+    const reqRes = await fetch("/api/contracts/record", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "request", payer, imageBase64: imageBase64 ?? "" }),
+    }).then(r => r.json()).catch(() => ({})) as Record<string, unknown>;
+    const aid = reqRes.analysisId as string | undefined;
+    if (aid) { setAnalysisId(aid); setOnChainTx(reqRes.txHash as string ?? null); }
 
     const completedTasks: ReportData["tasks"] = [];
     let apiData: { detections?: { brand: string; company: string; confidence: number; source: string }[]; prices?: number[]; shelfShare?: { brand: string; pct: number }[]; summary?: { topBrand: string; priceRange?: { min: number; max: number } | null } } = {};
@@ -490,6 +521,18 @@ export default function AnalysisPage() {
     setRunning(false);
     setDone(true);
     setActiveTab("full-report");
+
+    // ── Stage 3: Submit result hash on-chain ─────────────────────────────
+    if (aid) {
+      const resultJson = JSON.stringify({ skus: newReport.skus, shelfShare: newReport.shelfShare });
+      recordOnChain("result", {
+        analysisId:   aid,
+        resultJson,
+        modelVersion: "tesseract+roboflow-fmcg",
+        brandCount:   newReport.shelfShare?.length ?? 0,
+        skuCount:     newReport.skus?.length ?? 0,
+      });
+    }
   };
 
   const handleRunClick = () => {
@@ -515,6 +558,9 @@ export default function AnalysisPage() {
           onPaid={() => { setApproved(true); runAllTasks(); }}
           onClose={() => setShowGate(false)}
           circleSession={circleSession}
+          onCirclePaid={(circleTxId) => {
+            if (analysisId) recordOnChain("payment", { analysisId, circleTxId, pricePaid: TOTAL_ANALYSIS_PRICE });
+          }}
         />
       )}
 
@@ -588,8 +634,17 @@ export default function AnalysisPage() {
         {/* Header */}
         <header style={{ borderBottom: "1px solid #1f1f1f", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>10 Micro-Tasks · ARC Testnet</div>
+            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>10 Micro-Tasks · ARC Testnet · AnalysisRegistry Contract</div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>Shelf Image Analysis</h2>
+            {onChainTx && (
+              <a
+                href={`https://testnet.arcscan.app/tx/${onChainTx}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, fontSize: 10, color: "#4ade80", textDecoration: "none", fontFamily: "monospace" }}
+              >
+                ✓ On-chain: {onChainTx.slice(0, 18)}... ↗ ArcScan
+              </a>
+            )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}

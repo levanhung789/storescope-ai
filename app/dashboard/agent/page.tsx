@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Bot, Shield, Zap, Play, Pause, Activity,
   DollarSign, Clock, CheckCircle, XCircle, AlertTriangle,
-  RefreshCw, Settings, ExternalLink, Loader2,
+  RefreshCw, Settings, ExternalLink, Loader2, Radio,
 } from "lucide-react";
 import {
   loadAgentPolicy, saveAgentPolicy, loadAgentLog, appendAgentLog,
@@ -38,7 +38,24 @@ export default function AgentPage() {
   const [fAutoRun, setFAutoRun]     = useState(false);
 
   const logRef = useRef<HTMLDivElement>(null);
-  const [fetchingHash, setFetchingHash] = useState<string | null>(null);
+  const [fetchingHash, setFetchingHash]   = useState<string | null>(null);
+  const [activeTab, setActiveTab]         = useState<"log" | "events">("log");
+  type ChainEvent = { event: string; contract: string; blockNumber: string; txHash?: string; txUrl?: string; analysisId?: string; payer?: string; brandCount?: number; skuCount?: number; layoutName?: string; tokenId?: string; timestamp?: string; };
+  const [onChainEvents, setOnChainEvents] = useState<ChainEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
+  const fetchOnChainEvents = async () => {
+    setLoadingEvents(true);
+    try {
+      const res  = await fetch("/api/contracts/events?contract=all&blocks=1000");
+      const data = await res.json() as { events?: ChainEvent[] };
+      setOnChainEvents(data.events ?? []);
+    } catch {
+      setOnChainEvents([]);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
 
   const fetchTxHash = async (circleTxId: string, logId: string) => {
     setFetchingHash(logId);
@@ -266,6 +283,38 @@ export default function AgentPage() {
         {/* x402 Endpoint info + Run button */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
 
+          {/* ARC Agent Identity */}
+          <div style={{ ...card, gridColumn: "1 / -1", marginBottom: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Shield size={18} style={{ color: "#a78bfa" }} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>ARC Agent Identity</p>
+                  <p style={{ margin: 0, fontSize: 11, color: "#555" }}>Registered on IdentityRegistry · ERC-8004 · ARC Testnet</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                {[
+                  { label: "Agent ID", value: "#9393" },
+                  { label: "Token", value: "0x24b1" },
+                  { label: "Registry", value: "0x8004A818..." },
+                ].map(item => (
+                  <div key={item.label}>
+                    <p style={{ margin: 0, fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>{item.label}</p>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#a78bfa", fontFamily: "monospace" }}>{item.value}</p>
+                  </div>
+                ))}
+                <a href="https://testnet.arcscan.app/tx/0x6773105c6b14b109dcb08b49dfbcd7a9388c759debc6853791ee5a679484785f"
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#7c3aed", textDecoration: "none", alignSelf: "center" }}>
+                  <ExternalLink size={12} /> View on ArcScan
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* x402 endpoint */}
           <div style={card}>
             <p style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>x402 Payment Endpoint</p>
@@ -382,8 +431,27 @@ export default function AgentPage() {
           </div>
         )}
 
+        {/* Tab switcher */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+          {([
+            { id: "log",    label: "Activity Log",       icon: <Clock size={13} /> },
+            { id: "events", label: "On-Chain Events",    icon: <Radio size={13} /> },
+          ] as { id: "log" | "events"; label: string; icon: React.ReactNode }[]).map(t => (
+            <button key={t.id} onClick={() => { setActiveTab(t.id); if (t.id === "events") fetchOnChainEvents(); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                border: `1px solid ${activeTab === t.id ? "rgba(99,102,241,0.4)" : "#2a2a2a"}`,
+                background: activeTab === t.id ? "rgba(99,102,241,0.1)" : "transparent",
+                color: activeTab === t.id ? "#818cf8" : "#555",
+              }}>
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
+
         {/* Transaction log */}
-        <div style={card}>
+        {activeTab === "log" && <div style={card}>
           <p style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Agent Transaction Log</p>
           {logs.length === 0 ? (
             <div style={{ textAlign: "center", padding: "32px 0", color: "#555" }}>
@@ -453,7 +521,94 @@ export default function AgentPage() {
               ))}
             </div>
           )}
-        </div>
+        </div>}
+
+        {/* On-Chain Events panel */}
+        {activeTab === "events" && (
+          <div style={card}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>On-Chain Events</p>
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#555" }}>
+                  AnalysisRegistry · PaymentVerifier · RetailLayoutNFT — ARC Testnet
+                </p>
+              </div>
+              <button onClick={fetchOnChainEvents} disabled={loadingEvents}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid #2a2a2a", background: "transparent", color: "#6366f1" }}>
+                {loadingEvents
+                  ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                  : <RefreshCw size={13} />}
+                {loadingEvents ? "Loading..." : "Refresh"}
+              </button>
+            </div>
+
+            {loadingEvents && (
+              <div style={{ textAlign: "center", padding: "32px 0", color: "#555" }}>
+                <Loader2 size={24} style={{ animation: "spin 1s linear infinite", margin: "0 auto 8px" }} />
+                <p style={{ margin: 0, fontSize: 13 }}>Querying ARC Testnet...</p>
+              </div>
+            )}
+
+            {!loadingEvents && onChainEvents.length === 0 && (
+              <div style={{ textAlign: "center", padding: "32px 0", color: "#555" }}>
+                <Radio size={28} style={{ marginBottom: 8 }} />
+                <p style={{ margin: 0, fontSize: 13 }}>No events found in last 1000 blocks.</p>
+                <p style={{ margin: "4px 0 0", fontSize: 11, color: "#444" }}>Click Refresh to query ARC Testnet.</p>
+              </div>
+            )}
+
+            {!loadingEvents && onChainEvents.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {onChainEvents.map((ev, i) => {
+                  const isResult    = ev.event === "ResultSubmitted";
+                  const isRequested = ev.event === "AnalysisRequested";
+                  const isNFT       = ev.event === "LayoutMinted";
+                  const color       = isResult ? "#4ade80" : isRequested ? "#818cf8" : isNFT ? "#fbbf24" : "#888";
+
+                  return (
+                    <div key={i} style={{ padding: "12px 14px", background: "#0a0a0a", borderRadius: 10, borderLeft: `3px solid ${color}` }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color }}>{String(ev.event)}</span>
+                        <span style={{ fontSize: 11, color: "#555" }}>
+                          Block #{String(ev.blockNumber)} · {String(ev.contract)}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        {ev.analysisId && (
+                          <p style={{ margin: 0, fontSize: 11, color: "#888", fontFamily: "monospace" }}>
+                            ID: {String(ev.analysisId)}
+                          </p>
+                        )}
+                        {ev.payer && (
+                          <p style={{ margin: 0, fontSize: 11, color: "#888" }}>
+                            Payer: {String(ev.payer).slice(0, 16)}...
+                          </p>
+                        )}
+                        {ev.brandCount !== undefined && (
+                          <p style={{ margin: 0, fontSize: 11, color: "#888" }}>
+                            Brands: {String(ev.brandCount)} · SKUs: {String(ev.skuCount)}
+                          </p>
+                        )}
+                        {ev.layoutName && (
+                          <p style={{ margin: 0, fontSize: 11, color: "#888" }}>
+                            Layout: {String(ev.layoutName)}
+                          </p>
+                        )}
+                      </div>
+                      {ev.txHash && (
+                        <a href={String(ev.txUrl)} target="_blank" rel="noopener noreferrer"
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, fontSize: 10, color: "#6366f1", textDecoration: "none", fontFamily: "monospace" }}>
+                          <ExternalLink size={10} />
+                          {String(ev.txHash).slice(0, 22)}... ↗ ArcScan
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Policy editor modal */}
