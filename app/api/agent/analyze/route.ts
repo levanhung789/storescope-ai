@@ -14,7 +14,7 @@ import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-
 import { createHash, randomUUID } from "crypto";
 
 const ANALYSIS_PRICE    = 0.025; // USDC
-const SERVICE_WALLET    = process.env.SERVICE_WALLET ?? "0x1234567890123456789012345678901234567890";
+const SERVICE_WALLET    = (process.env.SERVICE_WALLET ?? process.env.DEPLOYER_ADDRESS ?? "0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c") as string;
 const ARC_USDC_TOKEN_ID = "15dc2b5d-0994-58b0-bf8c-3a0501148ee8";
 
 function getCircleClient() {

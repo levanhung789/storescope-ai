@@ -26,7 +26,7 @@ export const ARC_CONTRACTS = {
   USDC:          "0x3600000000000000000000000000000000000000" as `0x${string}`,
   EURC:          "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a" as `0x${string}`,
   Permit2:       "0x000000000022D473030F116dDEE9F6B43aC78BA3" as `0x${string}`,
-  SERVICE_WALLET:"0x1234567890123456789012345678901234567890" as `0x${string}`, // storescope.ai receiving wallet
+  SERVICE_WALLET:"0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c" as `0x${string}`, // storescope.ai service wallet (deployer)
 } as const;
 
 // ARC USDC has 6 decimals (not 18 like ETH)

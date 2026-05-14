@@ -205,7 +205,9 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: 20 }}>
             {[
               { label: "Image ID",    value: report.imageId },
-              { label: "Wallet",      value: `${report.walletAddress.slice(0, 8)}…${report.walletAddress.slice(-6)}` },
+              { label: "Wallet",      value: report.walletAddress.startsWith("0x") && report.walletAddress.length === 42
+                  ? `${report.walletAddress.slice(0, 8)}…${report.walletAddress.slice(-6)}`
+                  : (report.walletAddress || "Not connected") },
               { label: "Total Paid",  value: `$${report.totalPaid.toFixed(3)} USDC` },
               { label: "ARC Chain",   value: "Testnet · ID 5042002" },
             ].map(m => (
@@ -217,13 +219,19 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           </div>
 
           {/* Proof hash */}
-          <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 12, color: "#4ade80", fontWeight: 600 }}>Proof on ArcScan</span>
-            <a href={`https://testnet.arcscan.app/tx/${report.proofTxHash}`} target="_blank" rel="noreferrer"
-              style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", wordBreak: "break-all", textDecoration: "none" }}>
-              {report.proofTxHash} ↗
-            </a>
-          </div>
+          {report.proofTxHash && report.proofTxHash.startsWith("0x") && report.proofTxHash.length === 66 ? (
+            <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>Proof on ArcScan</span>
+              <a href={`https://testnet.arcscan.app/tx/${report.proofTxHash}`} target="_blank" rel="noreferrer"
+                style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {report.proofTxHash.slice(0, 22)}…{report.proofTxHash.slice(-8)} ↗
+              </a>
+            </div>
+          ) : (
+            <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10 }}>
+              <span style={{ fontSize: 11, color: "#555" }}>On-chain proof recording... (run analysis to generate TX)</span>
+            </div>
+          )}
         </div>
 
         {/* ── Summary stats ── */}

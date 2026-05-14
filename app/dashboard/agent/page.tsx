@@ -74,12 +74,16 @@ export default function AgentPage() {
     }
   };
 
+  // Current Circle session — luon dung vi nay de thanh toan, khong phu thuoc vao policy
+  const [currentSession, setCurrentSession] = useState<import("../../_lib/circle").CircleSession | null>(null);
+
   useEffect(() => {
     const logs  = loadAgentLog();
     const p     = loadAgentPolicy();
     const cs    = loadCircleSession();
     setLogs(logs);
     setPolicy(p);
+    setCurrentSession(cs);
     if (p) { setFMaxPerTx(String(p.maxPerTx)); setFMaxPerDay(String(p.maxPerDay)); setFAutoRun(p.autoRun); }
 
     if (cs?.walletId) {
@@ -111,7 +115,7 @@ export default function AgentPage() {
       maxPerTx:      Number(fMaxPerTx),
       maxPerDay:     Number(fMaxPerDay),
       autoRun:       fAutoRun,
-      allowlist:     ["0x1234567890123456789012345678901234567890"],
+      allowlist:     ["0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c"],
       createdAt:     policy?.createdAt ?? now,
       updatedAt:     now,
     };
@@ -139,11 +143,15 @@ export default function AgentPage() {
     const txId = `agent-${Date.now()}`;
     try {
       setStatus("Agent: sending x402 payment request...");
+      // Uu tien current session wallet, khong dung policy.walletId cu
+      const activeWalletId = currentSession?.walletId ?? policy.walletId;
+      if (!activeWalletId) throw new Error("No Circle Wallet found. Please login with Circle Wallet first.");
+
       const res = await fetch("/api/agent/run", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          walletId:    policy.walletId,
+          walletId:    activeWalletId,
           imageBase64: imageB64 ?? undefined,
           policy: {
             maxPerTx:   policy.maxPerTx,
@@ -174,7 +182,9 @@ export default function AgentPage() {
       setStatusType("ok");
       setStatus(`Payment confirmed — $${ANALYSIS_PRICE} USDC · txId: ${data.payment?.txId?.slice(0,12)}...`);
 
-      fetch(`/api/circle/balance?walletId=${policy.walletId}&address=${policy.walletAddress}`)
+      const refreshWalletId = currentSession?.walletId ?? policy.walletId;
+      const refreshAddress  = currentSession?.walletAddress ?? policy.walletAddress;
+      fetch(`/api/circle/balance?walletId=${refreshWalletId}&address=${refreshAddress}`)
         .then(r => r.json()).then(d => setBalance(d.usdc ?? "--"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -340,6 +350,21 @@ export default function AgentPage() {
           {/* Run agent */}
           <div style={{ ...card, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Run Agent Manually</p>
+
+            {/* Warning: wallet mismatch */}
+            {currentSession && policy && currentSession.walletId !== policy.walletId && (
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)", fontSize: 12, color: "#fbbf24" }}>
+                <strong>Wallet switched</strong> — Agent will use your current wallet:
+                <br /><code style={{ fontSize: 11 }}>{currentSession.walletAddress.slice(0, 16)}...{currentSession.walletAddress.slice(-6)}</code>
+                <br /><span style={{ color: "#92400e", fontSize: 11 }}>Previous policy wallet: {policy.walletAddress.slice(0, 14)}...</span>
+              </div>
+            )}
+
+            {!currentSession && (
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 12, color: "#f87171" }}>
+                No Circle Wallet connected. Please login with Circle Wallet to run agent.
+              </div>
+            )}
 
             {/* Image upload */}
             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageSelect} />

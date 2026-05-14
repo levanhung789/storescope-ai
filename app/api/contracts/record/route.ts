@@ -16,6 +16,29 @@ import {
   makeAnalysisId, hashResult, hashImage,
 } from "../../../_lib/contracts";
 
+// Retry viem writeContract khi gap "txpool is full"
+async function writeWithRetry(
+  wallet: Awaited<ReturnType<typeof getDeployerWallet>>,
+  params: Parameters<typeof wallet.writeContract>[0],
+  maxRetries = 4,
+  delayMs = 4000,
+): Promise<`0x${string}`> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await wallet.writeContract(params);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isPoolFull = msg.includes("txpool is full") || msg.includes("-32003");
+      if (isPoolFull && i < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as Record<string, unknown>;
@@ -35,7 +58,7 @@ export async function POST(req: NextRequest) {
       const imageHash  = hashImage(imageBase64 ?? payer);
       const analysisId = makeAnalysisId(payer, imageHash);
 
-      const hash = await wallet.writeContract({
+      const hash = await writeWithRetry(wallet, {
         address:      CONTRACTS.ANALYSIS_REGISTRY,
         abi:          ANALYSIS_REGISTRY_ABI,
         functionName: "requestAnalysis",
@@ -62,7 +85,7 @@ export async function POST(req: NextRequest) {
 
       const priceUnits = BigInt(Math.round((pricePaid ?? 0.025) * 1_000_000));
 
-      const hash = await wallet.writeContract({
+      const hash = await writeWithRetry(wallet, {
         address:      CONTRACTS.ANALYSIS_REGISTRY,
         abi:          ANALYSIS_REGISTRY_ABI,
         functionName: "confirmPayment",
@@ -93,7 +116,7 @@ export async function POST(req: NextRequest) {
 
       const resultHash = hashResult(resultJson);
 
-      const hash = await wallet.writeContract({
+      const hash = await writeWithRetry(wallet, {
         address:      CONTRACTS.ANALYSIS_REGISTRY,
         abi:          ANALYSIS_REGISTRY_ABI,
         functionName: "submitResult",
@@ -131,7 +154,7 @@ export async function POST(req: NextRequest) {
       const { analysisId, reason } = body as { analysisId: string; reason?: string };
       if (!analysisId) return NextResponse.json({ error: "analysisId required" }, { status: 400 });
 
-      const hash = await wallet.writeContract({
+      const hash = await writeWithRetry(wallet, {
         address:      CONTRACTS.ANALYSIS_REGISTRY,
         abi:          ANALYSIS_REGISTRY_ABI,
         functionName: "markFailed",

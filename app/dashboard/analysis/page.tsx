@@ -324,7 +324,8 @@ export default function AnalysisPage() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [showGate,    setShowGate]    = useState(false);
   const [analysisId,  setAnalysisId]  = useState<string | null>(null);
-  const [onChainTx,   setOnChainTx]   = useState<string | null>(null);
+  const [onChainTx,   setOnChainTx]   = useState<string | null>(null);  // requestAnalysis TX
+  const [resultTx,    setResultTx]    = useState<string | null>(null);  // submitResult TX (most important)
   const [approved,   setApproved]   = useState(false);
   const [running,    setRunning]     = useState(false);
   const [done,       setDone]        = useState(false);
@@ -349,7 +350,7 @@ export default function AnalysisPage() {
     setImageName(file.name);
     setImageUrl(URL.createObjectURL(file));
     setDone(false); setApproved(false); setSpentTotal(0);
-    setAnalysisId(null); setOnChainTx(null);
+    setAnalysisId(null); setOnChainTx(null); setResultTx(null);
     setTaskStates(Object.fromEntries(ANALYSIS_TASKS.map(t => [t.id, { status: "waiting" }])) as Record<TaskId, TaskState>);
     // Read base64 for on-chain hash
     const reader = new FileReader();
@@ -453,17 +454,17 @@ export default function AnalysisPage() {
       setSpentTotal(prev => +(prev + task.price).toFixed(6));
     }
 
-    // Build full report
-    const reportTx = completedTasks.find(t => t.id === "report")?.txHash || mockTx();
     const now = new Date().toISOString();
+    // Dung analysisId (on-chain) lam imageId chinh xac, proofTxHash la TX thật
+    const shortAid = aid ? aid.slice(2, 10).toUpperCase() : Date.now().toString(36).toUpperCase();
     const newReport: ReportData = {
       reportId: `RPT-${Date.now().toString(36).toUpperCase()}`,
-      imageId:  `IMG-${Date.now().toString(36).toUpperCase()}`,
+      imageId:  `IMG-${shortAid}`,
       createdAt: now,
-      walletAddress: address || "0x0000000000000000000000000000000000000000",
+      walletAddress: circleSession?.walletAddress || address || "—",
       imageName,
       totalPaid: TOTAL_ANALYSIS_PRICE,
-      proofTxHash: reportTx,
+      proofTxHash: onChainTx ?? "", // TX thật: requestAnalysis() on AnalysisRegistry
       tasks: completedTasks,
       skus: apiData.detections?.length
         ? apiData.detections.map((d, i) => ({
@@ -525,13 +526,28 @@ export default function AnalysisPage() {
     // ── Stage 3: Submit result hash on-chain ─────────────────────────────
     if (aid) {
       const resultJson = JSON.stringify({ skus: newReport.skus, shelfShare: newReport.shelfShare });
-      recordOnChain("result", {
-        analysisId:   aid,
-        resultJson,
-        modelVersion: "tesseract+roboflow-fmcg",
-        brandCount:   newReport.shelfShare?.length ?? 0,
-        skuCount:     newReport.skus?.length ?? 0,
-      });
+      fetch("/api/contracts/record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stage:        "result",
+          analysisId:   aid,
+          resultJson,
+          modelVersion: "tesseract+roboflow-fmcg",
+          brandCount:   newReport.shelfShare?.length ?? 0,
+          skuCount:     newReport.skus?.length ?? 0,
+        }),
+      })
+        .then(r => r.json())
+        .then((d: Record<string, unknown>) => {
+          if (d.txHash) {
+            const rTx = d.txHash as string;
+            setResultTx(rTx);
+            // Cap nhat proofTxHash trong report voi TX chinh xac nhat (submitResult)
+            setReport(prev => prev ? { ...prev, proofTxHash: rTx } : prev);
+          }
+        })
+        .catch(() => {});
     }
   };
 
@@ -741,14 +757,36 @@ export default function AnalysisPage() {
                 </div>
               )}
 
-              {/* Proof record */}
-              {done && reportTask.txHash && (
-                <div style={{ ...card, padding: "12px 14px", borderColor: "rgba(34,197,94,0.2)", background: "rgba(34,197,94,0.04)" }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "#4ade80", marginBottom: 6 }}>Proof on ArcScan</div>
-                  <a href={`https://testnet.arcscan.app/tx/${reportTask.txHash}`} target="_blank" rel="noreferrer"
-                    style={{ fontSize: 10, color: "#7c3aed", fontFamily: "monospace", wordBreak: "break-all", textDecoration: "none" }}>
-                    {reportTask.txHash.slice(0, 30)}…{reportTask.txHash.slice(-8)} ↗
-                  </a>
+              {/* Proof on ArcScan — chỉ hiện khi có TX on-chain thật */}
+              {done && (onChainTx || resultTx) && (
+                <div style={{ ...card, padding: "14px 16px", borderColor: "rgba(34,197,94,0.2)", background: "rgba(34,197,94,0.04)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", marginBottom: 10 }}>
+                    On-chain Proof — AnalysisRegistry
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {onChainTx && (
+                      <div>
+                        <div style={{ fontSize: 10, color: "#555", marginBottom: 3 }}>Stage 1 · requestAnalysis()</div>
+                        <a href={`https://testnet.arcscan.app/tx/${onChainTx}`} target="_blank" rel="noreferrer"
+                          style={{ fontSize: 10, color: "#888", fontFamily: "monospace", textDecoration: "none", wordBreak: "break-all" }}>
+                          {onChainTx.slice(0, 26)}…{onChainTx.slice(-6)} ↗
+                        </a>
+                      </div>
+                    )}
+                    {resultTx ? (
+                      <div>
+                        <div style={{ fontSize: 10, color: "#4ade80", marginBottom: 3, fontWeight: 600 }}>Stage 3 · submitResult() — Result hash stored ✓</div>
+                        <a href={`https://testnet.arcscan.app/tx/${resultTx}`} target="_blank" rel="noreferrer"
+                          style={{ fontSize: 10, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none", wordBreak: "break-all" }}>
+                          {resultTx.slice(0, 26)}…{resultTx.slice(-6)} ↗
+                        </a>
+                      </div>
+                    ) : done && (
+                      <div style={{ fontSize: 10, color: "#555", fontStyle: "italic" }}>
+                        Stage 3 · submitResult() — recording on-chain...
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -870,10 +908,12 @@ export default function AnalysisPage() {
                             {ts.result && <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{ts.result}</div>}
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 700, color: "#4ade80", textAlign: "right" }}>${task.price.toFixed(3)}</span>
-                          <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
-                            style={{ fontSize: 10, color: "#555", fontFamily: "monospace", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {ts.txHash?.slice(0, 20)}… ↗
-                          </a>
+                          <span style={{ fontSize: 10, color: "#444", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4 }}>
+                            <span style={{ padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#555", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                              Simulated
+                            </span>
+                            {ts.txHash?.slice(0, 14)}…
+                          </span>
                         </div>
                       );
                     })}
@@ -954,12 +994,34 @@ export default function AnalysisPage() {
 
                     {/* Blockchain Proof */}
                     <div style={{ padding: "14px 16px", background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#4ade80", marginBottom: 8 }}>Blockchain Proof</div>
-                      <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>Final report hash recorded on ARC Testnet.</div>
-                      <a href={`https://testnet.arcscan.app/tx/${report.proofTxHash}`} target="_blank" rel="noreferrer"
-                        style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", wordBreak: "break-all", textDecoration: "none" }}>
-                        {report.proofTxHash} ↗
-                      </a>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#4ade80", marginBottom: 8 }}>On-chain Proof — AnalysisRegistry</div>
+                      {(onChainTx || resultTx) ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {onChainTx && (
+                            <div>
+                              <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>Stage 1 · requestAnalysis()</div>
+                              <a href={`https://testnet.arcscan.app/tx/${onChainTx}`} target="_blank" rel="noreferrer"
+                                style={{ fontSize: 11, color: "#888", fontFamily: "monospace", wordBreak: "break-all", textDecoration: "none" }}>
+                                {onChainTx.slice(0, 28)}…{onChainTx.slice(-6)} ↗
+                              </a>
+                            </div>
+                          )}
+                          {resultTx && (
+                            <div>
+                              <div style={{ fontSize: 10, color: "#4ade80", marginBottom: 2, fontWeight: 600 }}>Stage 3 · submitResult() — Result hash ✓</div>
+                              <a href={`https://testnet.arcscan.app/tx/${resultTx}`} target="_blank" rel="noreferrer"
+                                style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", wordBreak: "break-all", textDecoration: "none" }}>
+                                {resultTx.slice(0, 28)}…{resultTx.slice(-6)} ↗
+                              </a>
+                            </div>
+                          )}
+                          {!resultTx && (
+                            <div style={{ fontSize: 11, color: "#555", fontStyle: "italic" }}>Stage 3 · recording on-chain...</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 11, color: "#555" }}>Not recorded on-chain yet.</div>
+                      )}
                     </div>
                   </div>
                 )}

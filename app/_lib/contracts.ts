@@ -15,7 +15,7 @@ export const arcTestnet = {
 
 // ── Contract addresses ─────────────────────────────────────────────────────
 export const CONTRACTS = {
-  ANALYSIS_REGISTRY:   (process.env.ANALYSIS_REGISTRY_ADDRESS   ?? "0x3974Ce11d3c656a8A0faB63BC498441D8a6423Bd") as `0x${string}`,
+  ANALYSIS_REGISTRY:   (process.env.ANALYSIS_REGISTRY_ADDRESS   ?? "0x1D8bBf0A9ba8CC51d08d4Fff15be79719C0A122C") as `0x${string}`,
   PAYMENT_VERIFIER:    (process.env.PAYMENT_VERIFIER_ADDRESS     ?? "0xeC595fE964be09854B6F5fa5FED0a814dacD6AcC") as `0x${string}`,
   RETAIL_LAYOUT_NFT:   (process.env.RETAIL_LAYOUT_NFT_ADDRESS    ?? "0x18B434352c1ff1BdAde1E7871823b7bC6eed00dB") as `0x${string}`,
   IDENTITY_REGISTRY:   (process.env.ARC_IDENTITY_REGISTRY        ?? "0x8004A818BFB912233c491871b3d84c89A494BD9e") as `0x${string}`,
