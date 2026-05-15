@@ -89,15 +89,25 @@ export async function POST(req: NextRequest) {
   const keyId     = req.headers.get("x-circle-key-id")      ?? "";
   const timestamp = req.headers.get("x-circle-timestamp")   ?? "";
 
-  // ── 1. Parse payload ────────────────────────────────────────────────────
+  // ── 1. Parse payload — return 200 for empty/test requests ─────────────
+  if (!rawBody || rawBody.trim() === "") {
+    return NextResponse.json({ ok: true, message: "Endpoint ready" });
+  }
+
   let payload: GatewayWebhookPayload;
   try {
     payload = JSON.parse(rawBody) as GatewayWebhookPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    // Return 200 so Circle doesn't retry (might be a connectivity test)
+    return NextResponse.json({ ok: true, message: "Received" });
   }
 
   const { notificationId, eventType, data } = payload;
+
+  // If Circle sends a "hello world" test notification
+  if (!notificationId || !eventType) {
+    return NextResponse.json({ ok: true, message: "Test received" });
+  }
 
   // ── 2. Signature verification (skip if no keys configured) ──────────────
   if (signature && keyId && timestamp) {
