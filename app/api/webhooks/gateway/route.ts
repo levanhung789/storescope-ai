@@ -159,11 +159,12 @@ export async function HEAD() {
   return new NextResponse(null, { status: 200 });
 }
 
-// ── GET handler — check webhook is live + recent log (admin only) ─────────
+// ── GET handler — returns 200 for Circle connectivity check, admin log with token ──
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
+  // Without token: return 200 OK (Circle uses GET to verify endpoint)
   if (token !== (process.env.ADMIN_TOKEN ?? "storescope-admin-2026")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: true, service: "StoreScope AI Gateway Webhook" }, { status: 200 });
   }
   const { getWebhookLog } = await import("../../../_lib/webhook");
   return NextResponse.json({
