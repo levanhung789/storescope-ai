@@ -18,6 +18,7 @@ type Stats = {
 };
 type Wallet = { id: string; address: string; refId: string; state: string; usdc: string; createDate: string };
 type ChainEvent = { event: string; contract: string; blockNumber: string; txHash?: string; txUrl?: string; payer?: string; brandCount?: number; skuCount?: number; timestamp?: string; };
+type WebhookEntry = { notificationId: string; eventType: string; amount?: string; txHash?: string; walletId?: string; status: "processed"|"duplicate"|"error"; receivedAt: string; error?: string; };
 
 const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 14, padding: 20 };
 const S = { color: "#555", fontSize: 11, textTransform: "uppercase" as const, letterSpacing: "0.1em" };
@@ -27,9 +28,10 @@ export default function AdminDashboard() {
   const [stats, setStats]         = useState<Stats | null>(null);
   const [wallets, setWallets]     = useState<Wallet[]>([]);
   const [events, setEvents]       = useState<ChainEvent[]>([]);
+  const [webhooks, setWebhooks]   = useState<WebhookEntry[]>([]);
   const [loading, setLoading]     = useState(true);
   const [lastRefresh, setLast]    = useState("");
-  const [activeTab, setActiveTab] = useState<"overview"|"wallets"|"events"|"contracts">("overview");
+  const [activeTab, setActiveTab] = useState<"overview"|"wallets"|"events"|"webhooks"|"contracts">("overview");
 
   // Auth check
   useEffect(() => {
@@ -44,14 +46,16 @@ export default function AdminDashboard() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, wRes, eRes] = await Promise.all([
+      const [sRes, wRes, eRes, whRes] = await Promise.all([
         fetch("/api/admin/stats",   { headers }).then(r => r.json()),
         fetch("/api/admin/wallets", { headers }).then(r => r.json()),
         fetch("/api/contracts/events?contract=all&blocks=500").then(r => r.json()),
+        fetch(`/api/webhooks/gateway?token=${ADMIN_TOKEN}`).then(r => r.json()).catch(() => ({ recentEvents: [] })),
       ]);
       setStats(sRes);
       setWallets(wRes.wallets ?? []);
       setEvents((eRes.events ?? []).slice(0, 30));
+      setWebhooks((whRes.recentEvents ?? []).slice(0, 30));
       setLast(new Date().toLocaleTimeString());
     } finally {
       setLoading(false);
@@ -65,6 +69,7 @@ export default function AdminDashboard() {
     { id: "overview",   label: "Overview",    icon: <Activity size={13} /> },
     { id: "wallets",    label: "Wallets",      icon: <Users size={13} /> },
     { id: "events",     label: "On-chain",     icon: <Zap size={13} /> },
+    { id: "webhooks",   label: "Webhooks",     icon: <Database size={13} /> },
     { id: "contracts",  label: "Contracts",    icon: <CircuitBoard size={13} /> },
   ] as const;
 
@@ -248,6 +253,76 @@ export default function AdminDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Webhooks ── */}
+        {activeTab === "webhooks" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Setup info */}
+            <div style={card}>
+              <p style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 600 }}>Gateway Webhook Setup</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                {[
+                  { label: "Endpoint URL", value: "https://storescope-ai.vercel.app/api/webhooks/gateway", mono: true },
+                  { label: "Local test URL", value: "http://localhost:3000/api/webhooks/gateway", mono: true },
+                  { label: "Supported Events", value: "gateway.deposit.finalized · gateway.mint.finalized · gateway.mint.forwarded", mono: false },
+                  { label: "Wildcard", value: "gateway.* — subscribe to all events at once", mono: false },
+                  { label: "Delivery", value: "At-least-once — deduplicate via notificationId", mono: false },
+                  { label: "Auth", value: "ECDSA SHA256 signature via X-Circle-Signature header", mono: false },
+                ].map(row => (
+                  <div key={row.label} style={{ padding: "10px 14px", background: "#0a0a0a", borderRadius: 10 }}>
+                    <p style={{ margin: "0 0 4px", ...S }}>{row.label}</p>
+                    <p style={{ margin: 0, fontSize: row.mono ? 11 : 12, color: "#888", fontFamily: row.mono ? "monospace" : "inherit", wordBreak: "break-all" }}>{row.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 10, fontSize: 12, color: "#818cf8" }}>
+                Register at: <strong>console.circle.com → Developer → Subscriptions</strong> — free account, no billing required
+              </div>
+            </div>
+
+            {/* Recent webhook events */}
+            <div style={card}>
+              <p style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 600 }}>
+                Recent Webhook Events
+                <span style={{ marginLeft: 10, fontSize: 11, color: "#555" }}>
+                  (in-memory, resets on server restart)
+                </span>
+              </p>
+              {webhooks.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "32px 0", color: "#555" }}>
+                  <p style={{ margin: 0, fontSize: 13 }}>No webhook events yet.</p>
+                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#444" }}>
+                    Subscribe via Circle Console, then deposits will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {webhooks.map((wh, i) => (
+                    <div key={i} style={{
+                      padding: "10px 14px", background: "#0a0a0a", borderRadius: 10,
+                      borderLeft: `3px solid ${wh.status === "processed" ? "#4ade80" : wh.status === "duplicate" ? "#fbbf24" : "#f87171"}`,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "#e0e0e0" }}>{wh.eventType}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: wh.status === "processed" ? "rgba(74,222,128,0.1)" : wh.status === "duplicate" ? "rgba(251,191,36,0.1)" : "rgba(248,113,113,0.1)", color: wh.status === "processed" ? "#4ade80" : wh.status === "duplicate" ? "#fbbf24" : "#f87171" }}>{wh.status}</span>
+                          <span style={{ fontSize: 10, color: "#444" }}>{new Date(wh.receivedAt).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 4, display: "flex", gap: 14, fontSize: 11, color: "#555" }}>
+                        {wh.amount   && <span>Amount: {wh.amount} USDC</span>}
+                        {wh.walletId && <span>Wallet: {wh.walletId.slice(0, 12)}...</span>}
+                        {wh.txHash   && <span style={{ fontFamily: "monospace", color: "#6366f1" }}>{wh.txHash.slice(0, 16)}...</span>}
+                        {wh.error    && <span style={{ color: "#f87171" }}>{wh.error}</span>}
+                      </div>
+                      <p style={{ margin: "4px 0 0", fontSize: 10, color: "#333", fontFamily: "monospace" }}>ID: {wh.notificationId.slice(0, 20)}...</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
