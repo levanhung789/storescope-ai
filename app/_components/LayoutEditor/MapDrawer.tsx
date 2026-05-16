@@ -17,16 +17,28 @@ declare global {
   }
 }
 
+let _mapsPromise: Promise<void> | null = null;
+
 function loadGoogleMaps(apiKey: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.google?.maps) { resolve(); return; }
+  if (window.google?.maps?.Map) return Promise.resolve();
+  if (_mapsPromise) return _mapsPromise;
+  // Unique callback name avoids conflicts with any other Maps loader on the page
+  const cbName = `__gmInit${Date.now()}`;
+  _mapsPromise = new Promise<void>((resolve, reject) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any)[cbName] = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any)[cbName];
+      resolve();
+    };
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=drawing,geometry,places&callback=initGoogleMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=drawing,geometry,places&callback=${cbName}&loading=async`;
     script.async = true;
-    window.initGoogleMap = () => resolve();
-    script.onerror = reject;
+    script.defer = true;
+    script.onerror = () => { _mapsPromise = null; reject(new Error("Google Maps script failed to load")); };
     document.head.appendChild(script);
   });
+  return _mapsPromise;
 }
 
 export default function MapDrawer({ lat, lon, address, onApply, onCancel }: MapDrawerProps) {
@@ -229,10 +241,13 @@ export default function MapDrawer({ lat, lon, address, onApply, onCancel }: MapD
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 
-      {/* Map */}
-      <div ref={mapRef} style={{ width: "100%", height: 380, borderRadius: "12px 12px 0 0", overflow: "hidden", border: "1px solid #d8d0c0" }}>
+      {/* Map wrapper — loading overlay is a sibling of mapRef, NOT inside it.
+          Google Maps mutates its container's DOM; React must not own any children inside mapRef. */}
+      <div style={{ position: "relative", width: "100%", height: 380, borderRadius: "12px 12px 0 0", border: "1px solid #d8d0c0", overflow: "hidden" }}>
+        {/* Explicit px height so Google Maps can measure the container at init time */}
+        <div ref={mapRef} style={{ width: "100%", height: 380 }} />
         {!ready && (
-          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f0e8", color: "#6a5a3a", fontSize: 13 }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 380, display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f0e8", color: "#6a5a3a", fontSize: 13, pointerEvents: "none" }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #c8a050", borderTopColor: "transparent", margin: "0 auto 10px", animation: "spin 0.8s linear infinite" }} />
               Loading Google Maps...
