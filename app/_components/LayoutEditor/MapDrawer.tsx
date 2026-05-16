@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 interface MapDrawerProps {
-  lat:      number;
-  lon:      number;
+  lat?:     number;   // optional — if not provided, geocode from address
+  lon?:     number;
   address:  string;
   onApply:  (width: number, depth: number, area: number) => void;
   onCancel: () => void;
@@ -21,7 +21,7 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (window.google?.maps) { resolve(); return; }
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=drawing,geometry&callback=initGoogleMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=drawing,geometry,places&callback=initGoogleMap`;
     script.async = true;
     window.initGoogleMap = () => resolve();
     script.onerror = reject;
@@ -53,8 +53,11 @@ export default function MapDrawer({ lat, lon, address, onApply, onCancel }: MapD
       .then(() => {
         if (!mapRef.current) return;
 
+        // Default center VN if no coords
+        const defaultCenter = { lat: lat ?? 10.8231, lng: lon ?? 106.6297 };
+
         const map = new google.maps.Map(mapRef.current, {
-          center:    { lat, lng: lon },
+          center:    defaultCenter,
           zoom:      19,
           mapTypeId: "satellite",
           tilt:      0,
@@ -67,9 +70,62 @@ export default function MapDrawer({ lat, lon, address, onApply, onCancel }: MapD
         });
         mapObjRef.current = map;
 
+        // Center map: coords provided → use directly; else geocode client-side
+        if (lat !== undefined && lon !== undefined && (lat !== 10.8231 || lon !== 106.6297)) {
+          map.setCenter({ lat, lng: lon });
+          map.setZoom(19);
+        } else if (address) {
+          // google.maps.Geocoder uses Maps JS API billing — works without separate Geocoding API
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ address, region: "VN" }, (results, status) => {
+            if (status === "OK" && results?.[0]) {
+              map.setCenter(results[0].geometry.location);
+              map.setZoom(19);
+              setHint("Found! Draw polygon around your store boundaries.");
+            }
+            // If fails too: user navigates via search box
+          });
+        }
+
+        // Add search box on top of map (uses Maps JS API — no Geocoding API needed)
+        const searchInput = document.createElement("input");
+        searchInput.placeholder = address || "Search address...";
+        searchInput.value = address || "";
+        Object.assign(searchInput.style, {
+          marginTop: "10px", padding: "8px 12px", width: "260px",
+          border: "1px solid #ccc", borderRadius: "6px",
+          fontSize: "13px", boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          outline: "none",
+        });
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(searchInput);
+
+        // Try Places Autocomplete first (if Places API enabled)
+        try {
+          const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+            fields: ["geometry", "formatted_address"],
+            componentRestrictions: { country: "VN" },
+          });
+          autocomplete.bindTo("bounds", map);
+          autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+            if (place.geometry?.location) {
+              map.setCenter(place.geometry.location);
+              map.setZoom(19);
+              new google.maps.Marker({
+                position: place.geometry.location, map,
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#7c3aed", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+              });
+              setHint("Location found. Draw polygon around your store boundary.");
+            }
+          });
+        } catch {
+          // Places API not available — use built-in map search
+          setHint("Navigate map manually or type address in the search box");
+        }
+
         // Center marker
         new google.maps.Marker({
-          position: { lat, lng: lon },
+          position: defaultCenter,
           map,
           title:    address.split(",")[0],
           icon: {

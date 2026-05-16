@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Wallet, Copy, ExternalLink, LogOut, RefreshCw, Loader2 } from "lucide-react";
 import {
   loadCircleSession,
@@ -39,16 +39,21 @@ export default function CircleWalletButton({ onDisconnect }: Props) {
     }
   }, []);
 
+  const balanceRef = useRef(balance);
+  balanceRef.current = balance;
+
   useEffect(() => {
     if (!session?.walletId) return;
     fetchBalance(session.walletId, session.walletAddress);
+    // Poll moi 10s khi balance = 0 — dung ref de tranh balance lam dependency
     const interval = setInterval(() => {
-      if (balance === "0.00" || balance === null) {
+      if (balanceRef.current === "0.00" || balanceRef.current === null) {
         fetchBalance(session.walletId, session.walletAddress);
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [session, fetchBalance, balance]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, fetchBalance]); // bo `balance` khoi dependency array
 
   const copyAddress = () => {
     if (!session?.walletAddress) return;

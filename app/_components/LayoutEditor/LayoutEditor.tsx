@@ -62,24 +62,25 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
   const [dimMode, setDimMode]                 = useState<"area" | "manual" | "map">("map");
   const [addressLoading, setAddressLoading]   = useState(false);
   const [addressNote, setAddressNote]         = useState("");
-  const [suggestions, setSuggestions]         = useState<{ display_name: string; place_id: number }[]>([]);
+  const [suggestions, setSuggestions]         = useState<{ display_name: string; place_id: number; lat: string; lon: string }[]>([]);
   const [sugLoading, setSugLoading]           = useState(false);
   const [mapCoords, setMapCoords]             = useState<{ lat: number; lon: number } | null>(null);
+  const [selectedCoords, setSelectedCoords]   = useState<{ lat: number; lon: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [circleSession, setCircleSession] = useState<CircleSession | null>(null);
   const [circleBalance, setCircleBalance] = useState<string>("--");
 
   const onAddressChange = (val: string) => {
     setAddressValue(val);
+    setSelectedCoords(null); // reset khi gõ lai
     setSuggestions([]);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.trim().length < 3) return;
     debounceRef.current = setTimeout(async () => {
       setSugLoading(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=6&addressdetails=0`;
-        const res = await fetch(url, { headers: { "User-Agent": "StoreScopeAI/1.0" } });
-        const data = await res.json() as { display_name: string; place_id: number }[];
+        const res  = await fetch(`/api/geocode?q=${encodeURIComponent(val)}&limit=6`);
+        const data = await res.json() as { display_name: string; place_id: number; lat: string; lon: string }[];
         setSuggestions(data);
       } catch { /* silent */ } finally { setSugLoading(false); }
     }, 400);
@@ -90,14 +91,25 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
     setAddressLoading(true);
     setAddressNote("");
     try {
-      // ── Map mode: geocode then open MapDrawer ──────────────────────────
+      // ── Map mode: geocode → mo MapDrawer ─────────────────────────────────
       if (dimMode === "map") {
-        const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressValue)}&format=json&limit=1`;
-        const res  = await fetch(url, { headers: { "User-Agent": "StoreScopeAI/1.0" } });
-        const data = await res.json() as { lat: string; lon: string }[];
-        if (!data.length) { setAddressNote("Address not found. Try a more specific address."); return; }
-        setMapCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
-        return; // MapDrawer will open
+        // Neu da chon suggestion → dung coords luon
+        if (selectedCoords) {
+          setMapCoords(selectedCoords);
+          return;
+        }
+        // Chua chon → geocode qua Nominatim
+        setAddressNote("Finding address...");
+        const res  = await fetch(`/api/geocode?q=${encodeURIComponent(addressValue)}&limit=1`);
+        const data = await res.json() as { lat?: number; lon?: number; error?: string };
+        if (data.lat && data.lon) {
+          setMapCoords({ lat: data.lat, lon: data.lon });
+        } else {
+          // Fallback: mo ban do tai trung tam HCM
+          setAddressNote("Address not found in map data — map opened at city center. Use search box inside map.");
+          setMapCoords({ lat: 10.8231, lon: 106.6297 });
+        }
+        return;
       }
 
       // ── Manual modes ───────────────────────────────────────────────────
@@ -392,8 +404,8 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
               {/* MapDrawer — shown after geocode in map mode */}
               {mapCoords ? (
                 <MapDrawer
-                  lat={mapCoords.lat}
-                  lon={mapCoords.lon}
+                  lat={selectedCoords?.lat}
+                  lon={selectedCoords?.lon}
                   address={addressValue}
                   onApply={applyFromMap}
                   onCancel={() => setMapCoords(null)}
@@ -419,7 +431,12 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
                     {suggestions.map((s, i) => (
                       <button
                         key={s.place_id}
-                        onMouseDown={() => { setAddressValue(s.display_name); setSuggestions([]); }}
+                        onMouseDown={() => {
+                          setAddressValue(s.display_name);
+                          setSelectedCoords({ lat: parseFloat(s.lat), lon: parseFloat(s.lon) });
+                          setSuggestions([]);
+                          setAddressNote("");
+                        }}
                         style={{
                           display: "block", width: "100%", textAlign: "left",
                           padding: "8px 12px", border: "none", cursor: "pointer", fontSize: 12,

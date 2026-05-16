@@ -6,8 +6,6 @@ import {
 } from "react";
 import { Canvas, useThree, ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
-import { EffectComposer, Outline } from "@react-three/postprocessing";
-import { Selection, Select } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { FixtureInstance, CanvasConfig, WallLine, ToolMode } from "./types";
 import { FIXTURE_MAP } from "./fixtureLibrary";
@@ -745,30 +743,47 @@ function FixtureNode({ fx, selected, tool, onSelect, onDragStart, onHover, orbit
   const rotY = -(fx.geometry.rotationDeg * Math.PI) / 180;
   const ringR = Math.max(w, d) * 0.54;
 
+  // Memoized position/rotation — new arrays cause r3f to re-process each render
+  const pos = useMemo(() => [cx, 0, cz] as [number,number,number], [cx, cz]);
+  const rot = useMemo(() => [0, rotY, 0] as [number,number,number], [rotY]);
+
+  // Stable event handlers — inline lambdas cause r3f infinite re-registration
+  const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    setHovered(true);
+    document.body.style.cursor = "grab";
+    onHover(fx.id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (orbitRef.current) (orbitRef.current as any).enableZoom = false;
+  }, [fx.id, onHover, orbitRef]);
+
+  const handlePointerOut = useCallback(() => {
+    setHovered(false);
+    document.body.style.cursor = "";
+    onHover(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (orbitRef.current) (orbitRef.current as any).enableZoom = true;
+  }, [onHover, orbitRef]);
+
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    onSelect(fx.id);
+    if (tool === "select") onDragStart(fx.id, e);
+  }, [fx.id, onSelect, onDragStart, tool]);
+
+  // Memoized geometry — new THREE.BoxGeometry in JSX creates new object each render
+  const outlineGeo = useMemo(
+    () => new THREE.BoxGeometry(w + 0.028, h + 0.028, d + 0.028),
+    [w, h, d]
+  );
+
   return (
     <group
-      position={[cx, 0, cz]}
-      rotation={[0, rotY, 0]}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-        document.body.style.cursor = "grab";
-        onHover(fx.id);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (orbitRef.current) (orbitRef.current as any).enableZoom = false;
-      }}
-      onPointerOut={() => {
-        setHovered(false);
-        document.body.style.cursor = "";
-        onHover(null);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (orbitRef.current) (orbitRef.current as any).enableZoom = true;
-      }}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        onSelect(fx.id);
-        if (tool === "select") onDragStart(fx.id, e);
-      }}
+      position={pos}
+      rotation={rot}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+      onPointerDown={handlePointerDown}
     >
       {/* Glow ring on floor */}
       {(hovered || selected) && (
@@ -809,7 +824,7 @@ function FixtureNode({ fx, selected, tool, onSelect, onDragStart, onHover, orbit
       {/* Selected outline */}
       {selected && (
         <lineSegments position={[0, h/2, 0]}>
-          <edgesGeometry args={[new THREE.BoxGeometry(w+0.028, h+0.028, d+0.028)]}/>
+          <edgesGeometry args={[outlineGeo]}/>
           <lineBasicMaterial color="#7c3aed"/>
         </lineSegments>
       )}
@@ -827,9 +842,15 @@ function Wall3D({ wall, selected, onSelect }: {
   const cx=(x1+x2)/2, cz=(z1+z2)/2;
   const angle = -Math.atan2(z2-z1, x2-x1);
   const wH=2.8, thick=Math.max(mm(wall.thickness), 0.06);
+
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    onSelect(wall.id);
+  }, [wall.id, onSelect]);
+
   return (
     <mesh position={[cx, wH/2, cz]} rotation={[0, angle, 0]} castShadow receiveShadow
-      onClick={(e) => { e.stopPropagation(); onSelect(wall.id); }}>
+      onClick={handleClick}>
       <boxGeometry args={[len, wH, thick]}/>
       <T color={selected?"#7c3aed":"#d0cbc2"} roughness={0.92}/>
     </mesh>
@@ -857,42 +878,69 @@ function Scene(props: SceneProps) {
   const [dragging, setDragging] = useState<{id:string; offX:number; offZ:number}|null>(null);
   const floorPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0,1,0), 0), []);
 
-  // Refs for wheel rotate (avoid stale closures)
+  // Refs for all callbacks — avoids stale closures AND prevents useEffect re-runs
   const hoveredIdRef  = useRef<string|null>(null);
   const fixturesRef   = useRef(fixtures);
   const rotateRef     = useRef(onRotateExact);
-  fixturesRef.current = fixtures;
-  rotateRef.current   = onRotateExact;
+  const onMoveRef       = useRef(onMove);
+  const onSelectRef     = useRef(onSelect);
+  const onSelectWallRef = useRef(onSelectWall);
+  const onStageRef      = useRef(onStageClick);
+  const glRef           = useRef(gl);
+  const cameraRef       = useRef(camera);
+  const raycasterRef    = useRef(raycaster);
+  fixturesRef.current   = fixtures;
+  rotateRef.current     = onRotateExact;
+  onMoveRef.current     = onMove;
+  onSelectRef.current   = onSelect;
+  onSelectWallRef.current = onSelectWall;
+  onStageRef.current    = onStageClick;
+  glRef.current         = gl;
+  cameraRef.current     = camera;
+  raycasterRef.current  = raycaster;
 
+  // getFloorHit uses refs — stable reference, no re-creation
   const getFloorHit = useCallback((clientX:number, clientY:number) => {
-    const rect = gl.domElement.getBoundingClientRect();
+    const rect = glRef.current.domElement.getBoundingClientRect();
     const ndc = new THREE.Vector2(
       ((clientX-rect.left)/rect.width)*2-1,
       -((clientY-rect.top)/rect.height)*2+1,
     );
-    raycaster.setFromCamera(ndc, camera);
+    raycasterRef.current.setFromCamera(ndc, cameraRef.current);
     const hit = new THREE.Vector3();
-    raycaster.ray.intersectPlane(floorPlane, hit);
+    raycasterRef.current.ray.intersectPlane(floorPlane, hit);
     return hit;
-  }, [gl, camera, raycaster, floorPlane]);
+  }, [floorPlane]); // floorPlane is stable (useMemo [])
 
-  // Global pointer move/up for drag
+  // Global pointer move/up for drag — only re-runs when dragging changes
+  const draggingRef = useRef(dragging);
+  draggingRef.current = dragging;
+
   useEffect(() => {
-    const canvas = gl.domElement;
+    const canvas = glRef.current.domElement;
     const onPointerMove = (e: PointerEvent) => {
-      if (!dragging) return;
+      if (!draggingRef.current) return;
       const pos = getFloorHit(e.clientX, e.clientY);
-      onMove(dragging.id, Math.max(0, snapMM(pos.x-dragging.offX, gridStep)), Math.max(0, snapMM(pos.z-dragging.offZ, gridStep)));
+      onMoveRef.current(
+        draggingRef.current.id,
+        Math.max(0, snapMM(pos.x - draggingRef.current.offX, gridStep)),
+        Math.max(0, snapMM(pos.z - draggingRef.current.offZ, gridStep)),
+      );
     };
     const onPointerUp = () => setDragging(null);
     canvas.addEventListener("pointermove", onPointerMove);
-    canvas.addEventListener("pointerup", onPointerUp);
-    return () => { canvas.removeEventListener("pointermove", onPointerMove); canvas.removeEventListener("pointerup", onPointerUp); };
-  }, [dragging, getFloorHit, onMove, gridStep, gl]);
+    canvas.addEventListener("pointerup",   onPointerUp);
+    return () => {
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerup",   onPointerUp);
+    };
+  // Only re-register when dragging starts/stops, not on every callback change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!dragging, getFloorHit, gridStep]);
 
-  // Wheel = rotate hovered fixture
+  // Wheel = rotate hovered fixture — use glRef to avoid gl in deps
   useEffect(() => {
-    const canvas = gl.domElement;
+    const canvas = glRef.current.domElement;
     const onWheel = (e: WheelEvent) => {
       if (!hoveredIdRef.current) return;
       e.preventDefault();
@@ -906,14 +954,42 @@ function Scene(props: SceneProps) {
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
-  }, [gl]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // glRef.current is stable — no deps needed
 
+  // Stable callbacks using refs — never recreated, no re-renders of children
   const handleDragStart = useCallback((id: string, e: ThreeEvent<PointerEvent>) => {
-    const fx = fixtures.find(f => f.id === id);
+    const fx = fixturesRef.current.find(f => f.id === id);
     if (!fx) return;
     const pos = getFloorHit(e.nativeEvent.clientX, e.nativeEvent.clientY);
-    setDragging({ id, offX: pos.x-mm(fx.geometry.x), offZ: pos.z-mm(fx.geometry.y) });
-  }, [fixtures, getFloorHit]);
+    setDragging({ id, offX: pos.x - mm(fx.geometry.x), offZ: pos.z - mm(fx.geometry.y) });
+  // getFloorHit is stable (depends only on floorPlane)
+  }, [getFloorHit]);
+
+  const handleHover = useCallback((id: string | null) => {
+    hoveredIdRef.current = id;
+  }, []);
+
+  const stableOnSelect = useCallback((id: string | null) => {
+    onSelectRef.current(id);
+  }, []);
+
+  const stableOnSelectWall = useCallback((id: string | null) => {
+    onSelectWallRef.current(id);
+  }, []);
+
+  const stableOnStageClick = useCallback(() => {
+    onStageRef.current();
+  }, []);
+
+  // Memoized values used in JSX — must be at top level, NOT inside JSX
+  const floorCenter   = useMemo(() => [fW/2, 0, fD/2] as [number,number,number], [fW, fD]);
+  const orbitTarget   = useMemo(() => [fW/2, 0, fD/2] as [number,number,number], [fW, fD]);
+  const floorClick    = useCallback((e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    stableOnStageClick();
+    stableOnSelect(null);
+  }, [stableOnStageClick, stableOnSelect]);
 
   // Floor grid lines — extracted as proper hook (useMemo must not be called inside JSX)
   const floorGrid = useMemo(() => {
@@ -950,35 +1026,21 @@ function Scene(props: SceneProps) {
       />
       <directionalLight position={[-fW*0.4, 8, fD*0.6]} intensity={0.4} color="#e8f4ff"/>
 
-      {/* Effect composer with outline — wraps all fixture selects */}
-      <Selection>
-        <EffectComposer autoClear={false}>
-          <Outline
-            blur={false}
-            edgeStrength={14}
-            visibleEdgeColor={0x111111}
-            hiddenEdgeColor={0x333333}
-            xRay={false}
-          />
-        </EffectComposer>
-
-        <Select enabled>
-          {fixtures.map(fx => (
-            <FixtureNode key={fx.id} fx={fx}
-              selected={fx.id===selectedId}
-              tool={tool}
-              onSelect={onSelect}
-              onDragStart={handleDragStart}
-              onHover={(id) => { hoveredIdRef.current = id; }}
-              orbitRef={orbitRef}
-            />
-          ))}
-        </Select>
-      </Selection>
+      {/* Fixtures */}
+      {fixtures.map(fx => (
+        <FixtureNode key={fx.id} fx={fx}
+          selected={fx.id===selectedId}
+          tool={tool}
+          onSelect={stableOnSelect}
+          onDragStart={handleDragStart}
+          onHover={handleHover}
+          orbitRef={orbitRef}
+        />
+      ))}
 
       {/* Floor — clean white tile for toon style */}
-      <mesh position={[fW/2, 0, fD/2]} rotation={[-Math.PI/2, 0, 0]} receiveShadow
-        onClick={(e) => { e.stopPropagation(); onStageClick(); onSelect(null); }}>
+      <mesh position={floorCenter} rotation={[-Math.PI/2, 0, 0]} receiveShadow
+        onClick={floorClick}>
         <planeGeometry args={[fW, fD]}/>
         <meshLambertMaterial color="#252a32"/>
       </mesh>
@@ -986,14 +1048,14 @@ function Scene(props: SceneProps) {
       {/* Floor tile grid lines */}
       {floorGrid}
 
-      {/* Perimeter walls */}
+      {/* Perimeter walls — stable string keys */}
       {([
-        { p:[fW/2,1.5,-0.14] as [number,number,number], a:[fW+0.28,3,0.28] as [number,number,number] },
-        { p:[fW/2,1.5,fD+0.14] as [number,number,number], a:[fW+0.28,3,0.28] as [number,number,number] },
-        { p:[-0.14,1.5,fD/2] as [number,number,number], a:[0.28,3,fD] as [number,number,number] },
-        { p:[fW+0.14,1.5,fD/2] as [number,number,number], a:[0.28,3,fD] as [number,number,number] },
-      ]).map(({p, a}, i) => (
-        <mesh key={i} position={p} castShadow receiveShadow>
+        { id:"w-front", p:[fW/2,1.5,-0.14]    as [number,number,number], a:[fW+0.28,3,0.28] as [number,number,number] },
+        { id:"w-back",  p:[fW/2,1.5,fD+0.14]  as [number,number,number], a:[fW+0.28,3,0.28] as [number,number,number] },
+        { id:"w-left",  p:[-0.14,1.5,fD/2]    as [number,number,number], a:[0.28,3,fD]       as [number,number,number] },
+        { id:"w-right", p:[fW+0.14,1.5,fD/2]  as [number,number,number], a:[0.28,3,fD]       as [number,number,number] },
+      ]).map(({id, p, a}) => (
+        <mesh key={id} position={p} castShadow receiveShadow>
           <boxGeometry args={a}/>
           <meshLambertMaterial color="#2e333d"/>
         </mesh>
@@ -1001,13 +1063,13 @@ function Scene(props: SceneProps) {
 
       {/* User-drawn walls */}
       {walls.map(w => (
-        <Wall3D key={w.id} wall={w} selected={w.id===selectedWallId} onSelect={onSelectWall}/>
+        <Wall3D key={w.id} wall={w} selected={w.id===selectedWallId} onSelect={stableOnSelectWall}/>
       ))}
 
-      {/* Camera controls */}
+      {/* Camera controls — memoized target to avoid new array ref each render */}
       <OrbitControls
         ref={orbitRef as React.RefObject<never>}
-        target={[fW/2, 0, fD/2]}
+        target={orbitTarget}
         enabled={!dragging}
         maxPolarAngle={Math.PI/2-0.02}
         minDistance={1.5}
@@ -1026,14 +1088,14 @@ function Scene(props: SceneProps) {
 
 function CameraInit({ fW, fD }: { fW:number; fD:number }) {
   const { camera } = useThree();
-  const done = useRef(false);
-  if (!done.current) {
-    done.current = true;
+  // useEffect to avoid side effects during render
+  useEffect(() => {
     camera.position.set(fW/2, fD*0.55, fD*1.15);
     (camera as THREE.PerspectiveCamera).fov = 48;
     camera.updateProjectionMatrix();
     camera.lookAt(fW/2, 0, fD/2);
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // only on mount
   return null;
 }
 
