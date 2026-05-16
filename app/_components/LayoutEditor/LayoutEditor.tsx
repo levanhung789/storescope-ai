@@ -7,6 +7,7 @@ import Inspector from "./Inspector";
 import MintModal from "./MintModal";
 import AnnotationEditor from "./AnnotationEditor";
 import { loadCircleSession, type CircleSession } from "../../_lib/circle";
+const MapDrawer = dynamic(() => import("./MapDrawer"), { ssr: false });
 import { FixtureInstance, CanvasConfig, LayoutDocument, FixtureTypeDef, WallLine, ToolMode } from "./types";
 import type { LayoutCanvasRef } from "./LayoutCanvas3D";
 
@@ -51,10 +52,84 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
   const canvasRef = useRef<LayoutCanvasRef>(null);
   const [showMint, setShowMint] = useState(false);
   const [editingAnnotation, setEditingAnnotation] = useState<FixtureInstance | null>(null);
-  const [showSizeEditor, setShowSizeEditor] = useState(false);
-  const [sizeInput, setSizeInput] = useState({ w: String(INITIAL_CANVAS.width / 1000), h: String(INITIAL_CANVAS.height / 1000) });
+  const [showSizeEditor, setShowSizeEditor]   = useState(false);
+  const [sizeInput, setSizeInput]             = useState({ w: String(INITIAL_CANVAS.width / 1000), h: String(INITIAL_CANVAS.height / 1000) });
+  const [showAddressInput, setShowAddress]    = useState(false);
+  const [addressValue, setAddressValue]       = useState("");
+  const [areaValue, setAreaValue]             = useState("");
+  const [dimW, setDimW]                       = useState("");
+  const [dimD, setDimD]                       = useState("");
+  const [dimMode, setDimMode]                 = useState<"area" | "manual" | "map">("map");
+  const [addressLoading, setAddressLoading]   = useState(false);
+  const [addressNote, setAddressNote]         = useState("");
+  const [suggestions, setSuggestions]         = useState<{ display_name: string; place_id: number }[]>([]);
+  const [sugLoading, setSugLoading]           = useState(false);
+  const [mapCoords, setMapCoords]             = useState<{ lat: number; lon: number } | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [circleSession, setCircleSession] = useState<CircleSession | null>(null);
   const [circleBalance, setCircleBalance] = useState<string>("--");
+
+  const onAddressChange = (val: string) => {
+    setAddressValue(val);
+    setSuggestions([]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim().length < 3) return;
+    debounceRef.current = setTimeout(async () => {
+      setSugLoading(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=6&addressdetails=0`;
+        const res = await fetch(url, { headers: { "User-Agent": "StoreScopeAI/1.0" } });
+        const data = await res.json() as { display_name: string; place_id: number }[];
+        setSuggestions(data);
+      } catch { /* silent */ } finally { setSugLoading(false); }
+    }, 400);
+  };
+
+  const fetchBuilding = async () => {
+    if (!addressValue.trim()) return;
+    setAddressLoading(true);
+    setAddressNote("");
+    try {
+      // ── Map mode: geocode then open MapDrawer ──────────────────────────
+      if (dimMode === "map") {
+        const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressValue)}&format=json&limit=1`;
+        const res  = await fetch(url, { headers: { "User-Agent": "StoreScopeAI/1.0" } });
+        const data = await res.json() as { lat: string; lon: string }[];
+        if (!data.length) { setAddressNote("Address not found. Try a more specific address."); return; }
+        setMapCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
+        return; // MapDrawer will open
+      }
+
+      // ── Manual modes ───────────────────────────────────────────────────
+      let w = 0, h = 0;
+      if (dimMode === "manual" && dimW && dimD) {
+        w = Number(dimW); h = Number(dimD);
+      } else if (dimMode === "area" && areaValue) {
+        const side = Math.sqrt(Number(areaValue));
+        w = Math.round(side); h = Math.round(side);
+      }
+      if (!w || !h || w < 3 || h < 3) { setAddressNote("Please enter valid dimensions (min 3m)"); return; }
+      w = Math.max(3, Math.min(500, w));
+      h = Math.max(3, Math.min(500, h));
+      setDoc(d => ({ ...d, canvas: { ...d.canvas, width: w * 1000, height: h * 1000 } }));
+      const name = addressValue.split(",")[0].trim();
+      if (name) setStoreName(name);
+      setAddressNote(`Applied: ${w}×${h}m`);
+      setShowAddress(false);
+    } catch { setAddressNote("Error"); }
+    finally  { setAddressLoading(false); }
+  };
+
+  const applyFromMap = (width: number, depth: number, _area: number) => {
+    const w = Math.max(3, Math.min(500, width));
+    const h = Math.max(3, Math.min(500, depth));
+    setDoc(d => ({ ...d, canvas: { ...d.canvas, width: w * 1000, height: h * 1000 } }));
+    const name = addressValue.split(",")[0].trim();
+    if (name) setStoreName(name);
+    setMapCoords(null);
+    setShowAddress(false);
+    setAddressNote(`Applied: ${w}×${h}m`);
+  };
 
   useEffect(() => {
     const cs = loadCircleSession();
@@ -292,6 +367,152 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
           style={{ background: "transparent", border: "none", outline: "none", color: "#2a2010", fontSize: 13, fontWeight: 600, width: 180 }}
           placeholder="Store name..."
         />
+
+        <div style={{ width: 1, height: 20, background: "#e0dbd0" }} />
+
+        {/* Address → Auto dimensions */}
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setShowAddress(v => !v)}
+            style={{ ...btnBase, gap: 4, color: showAddressInput ? "#7c3aed" : undefined, borderColor: showAddressInput ? "#c8a0f8" : undefined }}
+            title="Import building dimensions from address"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            From Address
+          </button>
+          {showAddressInput && (
+            <div style={{ position: "absolute", top: 40, left: 0, zIndex: 300, background: "#fff", border: "1px solid #d8d0c0", borderRadius: 12, padding: "16px 18px", boxShadow: "0 6px 24px rgba(0,0,0,0.14)", minWidth: mapCoords ? 500 : 320 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12, color: "#2a2010" }}>
+                {mapCoords ? `Drawing on map — ${addressValue.split(",")[0]}` : "Import from Address"}
+              </div>
+
+              {/* MapDrawer — shown after geocode in map mode */}
+              {mapCoords ? (
+                <MapDrawer
+                  lat={mapCoords.lat}
+                  lon={mapCoords.lon}
+                  address={addressValue}
+                  onApply={applyFromMap}
+                  onCancel={() => setMapCoords(null)}
+                />
+              ) : (<>
+
+              <label style={{ display: "block", fontSize: 11, color: "#6a5a3a", marginBottom: 5 }}>Street address</label>
+              <div style={{ position: "relative", marginBottom: 10 }}>
+                <input
+                  value={addressValue}
+                  onChange={e => onAddressChange(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { setSuggestions([]); fetchBuilding(); } if (e.key === "Escape") setSuggestions([]); }}
+                  onBlur={() => setTimeout(() => setSuggestions([]), 180)}
+                  placeholder="e.g. 30/3 Phan Văn Trị, Bình Thạnh"
+                  autoComplete="off"
+                  style={{ width: "100%", boxSizing: "border-box", padding: "7px 10px", border: "1px solid #d8d0c0", borderRadius: 7, fontSize: 12, outline: "none", color: "#2a2010" }}
+                />
+                {sugLoading && (
+                  <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 12, height: 12, borderRadius: "50%", border: "2px solid #c8a050", borderTopColor: "transparent", animation: "spin 0.6s linear infinite" }} />
+                )}
+                {suggestions.length > 0 && (
+                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 400, background: "#fff", border: "1px solid #d8d0c0", borderRadius: "0 0 8px 8px", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", maxHeight: 220, overflowY: "auto" }}>
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={s.place_id}
+                        onMouseDown={() => { setAddressValue(s.display_name); setSuggestions([]); }}
+                        style={{
+                          display: "block", width: "100%", textAlign: "left",
+                          padding: "8px 12px", border: "none", cursor: "pointer", fontSize: 12,
+                          background: i % 2 === 0 ? "#faf9f5" : "#fff",
+                          color: "#2a2010", borderBottom: i < suggestions.length - 1 ? "1px solid #f0ebe0" : "none",
+                          lineHeight: 1.5,
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "#f0e8d0")}
+                        onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? "#faf9f5" : "#fff")}
+                      >
+                        {s.display_name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dimension mode selector */}
+              <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
+                {([["map", "Draw on Map"], ["area", "Area (m²)"], ["manual", "W×D"]] as const).map(([m, label]) => (
+                  <button key={m} onClick={() => setDimMode(m)}
+                    style={{ flex: 1, padding: "5px 4px", border: `1px solid ${dimMode === m ? "#7c3aed" : "#d8d0c0"}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", background: dimMode === m ? "#7c3aed" : "transparent", color: dimMode === m ? "#fff" : "#6a5a3a" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {dimMode === "map" && (
+                <div style={{ fontSize: 11, color: "#6a5a3a", padding: "8px 10px", background: "#f5f0e8", borderRadius: 7, marginBottom: 10, lineHeight: 1.6 }}>
+                  Click <strong>Import Dimensions</strong> to open a map at this address.
+                  Then <strong>click the corners</strong> of your store to draw the polygon — area and dimensions are calculated automatically.
+                </div>
+              )}
+
+              {dimMode === "area" && (
+                <>
+                  <label style={{ display: "block", fontSize: 11, color: "#6a5a3a", marginBottom: 5 }}>Area (m²) — will create a square layout</label>
+                  <input
+                    value={areaValue}
+                    onChange={e => setAreaValue(e.target.value)}
+                    type="number" min="9" max="50000" placeholder="e.g. 80 → 9×9m square"
+                    style={{ width: "100%", boxSizing: "border-box", padding: "7px 10px", border: "1px solid #d8d0c0", borderRadius: 7, fontSize: 12, outline: "none", marginBottom: 10, color: "#2a2010" }}
+                  />
+                  {areaValue && Number(areaValue) > 0 && (
+                    <div style={{ fontSize: 11, color: "#8a7a5a", marginBottom: 8, padding: "5px 8px", background: "#faf5e8", borderRadius: 5 }}>
+                      → Canvas: {Math.round(Math.sqrt(Number(areaValue)))}×{Math.round(Math.sqrt(Number(areaValue)))}m
+                    </div>
+                  )}
+                </>
+              )}
+
+              {dimMode === "manual" && (
+                <>
+                  <label style={{ display: "block", fontSize: 11, color: "#6a5a3a", marginBottom: 5 }}>Enter exact dimensions (measure on Google Maps)</label>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 10, color: "#8a7a5a", display: "block", marginBottom: 3 }}>Width (m)</label>
+                      <input value={dimW} onChange={e => setDimW(e.target.value)} type="number" min="3" max="200" placeholder="e.g. 10"
+                        style={{ width: "100%", boxSizing: "border-box", padding: "7px 10px", border: "1px solid #d8d0c0", borderRadius: 7, fontSize: 12, outline: "none", color: "#2a2010" }} />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 8, color: "#8a7a5a", fontSize: 14, fontWeight: 700 }}>×</div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 10, color: "#8a7a5a", display: "block", marginBottom: 3 }}>Depth (m)</label>
+                      <input value={dimD} onChange={e => setDimD(e.target.value)} type="number" min="3" max="200" placeholder="e.g. 8"
+                        style={{ width: "100%", boxSizing: "border-box", padding: "7px 10px", border: "1px solid #d8d0c0", borderRadius: 7, fontSize: 12, outline: "none", color: "#2a2010" }} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#8a7a5a", marginBottom: 8 }}>
+                    Tip: Use Google Maps measurement tool for accuracy
+                  </div>
+                </>
+              )}
+
+              {addressNote && (
+                <div style={{ fontSize: 11, color: addressNote.includes("not found") || addressNote.includes("error") ? "#c04020" : "#3a8a3a", marginBottom: 10, padding: "6px 10px", background: addressNote.includes("not found") || addressNote.includes("error") ? "#fff5f5" : "#f0fff4", borderRadius: 6 }}>
+                  {addressNote}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={fetchBuilding}
+                  disabled={!addressValue.trim() || addressLoading}
+                  style={{ ...btnBase, flex: 2, justifyContent: "center", background: "#c8a050", borderColor: "#c8a050", color: "#fff", opacity: addressLoading ? 0.7 : 1 }}
+                >
+                  {addressLoading ? "Searching..." : "Import Dimensions"}
+                </button>
+                <button onClick={() => { setShowAddress(false); setAddressNote(""); }} style={{ ...btnBase, flex: 1, justifyContent: "center" }}>Cancel</button>
+              </div>
+              </>)}
+            </div>
+          )}
+        </div>
 
         <div style={{ width: 1, height: 20, background: "#e0dbd0" }} />
 
