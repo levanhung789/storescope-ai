@@ -6,6 +6,7 @@ import FixturePanel from "./FixturePanel";
 import Inspector from "./Inspector";
 import MintModal from "./MintModal";
 import AnnotationEditor from "./AnnotationEditor";
+import { loadCircleSession, type CircleSession } from "../../_lib/circle";
 import { FixtureInstance, CanvasConfig, LayoutDocument, FixtureTypeDef, WallLine, ToolMode } from "./types";
 import type { LayoutCanvasRef } from "./LayoutCanvas3D";
 
@@ -52,6 +53,17 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
   const [editingAnnotation, setEditingAnnotation] = useState<FixtureInstance | null>(null);
   const [showSizeEditor, setShowSizeEditor] = useState(false);
   const [sizeInput, setSizeInput] = useState({ w: String(INITIAL_CANVAS.width / 1000), h: String(INITIAL_CANVAS.height / 1000) });
+  const [circleSession, setCircleSession] = useState<CircleSession | null>(null);
+  const [circleBalance, setCircleBalance] = useState<string>("--");
+
+  useEffect(() => {
+    const cs = loadCircleSession();
+    setCircleSession(cs);
+    if (cs?.walletId) {
+      fetch(`/api/circle/balance?walletId=${cs.walletId}&address=${cs.walletAddress}`)
+        .then(r => r.json()).then(d => setCircleBalance(d.usdc ?? "--")).catch(() => {});
+    }
+  }, []);
 
   // Load draft
   useEffect(() => {
@@ -339,6 +351,27 @@ export default function LayoutEditor({ embedded = false }: LayoutEditorProps) {
 
         <button onClick={handleImport} style={btnBase}>Import</button>
         <button onClick={handleExport} style={{ ...btnBase, background: "#c8a050", borderColor: "#c8a050", color: "#fff" }}>Export JSON</button>
+
+        <div style={{ width: 1, height: 20, background: "#e0dbd0" }} />
+
+        {/* Circle Wallet badge */}
+        {circleSession ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#6366f1", flexShrink: 0 }} />
+            <div style={{ lineHeight: 1.2 }}>
+              <div style={{ fontSize: 9, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em" }}>Circle Wallet</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#312e81" }}>
+                {circleSession.walletAddress.slice(0, 8)}…{circleSession.walletAddress.slice(-4)}
+                <span style={{ marginLeft: 6, color: "#6366f1" }}>{circleBalance} USDC</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <a href="/login" style={{ ...btnBase, fontSize: 11, color: "#818cf8", borderColor: "rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.06)", textDecoration: "none" }}>
+            Connect Circle Wallet
+          </a>
+        )}
+
         <button
           onClick={() => setShowMint(true)}
           disabled={fixtures.length === 0}

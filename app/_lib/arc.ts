@@ -53,8 +53,8 @@ export const TOTAL_ANALYSIS_PRICE = ANALYSIS_TASKS.reduce((s, t) => s + t.price,
 // ── Other pricing ─────────────────────────────────────────────────────────────
 export const PRICING = {
   imageAnalysis: TOTAL_ANALYSIS_PRICE,
-  layoutMint: 2.00,
-  layoutList: 0.10,
+  layoutMint: 0.15,
+  layoutList: 0.05,
 } as const;
 
 export function calcImagePrice(_count: number): number {
