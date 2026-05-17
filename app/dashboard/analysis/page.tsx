@@ -19,7 +19,7 @@ const CircleWalletButton = dynamic(() => import("../../_components/CircleWalletB
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type TaskStatus = "waiting" | "paying" | "processing" | "done" | "skipped";
-type PayStep = "idle" | "connect" | "wrong_chain" | "confirm" | "approving" | "paid" | "error";
+type PayStep = "idle" | "connect" | "wrong_chain" | "confirm" | "approving" | "paid" | "error" | "pending";
 
 interface TaskState {
   status: TaskStatus;
@@ -48,7 +48,6 @@ const TASK_DURATION: Record<TaskId, number> = {
   human_review: 600, report: 1000,
 };
 
-function mockTx() { return "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""); }
 
 const MOCK_SKUS = [
   { sku: "CAL-MEI-1L", product: "Meizan Gold Cooking Oil 1L", brand: "Meizan Gold", category: "Cooking Oil", packSpec: "1L bottle", facings: 6, priceVND: 42400, matchedCompany: "Calofic", status: "Matched" as const, scores: { brand: 28, text: 27, size: 17, category: 10, visual: 8 } },
@@ -150,24 +149,34 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
 
       setCircleTxHash(data.txHash ?? txId);
 
-      // Poll for confirmation (max 30s, every 2s)
+      // Poll /api/circle/status:
+      // - Vercel production: webhook fires → store updated → instant response
+      // - Local dev: fallback to Circle API each poll
+      // Poll every 1s for first 10s, then every 2s up to 60s total
       let confirmed = false;
-      for (let i = 0; i < 15; i++) {
-        await new Promise(r => setTimeout(r, 2000));
-        const statusRes = await fetch(`/api/circle/transfer?txId=${txId}`);
+      const intervals = [
+        ...Array(10).fill(1000),  // first 10s: every 1s
+        ...Array(25).fill(2000),  // next 50s:  every 2s
+      ];
+      for (let i = 0; i < intervals.length; i++) {
+        await new Promise(r => setTimeout(r, intervals[i]));
+        const statusRes = await fetch(`/api/circle/status?txId=${txId}`);
         const statusData = await statusRes.json() as { state?: string; txHash?: string };
-        console.log(`[Circle Payment] Poll attempt ${i + 1}:`, statusData);
+        console.log(`[Circle Payment] Poll ${i + 1} (${intervals[i]}ms):`, statusData);
 
-        if (statusData.state === "CONFIRMED") {
+        if (statusData.state === "CONFIRMED" || statusData.state === "SENT") {
           confirmed = true;
           if (statusData.txHash) setCircleTxHash(statusData.txHash);
           break;
         }
+        if (statusData.state === "FAILED" || statusData.state === "DENIED") {
+          throw new Error(`Transaction ${statusData.state?.toLowerCase()}. Please try again.`);
+        }
       }
 
       if (!confirmed) {
-        setErrMsg("Circle transfer is still pending. This can take up to 1 minute. Try refreshing in a moment.");
-        setStep("error");
+        setErrMsg(`Transfer sent but still pending confirmation (txId: ${txId.slice(0, 16)}…). The payment was submitted — click "Continue anyway" to proceed.`);
+        setStep("pending");
         return;
       }
 
@@ -245,8 +254,19 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
         ) : step === "error" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 36, marginBottom: 12, color: "#f87171" }}>✗</div>
-            <p style={{ color: "#f87171", fontSize: 13 }}>{errMsg}</p>
+            <p style={{ color: "#f87171", fontSize: 13, whiteSpace: "pre-line" }}>{errMsg}</p>
             <button onClick={() => setStep("confirm")} style={{ marginTop: 16, background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "10px 24px", fontSize: 13, cursor: "pointer" }}>Try Again</button>
+          </div>
+
+        ) : step === "pending" ? (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 12, color: "#fbbf24" }}>⏳</div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 16, color: "#fbbf24" }}>Transfer Submitted</h3>
+            <p style={{ color: "#888", fontSize: 13, whiteSpace: "pre-line", lineHeight: 1.6 }}>{errMsg}</p>
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button onClick={() => setStep("confirm")} style={{ flex: 1, background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>Try Again</button>
+              <button onClick={() => { setStep("paid"); }} style={{ flex: 2, background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Continue anyway →</button>
+            </div>
           </div>
 
         ) : (
@@ -361,6 +381,7 @@ export default function AnalysisPage() {
   const [imageUrl,    setImageUrl]    = useState<string | null>(null);
   const [imageName,   setImageName]   = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const taskTxHashesRef = useRef<Record<string, string>>({});
   const [showGate,    setShowGate]    = useState(false);
   const [analysisId,  setAnalysisId]  = useState<string | null>(null);
   const [onChainTx,   setOnChainTx]   = useState<string | null>(null);  // requestAnalysis TX
@@ -390,6 +411,7 @@ export default function AnalysisPage() {
     setImageUrl(URL.createObjectURL(file));
     setDone(false); setApproved(false); setSpentTotal(0);
     setAnalysisId(null); setOnChainTx(null); setResultTx(null);
+    taskTxHashesRef.current = {};
     setTaskStates(Object.fromEntries(ANALYSIS_TASKS.map(t => [t.id, { status: "waiting" }])) as Record<TaskId, TaskState>);
     // Read base64 for on-chain hash
     const reader = new FileReader();
@@ -425,8 +447,12 @@ export default function AnalysisPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage: "request", payer, imageBase64: imageBase64 ?? "" }),
     }).then(r => r.json()).catch(() => ({})) as Record<string, unknown>;
-    const aid = reqRes.analysisId as string | undefined;
-    if (aid) { setAnalysisId(aid); setOnChainTx(reqRes.txHash as string ?? null); }
+
+    // Fallback analysisId nếu on-chain call thất bại — đảm bảo task contracts luôn chạy
+    const aid: string = (reqRes.analysisId as string | undefined)
+      ?? ("0x" + Date.now().toString(16).padStart(64, "0"));
+    setAnalysisId(aid);
+    if (reqRes.txHash) setOnChainTx(reqRes.txHash as string);
 
     const completedTasks: ReportData["tasks"] = [];
     let apiData: { detections?: { brand: string; company: string; confidence: number; source: string }[]; prices?: number[]; shelfShare?: { brand: string; pct: number }[]; summary?: { topBrand: string; priceRange?: { min: number; max: number } | null } } = {};
@@ -435,8 +461,46 @@ export default function AnalysisPage() {
     for (const task of ANALYSIS_TASKS) {
       updateTask(task.id, { status: "paying" });
       await new Promise(r => setTimeout(r, 400));
-      const txHash = mockTx();
-      updateTask(task.id, { status: "processing", txHash });
+
+      // Show pending placeholder immediately, fire real on-chain tx in background
+      updateTask(task.id, { status: "processing", txHash: undefined });
+
+      // Record task payment on-chain — await với timeout 5s để không block quá lâu
+      const taskIdCapture = task.id;
+      const recordTask = async () => {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 5000);
+          const res = await fetch("/api/contracts/record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              stage:      "task",
+              analysisId: aid,
+              taskId:     taskIdCapture,
+              taskPrice:  task.price,
+              payer,
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          const d = await res.json() as Record<string, unknown>;
+          if (d.txHash) {
+            const hash = d.txHash as string;
+            taskTxHashesRef.current[taskIdCapture] = hash;
+            updateTask(taskIdCapture, { txHash: hash });
+            setReport(prev => prev ? {
+              ...prev,
+              tasks: prev.tasks.map(t => t.id === taskIdCapture ? { ...t, txHash: hash } : t),
+            } : prev);
+          }
+        } catch (err) {
+          // Timeout hoặc lỗi khác — tiếp tục, hash sẽ hiện "recording..."
+          console.warn(`[Task TX] ${taskIdCapture}:`, err instanceof Error ? err.message : err);
+        }
+      };
+      // Chạy song song với task duration — không await để không block pipeline
+      recordTask();
       let result = TASK_RESULTS[task.id];
 
       // ── Upload + OCR (chạy client-side Tesseract) ─────────────────────────
@@ -488,8 +552,12 @@ export default function AnalysisPage() {
       }
 
       await new Promise(r => setTimeout(r, TASK_DURATION[task.id]));
-      updateTask(task.id, { status: "done", txHash, result });
-      completedTasks.push({ id: task.id, label: task.label, price: task.price, txHash, result });
+      updateTask(task.id, { status: "done", result });
+      completedTasks.push({
+        id: task.id, label: task.label, price: task.price,
+        txHash: taskTxHashesRef.current[task.id] ?? undefined,
+        result,
+      });
       setSpentTotal(prev => +(prev + task.price).toFixed(6));
     }
 
@@ -557,7 +625,22 @@ export default function AnalysisPage() {
       })(),
     };
 
-    setReport(newReport);
+    // Đợi tối đa 8s cho các hash chưa về, poll mỗi 500ms
+    let waited = 0;
+    while (waited < 8000) {
+      const missing = ANALYSIS_TASKS.filter(t => !taskTxHashesRef.current[t.id]);
+      if (missing.length === 0) break;
+      await new Promise(r => setTimeout(r, 500));
+      waited += 500;
+    }
+
+    // Build report với tất cả hash đã về
+    const finalTasks = completedTasks.map(t => ({
+      ...t,
+      txHash: taskTxHashesRef.current[t.id] ?? t.txHash,
+    }));
+
+    setReport({ ...newReport, tasks: finalTasks });
     setRunning(false);
     setDone(true);
     setActiveTab("full-report");
@@ -878,11 +961,15 @@ export default function AnalysisPage() {
                         </div>
                         <div style={{ fontSize: 11, color: "#555" }}>{task.desc}</div>
                         {ts.result && <div style={{ fontSize: 11, color: "#4ade80", marginTop: 4 }}>{ts.result}</div>}
-                        {ts.txHash && ts.status === "done" && (
-                          <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
-                            style={{ fontSize: 10, color: "#444", fontFamily: "monospace", textDecoration: "none", marginTop: 3, display: "block" }}>
-                            tx: {ts.txHash.slice(0, 16)}… ↗
-                          </a>
+                        {ts.status === "done" && (
+                          ts.txHash
+                            ? <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
+                                style={{ fontSize: 10, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none", marginTop: 3, display: "block" }}>
+                                tx: {ts.txHash.slice(0, 16)}… ↗
+                              </a>
+                            : <span style={{ fontSize: 10, color: "#444", marginTop: 3, display: "block" }}>
+                                recording on-chain…
+                              </span>
                         )}
                       </div>
 
@@ -947,11 +1034,14 @@ export default function AnalysisPage() {
                             {ts.result && <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{ts.result}</div>}
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 700, color: "#4ade80", textAlign: "right" }}>${task.price.toFixed(3)}</span>
-                          <span style={{ fontSize: 10, color: "#444", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#555", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                              Simulated
-                            </span>
-                            {ts.txHash?.slice(0, 14)}…
+                          <span style={{ fontSize: 10, fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ts.txHash
+                              ? <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
+                                  style={{ color: "#7c3aed", textDecoration: "none" }}>
+                                  {ts.txHash.slice(0, 16)}… ↗
+                                </a>
+                              : <span style={{ color: "#444" }}>recording on-chain…</span>
+                            }
                           </span>
                         </div>
                       );

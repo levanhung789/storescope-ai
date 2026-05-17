@@ -13,7 +13,7 @@ export interface ReportData {
   imageName: string;
   totalPaid: number;
   proofTxHash: string;
-  tasks: { id: TaskId; label: string; price: number; txHash: string; result: string }[];
+  tasks: { id: TaskId; label: string; price: number; txHash?: string; result: string }[];
   skus: {
     sku: string; product: string; brand: string; category: string;
     packSpec: string; facings: number; priceVND: number | null;
@@ -374,10 +374,13 @@ export default function AnalysisReport({ report, onSaved }: Props) {
                     <td style={{ ...td, fontWeight: 600 }}>{t.label}</td>
                     <td style={{ ...td, fontWeight: 700, color: "#4ade80", textAlign: "center" }}>${t.price.toFixed(3)}</td>
                     <td style={{ ...td }}>
-                      <a href={`https://testnet.arcscan.app/tx/${t.txHash}`} target="_blank" rel="noreferrer"
-                        style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none" }}>
-                        {t.txHash.slice(0, 18)}…{t.txHash.slice(-6)} ↗
-                      </a>
+                      {t.txHash
+                        ? <a href={`https://testnet.arcscan.app/tx/${t.txHash}`} target="_blank" rel="noreferrer"
+                            style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none" }}>
+                            {t.txHash.slice(0, 18)}…{t.txHash.slice(-6)} ↗
+                          </a>
+                        : <span style={{ fontSize: 11, color: "#444" }}>recording…</span>
+                      }
                     </td>
                     <td style={{ ...td, fontSize: 12, color: "#888" }}>{t.result}</td>
                   </tr>

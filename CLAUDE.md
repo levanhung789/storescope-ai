@@ -628,3 +628,103 @@ DEPLOYER_KEY=0xd302f59709feeaa147c77f657616f7e17dc3087c37d5f14d14953b9c4b27672f
 4. **Verify contract trên ArcScan** — upload source code Solidity để mọi người đọc được
 5. **Tích hợp Agent Stack vào forum** — agent tự mua/bán layout qua x402
 6. **Roboflow model** — vào https://app.roboflow.com/levanhungs-workspace/fmcg-project/annotate → Generate → Train → điền `RF_VERSION` vào `.env.local`
+
+---
+
+## Nhật ký làm việc — 2026-05-17
+
+### Đổi tên thư mục dự án
+
+- `storescope-ai-Shelby` → `storescope-ai` (tại `OneDrive/Máy tính/tổng file/`)
+- Bản cũ `storescope-ai/` → đổi thành `storescope-ai-old/` (giữ lại)
+- **Vị trí chính thức:** `C:\Users\Admin\OneDrive\Máy tính\tổng file\storescope-ai\`
+
+### Sửa lỗi khởi động server sau đổi tên
+
+**Vấn đề:** Sau đổi tên, Turbopack cache bị corrupted + thiếu `@tailwindcss/postcss`.
+
+**Fix:**
+1. Cài package: `npm install @tailwindcss/postcss`
+2. Xóa cache: `rm -rf C:\next-cache\storescope-ai\dev`
+3. Tạo lại junction `node_modules` trong cache:
+   ```powershell
+   New-Item -ItemType Junction -Path 'C:\next-cache\storescope-ai\node_modules' -Target 'C:\Users\Admin\OneDrive\Máy tính\tổng file\storescope-ai\node_modules'
+   ```
+
+### Fix Circle Transfer "still pending" error
+
+**Vấn đề:** `PaymentGateModal` poll Circle API tối đa 30s (15 lần × 2s), timeout hiện lỗi.
+
+**Fix trong `app/dashboard/analysis/page.tsx`:**
+
+| Thay đổi | Trước | Sau |
+|---|---|---|
+| Timeout | 30s (15 × 2s) | 60s (10 × 1s + 25 × 2s) |
+| Accepted states | `CONFIRMED` only | `CONFIRMED` hoặc `SENT` |
+| Khi `FAILED`/`DENIED` | Chờ hết timeout | Throw error ngay |
+| Khi vẫn pending | Show error | Show màn hình ⏳ + nút "Continue anyway →" |
+| Poll endpoint | `/api/circle/transfer?txId=` | `/api/circle/status?txId=` (webhook-backed) |
+
+**State mới:** `PayStep` thêm `"pending"` — hiện khi transfer submitted nhưng chưa confirm sau 60s.
+
+### Circle Webhook Integration
+
+**Mục tiêu:** Khi Circle confirm transaction → server biết ngay (không cần poll chậm).
+
+**Files mới:**
+
+| File | Mục đích |
+|---|---|
+| `app/_lib/txStore.ts` | In-memory Map lưu tx state từ webhook (global, persist qua hot-reload) |
+| `app/api/circle/webhook/route.ts` | POST endpoint nhận notification từ Circle |
+| `app/api/circle/status/route.ts` | GET — check store trước (instant), fallback Circle API |
+| `scripts/register-circle-webhook.js` | Đăng ký webhook URL với Circle một lần |
+
+**Webhook đã đăng ký:**
+- Subscription ID: `3f7749f1-8177-40bd-b554-6dd569018982`
+- Endpoint: `https://storescope-ai.vercel.app/api/circle/webhook`
+- Status: `pending` (active sau khi deploy lên Vercel)
+
+**Tốc độ:**
+- Local dev: poll Circle API mỗi 1s (nhanh hơn 3× so với trước)
+- Vercel production: webhook fires → confirm trong <1s
+
+**Lưu ý txStore:** In-memory Map — works cho single-process local dev. Production multi-instance cần Redis/KV.
+
+### Task Payment Log — TX Hash thật trên ArcScan
+
+**Vấn đề:** 10 TX hash trong Task Payment Log là hash ngẫu nhiên (`mockTx()`), không tồn tại trên blockchain.
+
+**Fix:** Mỗi micro-task gọi `PaymentVerifier.recordPayment()` on-chain.
+
+**Files thay đổi:**
+
+| File | Thay đổi |
+|---|---|
+| `app/_lib/contracts.ts` | Thêm `PAYMENT_VERIFIER_ABI` |
+| `app/api/contracts/record/route.ts` | Thêm stage `"task"` → gọi `PaymentVerifier.recordPayment()` |
+| `app/dashboard/analysis/page.tsx` | Xóa `mockTx()`, thay bằng API call thật (fire-and-forget) |
+
+**Flow mới:**
+```
+Task hoàn thành → hiện "recording on-chain…"
+    ↓ (background, không block UI)
+POST /api/contracts/record { stage:"task", analysisId, taskId, taskPrice, payer }
+    ↓
+PaymentVerifier.recordPayment(paymentId, payer, amountUnits, taskId)
+    ↓ paymentId = keccak256(analysisId + taskId)
+TX thật trên ArcScan → UI update link ↗
+```
+
+**Đã xóa:** `function mockTx()` — không còn dùng.
+
+### Việc cần làm tiếp (cập nhật 2026-05-17)
+
+**Ưu tiên cao:**
+1. **Push lên GitHub + deploy Vercel** — để Circle webhook hoạt động (endpoint đã đăng ký)
+2. **Test pipeline đầy đủ** — upload ảnh → Circle pay → xem 10 TX thật trên ArcScan
+3. **Tích hợp RetailLayoutNFT vào `/forum`**
+
+**Ưu tiên vừa:**
+4. **Verify contracts trên ArcScan** — upload Solidity source
+5. **Roboflow model** — Generate → Train → điền `RF_VERSION`

@@ -11,10 +11,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getDeployerWallet, publicClient,
-  CONTRACTS, ANALYSIS_REGISTRY_ABI,
+  CONTRACTS, ANALYSIS_REGISTRY_ABI, PAYMENT_VERIFIER_ABI,
+  BASE_TASK_VERIFIER_ABI, TASK_CONTRACT,
   REPUTATION_REGISTRY_ABI, ARC_AGENT_ID,
   makeAnalysisId, hashResult, hashImage,
 } from "../../../_lib/contracts";
+import { keccak256, toHex } from "viem";
 
 // Retry viem writeContract khi gap "txpool is full"
 async function writeWithRetry(
@@ -162,6 +164,41 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({ stage: "failed", analysisId, txHash: hash });
+    }
+
+    // ── Stage task: record micro-task payment on its dedicated contract ──
+    if (stage === "task") {
+      const { analysisId, taskId, taskPrice, payer } = body as {
+        analysisId: string; taskId: string; taskPrice: number; payer: string;
+      };
+      if (!analysisId || !taskId || !payer) {
+        return NextResponse.json({ error: "analysisId, taskId, payer required" }, { status: 400 });
+      }
+
+      const contractAddress = TASK_CONTRACT[taskId];
+      if (!contractAddress) {
+        return NextResponse.json({ error: `Unknown taskId: ${taskId}` }, { status: 400 });
+      }
+
+      // analysisId as bytes32 (already a 0x hash from makeAnalysisId)
+      const analysisIdBytes = analysisId as `0x${string}`;
+      const amountUnits = BigInt(Math.round((taskPrice ?? 0.001) * 1_000_000));
+
+      const hash = await writeWithRetry(wallet, {
+        address:      contractAddress,
+        abi:          BASE_TASK_VERIFIER_ABI,
+        functionName: "recordPayment",
+        args:         [analysisIdBytes, payer as `0x${string}`, amountUnits],
+      });
+
+      return NextResponse.json({
+        stage:       "task",
+        analysisId,
+        taskId,
+        contract:    contractAddress,
+        txHash:      hash,
+        explorerUrl: `https://testnet.arcscan.app/tx/${hash}`,
+      });
     }
 
     // ── Read: get analysis ────────────────────────────────────────────────
