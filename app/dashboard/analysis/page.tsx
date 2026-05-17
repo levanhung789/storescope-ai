@@ -142,9 +142,30 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
         return;
       }
       if (!res.ok) throw new Error(data.error ?? "Circle transfer failed");
-      setCircleTxHash(data.txHash ?? data.txId);
+
+      const txId = data.txId ?? "";
+      setCircleTxHash(data.txHash ?? txId);
+
+      // Poll for confirmation (max 30s, every 2s)
+      let confirmed = false;
+      for (let i = 0; i < 15; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const statusRes = await fetch(`/api/circle/transfer?txId=${txId}`);
+        const statusData = await statusRes.json() as { state?: string };
+        if (statusData.state === "CONFIRMED") {
+          confirmed = true;
+          break;
+        }
+      }
+
+      if (!confirmed) {
+        setErrMsg("Circle transfer is still pending. This can take up to 1 minute. Try refreshing in a moment.");
+        setStep("error");
+        return;
+      }
+
       setStep("paid");
-      onCirclePaid?.(data.txId ?? "");
+      onCirclePaid?.(txId);
     } catch (err) {
       setErrMsg(err instanceof Error ? err.message : "Circle payment failed");
       setStep("error");
@@ -281,15 +302,23 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
                 Confirming: {txHash.slice(0, 20)}…
               </div>
             )}
+            {step === "approving" && payMethod === "circle" && (
+              <div style={{ fontSize: 12, color: "#818cf8", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #818cf8", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+                Confirming Circle transfer...
+              </div>
+            )}
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={onClose} disabled={isProcessing} style={{ flex: 1, background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 12, padding: "12px 0", fontSize: 13, cursor: isProcessing ? "not-allowed" : "pointer" }}>Cancel</button>
               <button onClick={handleApprove} disabled={isProcessing}
                 style={{ flex: 2, background: isProcessing ? "#5a2aad" : "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "12px 0", fontSize: 13, fontWeight: 600, cursor: isProcessing ? "wait" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 {isSending     && <><Spinner /> Confirm in wallet…</>}
                 {isConfirming  && <><Spinner /> Confirming on-chain…</>}
+                {step === "approving" && payMethod === "circle" && <><Spinner /> Confirming Circle…</>}
                 {!isProcessing && `Pay $${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC`}
               </button>
             </div>
+            <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
           </>
         )}
       </div>
