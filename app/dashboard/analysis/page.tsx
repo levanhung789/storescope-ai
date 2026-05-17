@@ -132,6 +132,8 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
         }),
       });
       const data = await res.json();
+      console.log("[Circle Payment] Initial response:", data);
+
       if (res.status === 402) {
         setErrMsg(
           `Your Circle Wallet has no USDC yet.\n\n` +
@@ -144,6 +146,8 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
       if (!res.ok) throw new Error(data.error ?? "Circle transfer failed");
 
       const txId = data.txId ?? "";
+      if (!txId) throw new Error("No txId in response");
+
       setCircleTxHash(data.txHash ?? txId);
 
       // Poll for confirmation (max 30s, every 2s)
@@ -151,9 +155,12 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
       for (let i = 0; i < 15; i++) {
         await new Promise(r => setTimeout(r, 2000));
         const statusRes = await fetch(`/api/circle/transfer?txId=${txId}`);
-        const statusData = await statusRes.json() as { state?: string };
+        const statusData = await statusRes.json() as { state?: string; txHash?: string };
+        console.log(`[Circle Payment] Poll attempt ${i + 1}:`, statusData);
+
         if (statusData.state === "CONFIRMED") {
           confirmed = true;
+          if (statusData.txHash) setCircleTxHash(statusData.txHash);
           break;
         }
       }
@@ -164,10 +171,13 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
         return;
       }
 
+      console.log("[Circle Payment] Transfer confirmed!");
       setStep("paid");
       onCirclePaid?.(txId);
     } catch (err) {
-      setErrMsg(err instanceof Error ? err.message : "Circle payment failed");
+      const errMsg = err instanceof Error ? err.message : "Circle payment failed";
+      console.error("[Circle Payment] Error:", errMsg);
+      setErrMsg(errMsg);
       setStep("error");
     }
   };
