@@ -66,7 +66,7 @@ export function exportCSV(report: ReportData) {
   rows.push([]);
   rows.push(["--- TASK LOG ---"]);
   rows.push(["Task", "Price (USDC)", "Tx Hash", "Result"]);
-  report.tasks.forEach(t => rows.push([t.label, `$${t.price.toFixed(3)}`, t.txHash, t.result]));
+  report.tasks.forEach(t => rows.push([t.label, `$${t.price.toFixed(3)}`, t.txHash ?? "", t.result]));
 
   const csv = rows.map(r => r.map(c => `"${(c || "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
