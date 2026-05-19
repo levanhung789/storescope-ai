@@ -455,7 +455,17 @@ export default function AnalysisPage() {
     if (reqRes.txHash) setOnChainTx(reqRes.txHash as string);
 
     const completedTasks: ReportData["tasks"] = [];
-    let apiData: { detections?: { brand: string; company: string; confidence: number; source: string }[]; prices?: number[]; shelfShare?: { brand: string; pct: number }[]; summary?: { topBrand: string; priceRange?: { min: number; max: number } | null } } = {};
+    let apiData: {
+      detections?:     { brand: string; company: string; confidence: number; source: string }[];
+      prices?:         number[];
+      shelfShare?:     { brand: string; pct: number }[];
+      imageQuality?:   { score: number; issues: string[] };
+      recommendations?: string[];
+      stockRisks?:     string[];
+      rawSummary?:     string;
+      model?:          string;
+      summary?:        { topBrand: string; priceRange?: { min: number; max: number } | null };
+    } = {};
     let ocrText = "";
 
     for (const task of ANALYSIS_TASKS) {
@@ -503,39 +513,41 @@ export default function AnalysisPage() {
       recordTask();
       let result = TASK_RESULTS[task.id];
 
-      // ── Upload + OCR (chạy client-side Tesseract) ─────────────────────────
+      // ── Upload: gửi ảnh lên GPT-4o Vision ngay từ đầu ───────────────────
       if (task.id === "upload" && fileObjRef.current) {
-        try {
-          const { createWorker } = await import("tesseract.js");
-          const worker = await createWorker("vie+eng");
-          const { data } = await worker.recognize(fileObjRef.current);
-          await worker.terminate();
-          ocrText = data.text || "";
-          const wordCount = ocrText.split(/\s+/).filter(Boolean).length;
-          result = `Image registered · OCR extracted ${wordCount} words`;
-        } catch {
-          result = "Image registered · OCR unavailable";
-        }
-      }
-
-      // ── SKU Detection → gửi image + OCR lên API ──────────────────────────
-      if (task.id === "sku_detect" && fileObjRef.current) {
         try {
           const fd = new FormData();
           fd.append("image", fileObjRef.current);
-          fd.append("ocrText", ocrText);
           const res = await fetch("/api/analyze", { method: "POST", body: fd });
           if (res.ok) {
             apiData = await res.json();
-            const det = apiData.detections || [];
-            if (det.length > 0) {
-              result = det.slice(0, 5).map(d => `${d.brand} (${d.confidence}%)`).join(" · ");
-            } else {
-              result = "No products detected — try a clearer shelf photo";
-            }
+            const model = apiData.model ?? "ai";
+            const detCount = apiData.detections?.length ?? 0;
+            result = `Image registered · GPT-4o Vision (${model}) · ${detCount} products pre-detected`;
+          } else {
+            result = "Image registered · AI analysis queued";
           }
         } catch {
-          result = "Detection API unavailable";
+          result = "Image registered · AI analysis unavailable";
+        }
+      }
+
+      // ── Quality check: dùng imageQuality từ GPT-4o ───────────────────────
+      if (task.id === "quality") {
+        const q = apiData.imageQuality;
+        if (q) {
+          const issues = q.issues.length ? ` · Issues: ${q.issues.join(", ")}` : "";
+          result = `✓ Quality score ${q.score}/100${issues}`;
+        }
+      }
+
+      // ── SKU Detection: dùng kết quả đã có từ upload ──────────────────────
+      if (task.id === "sku_detect") {
+        const det = apiData.detections ?? [];
+        if (det.length > 0) {
+          result = det.slice(0, 5).map(d => `${d.brand} (${d.confidence}%)`).join(" · ");
+        } else {
+          result = "No products detected — try a clearer shelf photo";
         }
       }
 
@@ -545,10 +557,24 @@ export default function AnalysisPage() {
         result = top2.map(s => `${s.brand} ${s.pct}%`).join(" vs ");
       }
 
-      // ── Stock risk from price data ─────────────────────────────────────────
-      if (task.id === "stock_risk" && apiData.prices?.length) {
-        const p = apiData.prices;
-        result = `Price range: ${p[0].toLocaleString()}đ – ${p[p.length - 1].toLocaleString()}đ · ${p.length} price points detected`;
+      // ── Stock risk: dùng stockRisks từ GPT-4o hoặc price data ────────────
+      if (task.id === "stock_risk") {
+        if (apiData.stockRisks?.length) {
+          result = apiData.stockRisks.slice(0, 2).join(" · ");
+        } else if (apiData.prices?.length) {
+          const p = apiData.prices;
+          result = `Price range: ${p[0].toLocaleString()}đ – ${p[p.length - 1].toLocaleString()}đ · ${p.length} price points detected`;
+        }
+      }
+
+      // ── Recommendation: dùng recommendations từ GPT-4o ───────────────────
+      if (task.id === "recommend" && apiData.recommendations?.length) {
+        result = apiData.recommendations[0];
+      }
+
+      // ── Final report: hiện rawSummary từ GPT-4o ───────────────────────────
+      if (task.id === "report" && apiData.rawSummary) {
+        result = apiData.rawSummary;
       }
 
       await new Promise(r => setTimeout(r, TASK_DURATION[task.id]));
