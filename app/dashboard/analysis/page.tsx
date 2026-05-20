@@ -455,16 +455,22 @@ export default function AnalysisPage() {
     if (reqRes.txHash) setOnChainTx(reqRes.txHash as string);
 
     const completedTasks: ReportData["tasks"] = [];
+
+    // Vision Agent PipelineResult — populated after upload task
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let visionData: Record<string, any> = {};
+
+    // Legacy apiData shape (kept for report building compatibility)
     let apiData: {
-      detections?:     { brand: string; company: string; confidence: number; source: string }[];
-      prices?:         number[];
-      shelfShare?:     { brand: string; pct: number }[];
-      imageQuality?:   { score: number; issues: string[] };
+      detections?:      { brand: string; company: string; confidence: number; source: string }[];
+      prices?:          number[];
+      shelfShare?:      { brand: string; pct: number }[];
+      imageQuality?:    { score: number; issues: string[] };
       recommendations?: string[];
-      stockRisks?:     string[];
-      rawSummary?:     string;
-      model?:          string;
-      summary?:        { topBrand: string; priceRange?: { min: number; max: number } | null };
+      stockRisks?:      string[];
+      rawSummary?:      string;
+      model?:           string;
+      summary?:         { topBrand: string; priceRange?: { min: number; max: number } | null };
     } = {};
     let ocrText = "";
 
@@ -513,68 +519,156 @@ export default function AnalysisPage() {
       recordTask();
       let result = TASK_RESULTS[task.id];
 
-      // ── Upload: gửi ảnh lên GPT-4o Vision ngay từ đầu ───────────────────
+      // ── TASK 1: Upload → gọi Vision Agent (8-step pipeline) ─────────────
       if (task.id === "upload" && fileObjRef.current) {
         try {
           const fd = new FormData();
           fd.append("image", fileObjRef.current);
-          const res = await fetch("/api/analyze", { method: "POST", body: fd });
+          const res = await fetch("/api/vision-agent/analyze", { method: "POST", body: fd });
           if (res.ok) {
-            apiData = await res.json();
-            const model = apiData.model ?? "ai";
-            const detCount = apiData.detections?.length ?? 0;
-            result = `Image registered · ${detCount} products pre-detected`;
+            const json = await res.json();
+            visionData = json.result ?? {};
+
+            // Map sang apiData shape để tương thích report builder
+            const skus    = visionData.step3_skus ?? [];
+            const facings = visionData.step4_facings ?? [];
+            const sos     = visionData.step6_shelfShare ?? [];
+            const osa     = visionData.step7_osa ?? [];
+            const recs    = (visionData.step8_recommendations ?? []) as {action:string}[];
+
+            apiData = {
+              detections: skus.map((s: {brand:string;company:string;confidence:number}) => ({
+                brand: s.brand, company: s.company, confidence: s.confidence, source: "gpt4v",
+              })),
+              prices: skus.map((s: {price_vnd:number|null}) => s.price_vnd).filter(Boolean) as number[],
+              shelfShare: sos.map((s: {brand:string;shareOfShelf:number}) => ({ brand: s.brand, pct: s.shareOfShelf })),
+              imageQuality: {
+                score:  visionData.step1_quality?.score ?? 80,
+                issues: visionData.step1_quality?.issues ?? [],
+              },
+              recommendations: recs.map((r) => r.action),
+              stockRisks: osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none")
+                             .map((o: {sku:string;osaNote?:string;action?:string}) => `${o.sku}: ${o.action ?? o.osaNote ?? ""}`),
+              rawSummary: visionData.summary ?? "",
+              model: visionData.model ?? "gpt-4o",
+              summary: {
+                topBrand: visionData.topBrand ?? skus[0]?.brand ?? "—",
+                priceRange: null,
+              },
+            };
+
+            const skuCount  = skus.length;
+            const totalFacing = visionData.totalFacings ?? facings.reduce((s: number, f: {facingAdjusted:number}) => s + (f.facingAdjusted ?? 0), 0);
+            result = `Image registered · ${skuCount} SKUs · ${totalFacing} facings · ${visionData.step2_count?.totalUnits ?? "?"} units`;
           } else {
-            result = "Image registered · AI analysis queued";
+            result = "Image registered · Vision Agent queued";
           }
         } catch {
-          result = "Image registered · AI analysis unavailable";
+          result = "Image registered · Vision Agent unavailable";
         }
       }
 
-      // ── Quality check: dùng imageQuality từ GPT-4o ───────────────────────
+      // ── TASK 2: Image quality → Step 1 (quality + perspective) ──────────
       if (task.id === "quality") {
-        const q = apiData.imageQuality;
+        const q    = visionData.step1_quality;
+        const persp = q?.perspective;
         if (q) {
-          const issues = q.issues.length ? ` · Issues: ${q.issues.join(", ")}` : "";
-          result = `✓ Quality score ${q.score}/100${issues}`;
+          const perspNote = persp?.shootingAngle > 15
+            ? ` · Góc xiên ~${persp.shootingAngle}° (hiệu chỉnh ${persp.correctionFactor}×)`
+            : persp ? " · Frontal — không cần hiệu chỉnh" : "";
+          const issues = q.issues?.length ? ` · ${q.issues[0]}` : "";
+          result = `✓ Quality ${q.score}/100 · ${q.lighting} · ${q.blur}${perspNote}${issues}`;
         }
       }
 
-      // ── SKU Detection: dùng kết quả đã có từ upload ──────────────────────
+      // ── TASK 3: Shelf detection → Step 2 (count) + Step 5 (position) ─────
+      if (task.id === "shelf_detect") {
+        const c = visionData.step2_count;
+        const pos = visionData.step5_positions ?? [];
+        if (c) {
+          const eyeLevel = pos.filter((p: {tier:string}) => p.tier === "eye-level").map((p: {brand:string}) => p.brand).join(", ");
+          result = `${c.shelfRows} tầng kệ · ${c.totalUnits} units · depth ~${c.estimatedDepth}` +
+            (eyeLevel ? ` · Eye-level: ${eyeLevel}` : "");
+        }
+      }
+
+      // ── TASK 4: SKU detection → Step 3 + Step 4 (facing) ─────────────────
       if (task.id === "sku_detect") {
-        const det = apiData.detections ?? [];
-        if (det.length > 0) {
-          result = det.slice(0, 5).map(d => `${d.brand} (${d.confidence}%)`).join(" · ");
+        const skus    = visionData.step3_skus ?? [];
+        const facings = visionData.step4_facings ?? [];
+        if (skus.length > 0) {
+          const top3 = facings.slice(0, 3).map((f: {brand:string;facingAdjusted:number}) =>
+            `${f.brand} (${f.facingAdjusted} facing)`).join(" · ");
+          result = `${skus.length} SKUs · ${top3 || skus.slice(0, 3).map((s: {brand:string}) => s.brand).join(" · ")}`;
         } else {
           result = "No products detected — try a clearer shelf photo";
         }
       }
 
-      // ── Competitor analysis ───────────────────────────────────────────────
-      if (task.id === "competitor" && apiData.shelfShare?.length) {
-        const top2 = apiData.shelfShare.slice(0, 2);
-        result = top2.map(s => `${s.brand} ${s.pct}%`).join(" vs ");
-      }
-
-      // ── Stock risk: dùng stockRisks từ GPT-4o hoặc price data ────────────
-      if (task.id === "stock_risk") {
-        if (apiData.stockRisks?.length) {
-          result = apiData.stockRisks.slice(0, 2).join(" · ");
-        } else if (apiData.prices?.length) {
-          const p = apiData.prices;
-          result = `Price range: ${p[0].toLocaleString()}đ – ${p[p.length - 1].toLocaleString()}đ · ${p.length} price points detected`;
+      // ── TASK 5: Competitor → Step 6 (Share of Shelf) ─────────────────────
+      if (task.id === "competitor") {
+        const sos = visionData.step6_shelfShare ?? apiData.shelfShare ?? [];
+        if (sos.length > 0) {
+          const top2 = sos.slice(0, 2);
+          result = top2.map((s: {brand:string; shareOfShelf?:number; pct?:number}) =>
+            `${s.brand} ${s.shareOfShelf ?? s.pct ?? 0}%`).join(" vs ") +
+            ` · Total ${visionData.totalFacings ?? "?"} facings`;
         }
       }
 
-      // ── Recommendation: dùng recommendations từ GPT-4o ───────────────────
-      if (task.id === "recommend" && apiData.recommendations?.length) {
-        result = apiData.recommendations[0];
+      // ── TASK 6: Stock risk → Step 7 (OSA) ────────────────────────────────
+      if (task.id === "stock_risk") {
+        const osa = visionData.step7_osa ?? [];
+        const risks = osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none");
+        if (risks.length > 0) {
+          result = risks.slice(0, 2).map((o: {sku:string;riskLevel:string;facingsRemaining:number}) =>
+            `⚠ ${o.sku}: ${o.riskLevel.toUpperCase()} (${o.facingsRemaining} left)`).join(" · ");
+        } else {
+          result = "✓ All SKUs in-stock — no OSA risk detected";
+        }
       }
 
-      // ── Final report: hiện rawSummary từ GPT-4o ───────────────────────────
-      if (task.id === "report" && apiData.rawSummary) {
-        result = apiData.rawSummary;
+      // ── TASK 7: Layout sim → Step 5 (positions) ──────────────────────────
+      if (task.id === "layout_sim") {
+        const pos = visionData.step5_positions ?? [];
+        if (pos.length > 0) {
+          const byTier: Record<string, string[]> = {};
+          pos.forEach((p: {tier:string; brand:string}) => {
+            if (!byTier[p.tier]) byTier[p.tier] = [];
+            byTier[p.tier].push(p.brand);
+          });
+          result = Object.entries(byTier).map(([tier, brands]) =>
+            `${tier}: ${[...new Set(brands)].join(", ")}`).join(" · ");
+        }
+      }
+
+      // ── TASK 8: Recommendations → Step 8 ─────────────────────────────────
+      if (task.id === "recommend") {
+        const recs = visionData.step8_recommendations ?? [];
+        const high = recs.filter((r: {priority:string}) => r.priority === "high");
+        if (high.length > 0) {
+          result = high[0].action;
+        } else if (recs.length > 0) {
+          result = recs[0].action;
+        }
+      }
+
+      // ── TASK 9: Human review → low confidence SKUs ───────────────────────
+      if (task.id === "human_review") {
+        const skus = visionData.step3_skus ?? [];
+        const low  = skus.filter((s: {confidence:number}) => s.confidence < 75);
+        result = low.length > 0
+          ? `${low.length} SKUs need review: ${low.map((s: {sku:string}) => s.sku).join(", ")}`
+          : "✓ All confidence scores ≥ 75% — no human review needed";
+      }
+
+      // ── TASK 10: Final report → summary ───────────────────────────────────
+      if (task.id === "report") {
+        const sos = visionData.step6_shelfShare ?? [];
+        const top  = sos[0];
+        result = visionData.summary
+          ?? (top ? `Top brand: ${top.brand} ${top.shareOfShelf ?? top.pct ?? 0}% SoS · ${visionData.step3_skus?.length ?? 0} SKUs detected` : TASK_RESULTS.report);
+        ocrText = result; // store for legacy compat
       }
 
       await new Promise(r => setTimeout(r, TASK_DURATION[task.id]));
@@ -599,55 +693,67 @@ export default function AnalysisPage() {
       totalPaid: TOTAL_ANALYSIS_PRICE,
       proofTxHash: onChainTx ?? "", // TX thật: requestAnalysis() on AnalysisRegistry
       tasks: completedTasks,
-      skus: apiData.detections?.length
-        ? apiData.detections.map((d, i) => ({
-            sku: `SKU-${String(i + 1).padStart(3, "0")}`,
-            product: d.brand,
-            brand: d.brand,
-            category: (d as { sector?: string }).sector || "FMCG",
-            packSpec: "—",
-            facings: 1,
-            priceVND: apiData.prices?.[i] || null,
-            matchedCompany: d.company,
-            status: (d.confidence >= 75 ? "Matched" : "Review") as "Matched" | "Review" | "Missing",
-            confidence: d.confidence,
-          }))
-        : MOCK_SKUS.map(s => ({
-            sku: s.sku, product: s.product, brand: s.brand, category: s.category,
-            packSpec: s.packSpec, facings: s.facings, priceVND: s.priceVND,
-            matchedCompany: s.matchedCompany, status: s.status,
-            confidence: s.scores.brand + s.scores.text + s.scores.size + s.scores.category + s.scores.visual,
-          })),
-      shelfShare: apiData.shelfShare?.length
-        ? apiData.shelfShare
-        : [{ brand: "Unknown", pct: 100 }],
+      // ── Build SKUs từ Vision Agent step3 + step4 (facings) ──────────────
+      skus: (() => {
+        const skus3   = visionData.step3_skus ?? apiData.detections ?? [];
+        const facings4 = visionData.step4_facings ?? [];
+        if (skus3.length > 0) {
+          return skus3.map((s: {brand:string;company:string;sku:string;sector:string;confidence:number;price_vnd:number|null}, i: number) => {
+            const facing = facings4.find((f: {sku:string;facingAdjusted:number}) => f.sku === s.sku || f.brand === s.brand);
+            return {
+              sku:            `SKU-${String(i + 1).padStart(3, "0")}`,
+              product:        s.sku ?? s.brand,
+              brand:          s.brand,
+              category:       s.sector ?? "FMCG",
+              packSpec:       "—",
+              facings:        facing?.facingAdjusted ?? 1,
+              priceVND:       s.price_vnd ?? null,
+              matchedCompany: s.company,
+              status:         (s.confidence >= 75 ? "Matched" : "Review") as "Matched" | "Review" | "Missing",
+              confidence:     s.confidence,
+            };
+          });
+        }
+        return MOCK_SKUS.map(s => ({
+          sku: s.sku, product: s.product, brand: s.brand, category: s.category,
+          packSpec: s.packSpec, facings: s.facings, priceVND: s.priceVND,
+          matchedCompany: s.matchedCompany, status: s.status,
+          confidence: s.scores.brand + s.scores.text + s.scores.size + s.scores.category + s.scores.visual,
+        }));
+      })(),
+
+      // ── Shelf share từ Vision Agent step6 ────────────────────────────────
+      shelfShare: (() => {
+        const sos = visionData.step6_shelfShare ?? [];
+        if (sos.length > 0)
+          return sos.map((s: {brand:string; shareOfShelf:number}) => ({ brand: s.brand, pct: s.shareOfShelf }));
+        return apiData.shelfShare?.length ? apiData.shelfShare : [{ brand: "Unknown", pct: 100 }];
+      })(),
+
+      // ── Recommendations từ Vision Agent step8 ────────────────────────────
       recommendations: (() => {
+        const recs8 = visionData.step8_recommendations ?? [];
+        if (recs8.length > 0)
+          return recs8.map((r: {action:string; reason:string}) => `${r.action}${r.reason ? ` — ${r.reason}` : ""}`);
+        // Fallback
         const recs: string[] = [];
         const det = apiData.detections || [];
-        const topBrand = apiData.summary?.topBrand;
-        const prices = apiData.prices || [];
-
-        if (topBrand) recs.push(`${topBrand} is the dominant brand detected — verify planogram compliance`);
-        if (det.length > 1) recs.push(`${det.length} brands detected on shelf — review competitor positioning`);
-        if (prices.length >= 2) {
-          const spread = prices[prices.length - 1] - prices[0];
-          if (spread > 10000) recs.push(`Price spread of ${spread.toLocaleString()}đ detected — potential pricing inconsistency`);
-        }
-        if (det.some(d => d.confidence < 75)) recs.push("Some SKUs have low confidence score — retake photo with better lighting");
-        if (det.length === 0) recs.push("No brands detected — ensure shelf photo is clear, well-lit, and taken from the front");
+        if (det.length > 1) recs.push(`${det.length} brands detected — review competitor positioning`);
+        if (det.length === 0) recs.push("No brands detected — ensure shelf photo is clear and frontal");
         if (recs.length === 0) recs.push("Analysis complete — no critical issues found");
         return recs;
       })(),
+
+      // ── Stock risks từ Vision Agent step7 (OSA) ──────────────────────────
       stockRisk: (() => {
-        const risks: string[] = [];
-        const prices = apiData.prices || [];
-        if (prices.length === 0 && (apiData.detections?.length || 0) > 0) {
-          risks.push("No price tags detected — verify price labels are visible and up to date");
-        }
-        if ((apiData.detections?.length || 0) === 0) {
-          risks.push("No products detected — shelf may be empty or image quality insufficient");
-        }
-        return risks;
+        const osa = visionData.step7_osa ?? [];
+        const risks = osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none")
+                        .map((o: {sku:string;riskLevel:string;facingsRemaining:number;action:string}) =>
+                          `${o.sku} — ${o.riskLevel.toUpperCase()} risk (${o.facingsRemaining} facing remaining): ${o.action}`);
+        if (risks.length > 0) return risks;
+        if ((visionData.step3_skus?.length ?? 0) === 0)
+          return ["No products detected — shelf may be empty or image quality insufficient"];
+        return [];
       })(),
     };
 
