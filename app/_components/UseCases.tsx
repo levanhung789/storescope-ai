@@ -106,11 +106,11 @@ export default function UseCases() {
                   }),
                 }}
               >
-                {i === 0 || i === 1 ? (
-                  /* FMCG Brands + Distributors — hero images */
+                {i === 0 || i === 1 || i === 2 ? (
+                  /* All 3 cards — hero images */
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={i === 0 ? "/shelf-hero.png" : "/distributors-hero.png"}
+                    src={i === 0 ? "/shelf-hero.png" : i === 1 ? "/distributors-hero.png" : "/retail-teams-hero.png"}
                     alt={c.headline}
                     style={{
                       width: "100%",
