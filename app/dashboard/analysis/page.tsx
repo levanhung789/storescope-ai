@@ -691,7 +691,8 @@ export default function AnalysisPage() {
       walletAddress: circleSession?.walletAddress || address || "—",
       imageName,
       totalPaid: TOTAL_ANALYSIS_PRICE,
-      proofTxHash: onChainTx ?? "", // TX thật: requestAnalysis() on AnalysisRegistry
+      proofTxHash: onChainTx ?? "",
+      visionPipeline: Object.keys(visionData).length > 0 ? visionData : undefined,
       tasks: completedTasks,
       // ── Build SKUs từ Vision Agent step3 + step4 (facings) ──────────────
       skus: (() => {

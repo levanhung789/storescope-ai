@@ -23,6 +23,9 @@ export interface ReportData {
   shelfShare: { brand: string; pct: number }[];
   recommendations: string[];
   stockRisk: string[];
+  // Vision Agent 8-step pipeline result (optional — present when using Vision Agent)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  visionPipeline?: Record<string, any>;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -234,6 +237,9 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           )}
         </div>
 
+        {/* ── Vision Agent 8-step Report (shown when Vision Agent was used) ── */}
+        {report.visionPipeline && <VisionPipelineReport p={report.visionPipeline} />}
+
         {/* ── Summary stats ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
           {[
@@ -397,5 +403,277 @@ export default function AnalysisReport({ report, onSaved }: Props) {
 
       </div>
     </>
+  );
+}
+
+// ── Vision Agent 8-Step Pipeline Report ──────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function VisionPipelineReport({ p }: { p: Record<string, any> }) {
+  const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 14, overflow: "hidden", marginBottom: 0 };
+  const stepHeader = (icon: string, n: number, label: string, sub?: string): React.CSSProperties => ({ all: "unset" as "unset" });
+  void stepHeader;
+
+  const riskColor = (r: string) => r === "high" ? "#ef4444" : r === "medium" ? "#f97316" : r === "low" ? "#fbbf24" : "#4ade80";
+  const chip = (color: string, text: string) => (
+    <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: `${color}18`, border: `1px solid ${color}40`, color, display: "inline-block" }}>{text}</span>
+  );
+
+  const th2: React.CSSProperties = { padding: "8px 12px", fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, textAlign: "left", background: "#0a0a0a", borderBottom: "1px solid #1f1f1f" };
+  const td2: React.CSSProperties = { padding: "10px 12px", fontSize: 12, color: "#e0e0e0", borderBottom: "1px solid #111", verticalAlign: "middle" };
+
+  function StepBox({ n, icon, title, children }: { n: number; icon: string; title: string; children: React.ReactNode }) {
+    return (
+      <div style={card}>
+        <div style={{ padding: "12px 18px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "rgba(124,58,237,0.04)" }}>
+          <span style={{ fontSize: 18 }}>{icon}</span>
+          <div>
+            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.1em" }}>Step {n}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>{title}</div>
+          </div>
+          <span style={{ marginLeft: "auto", fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", padding: "2px 8px", borderRadius: 999 }}>✓ Done</span>
+        </div>
+        <div style={{ padding: "16px 18px" }}>{children}</div>
+      </div>
+    );
+  }
+
+  const q     = p.step1_quality ?? {};
+  const persp = q.perspective ?? {};
+  const cnt   = p.step2_count ?? {};
+  const skus  = p.step3_skus ?? [];
+  const facs  = p.step4_facings ?? [];
+  const pos   = p.step5_positions ?? [];
+  const sos   = p.step6_shelfShare ?? [];
+  const osa   = p.step7_osa ?? [];
+  const recs  = p.step8_recommendations ?? [];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+      {/* Divider */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
+        <div style={{ fontSize: 11, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 700 }}>Vision Agent — 8-Step Analysis</div>
+        <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
+      </div>
+
+      {/* Step 1 */}
+      <StepBox n={1} icon="🔍" title="Chất lượng ảnh & Phối cảnh">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <tbody>
+              {[
+                { k: "Score",            v: `${q.score ?? "—"}/100` },
+                { k: "Góc chụp",         v: q.angle ?? "—" },
+                { k: "Lighting",         v: q.lighting ?? "—" },
+                { k: "Blur",             v: q.blur ?? "—" },
+              ].map(r => (
+                <tr key={r.k}>
+                  <td style={{ ...td2, color: "#555", width: 120 }}>{r.k}</td>
+                  <td style={{ ...td2, fontWeight: 600, color: "#f0f0f0" }}>{r.v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {persp.shootingAngle !== undefined && (
+            <div style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.2)", borderRadius: 10, padding: "12px 14px" }}>
+              <div style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, marginBottom: 8 }}>Phối cảnh (Perspective)</div>
+              {[
+                { k: "Góc chụp",      v: `~${persp.shootingAngle}°` },
+                { k: "Loại",          v: persp.perspectiveType ?? "—" },
+                { k: "Hệ số hiệu chỉnh", v: persp.correctionFactor ?? 1 },
+                { k: "Phía gần",      v: persp.nearSide ?? "—" },
+                { k: "Tỉ lệ gần/xa",  v: `${persp.nearFarRatio ?? 1}×` },
+              ].map(r => (
+                <div key={r.k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ color: "#555" }}>{r.k}</span>
+                  <span style={{ color: "#818cf8", fontWeight: 600 }}>{r.v}</span>
+                </div>
+              ))}
+              {persp.depthVisible && <div style={{ marginTop: 8, fontSize: 11, color: "#fbbf24" }}>⚠ {persp.depthVisibleNote}</div>}
+              {persp.correctionNote && <div style={{ marginTop: 4, fontSize: 10, color: "#555" }}>{persp.correctionNote}</div>}
+            </div>
+          )}
+        </div>
+        {q.issues?.length > 0 && <div style={{ marginTop: 10, fontSize: 12, color: "#fbbf24" }}>Issues: {q.issues.join(", ")}</div>}
+      </StepBox>
+
+      {/* Step 2 */}
+      <StepBox n={2} icon="📦" title="Đếm sản phẩm">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 12 }}>
+          {[
+            { label: "Tổng units",   value: cnt.totalUnits ?? "—" },
+            { label: "Nhìn thấy rõ", value: cnt.visibleUnits ?? "—" },
+            { label: "Độ sâu kệ",    value: `~${cnt.estimatedDepth ?? 1}` },
+            { label: "Số tầng kệ",   value: cnt.shelfRows ?? "—" },
+          ].map(k => (
+            <div key={k.label} style={{ background: "#0a0a0a", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: "#555", marginBottom: 4 }}>{k.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+        {cnt.note && <div style={{ fontSize: 12, color: "#666" }}>{cnt.note}</div>}
+      </StepBox>
+
+      {/* Step 3 */}
+      {skus.length > 0 && (
+        <StepBox n={3} icon="🏷️" title={`Nhận diện Brand / SKU — ${skus.length} SKUs`}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>{["Brand","SKU","Sector","Confidence","Giá"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {skus.map((s: {brand:string;sku:string;sector:string;confidence:number;price_vnd:number|null}, i: number) => (
+                  <tr key={i}>
+                    <td style={{ ...td2, fontWeight: 700 }}>{s.brand}</td>
+                    <td style={td2}>{s.sku}</td>
+                    <td style={{ ...td2, color: "#818cf8" }}>{s.sector}</td>
+                    <td style={{ ...td2, textAlign: "center" }}>
+                      <span style={{ color: s.confidence >= 85 ? "#4ade80" : "#fbbf24", fontWeight: 700 }}>{s.confidence}%</span>
+                    </td>
+                    <td style={{ ...td2, color: "#fbbf24" }}>{s.price_vnd ? `${Number(s.price_vnd).toFixed(2)}` : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </StepBox>
+      )}
+
+      {/* Step 4 */}
+      {facs.length > 0 && (
+        <StepBox n={4} icon="📐" title="Facing Count (có hiệu chỉnh phối cảnh)">
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>{["Brand","SKU","Facing (raw)","Facing (adj)","Depth","Ghi chú"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {facs.map((f: {brand:string;sku:string;facing:number;facingAdjusted:number;depth:number;isDepthVisible:boolean;perspectiveNote:string}, i: number) => (
+                  <tr key={i}>
+                    <td style={{ ...td2, fontWeight: 700 }}>{f.brand}</td>
+                    <td style={td2}>{f.sku}</td>
+                    <td style={{ ...td2, textAlign: "center", color: f.facingAdjusted !== f.facing ? "#555" : "#a78bfa", textDecoration: f.facingAdjusted !== f.facing ? "line-through" : "none" }}>{f.facing}</td>
+                    <td style={{ ...td2, textAlign: "center", fontWeight: 800, color: "#a78bfa", fontSize: 15 }}>{f.facingAdjusted}</td>
+                    <td style={{ ...td2, textAlign: "center", color: "#555" }}>{f.depth}</td>
+                    <td style={{ ...td2, fontSize: 11, color: "#666" }}>
+                      {f.isDepthVisible && <span style={{ color: "#fbbf24", marginRight: 4 }}>depth visible</span>}
+                      {f.perspectiveNote}
+                    </td>
+                  </tr>
+                ))}
+                <tr style={{ background: "#0a0a0a" }}>
+                  <td colSpan={3} style={{ ...td2, fontWeight: 700, color: "#f0f0f0" }}>Total</td>
+                  <td style={{ ...td2, fontWeight: 800, color: "#a78bfa", fontSize: 15, textAlign: "center" }}>{p.totalFacings ?? facs.reduce((s: number, f: {facingAdjusted:number}) => s + (f.facingAdjusted ?? 0), 0)}</td>
+                  <td colSpan={2} style={td2} />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style={{ marginTop: 10, fontSize: 11, color: "#818cf8", padding: "8px 12px", background: "rgba(129,140,248,0.06)", borderRadius: 8 }}>
+            ℹ️ Facing (adj) = sau hiệu chỉnh góc chụp + loại trừ depth — dùng để tính Share of Shelf
+          </div>
+        </StepBox>
+      )}
+
+      {/* Step 5 */}
+      {pos.length > 0 && (
+        <StepBox n={5} icon="📍" title="Vị trí kệ">
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>{["Brand","SKU","Tier","Ghi chú"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {pos.map((p2: {brand:string;sku:string;tier:string;tierNote:string}, i: number) => (
+                  <tr key={i}>
+                    <td style={{ ...td2, fontWeight: 700 }}>{p2.brand}</td>
+                    <td style={td2}>{p2.sku}</td>
+                    <td style={td2}>{chip(p2.tier === "eye-level" ? "#4ade80" : p2.tier === "end-cap" ? "#fbbf24" : "#818cf8", p2.tier + (p2.tier === "eye-level" ? " ⭐" : ""))}</td>
+                    <td style={{ ...td2, color: "#666" }}>{p2.tierNote}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </StepBox>
+      )}
+
+      {/* Step 6 */}
+      {sos.length > 0 && (
+        <StepBox n={6} icon="📊" title={`Share of Shelf — tổng ${p.totalFacings ?? "?"} facings`}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {sos.map((s: {brand:string;facings:number;shareOfShelf:number;blockLength:string}) => (
+              <div key={s.brand}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, alignItems: "center" }}>
+                  <div>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>{s.brand}</span>
+                    <span style={{ fontSize: 11, color: "#555", marginLeft: 10 }}>{s.facings} facings · {s.blockLength}</span>
+                  </div>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: "#a78bfa" }}>{s.shareOfShelf}%</span>
+                </div>
+                <div style={{ height: 10, background: "#1a1a1a", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${s.shareOfShelf}%`, background: "linear-gradient(90deg,#7c3aed,#a78bfa)", borderRadius: 99 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {sos.length === 2 && Math.abs(sos[0].shareOfShelf - sos[1].shareOfShelf) < 5 && (
+            <div style={{ marginTop: 12, fontSize: 12, color: "#fbbf24", padding: "8px 12px", background: "rgba(251,191,36,0.06)", borderRadius: 8 }}>
+              ⚡ Kệ cạnh tranh trực tiếp — SoS chênh lệch &lt;5% — cần monitor thường xuyên
+            </div>
+          )}
+        </StepBox>
+      )}
+
+      {/* Step 7 */}
+      <StepBox n={7} icon="⚠️" title="On-Shelf Availability (OSA)">
+        {osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none").length === 0
+          ? <div style={{ fontSize: 13, color: "#4ade80" }}>✓ Tất cả sản phẩm đủ hàng — không có rủi ro OSA</div>
+          : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>{["Brand","SKU","Status","Risk","Facing còn","Action"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none").map((o: {brand:string;sku:string;status:string;riskLevel:string;facingsRemaining:number;action:string}, i: number) => (
+                  <tr key={i}>
+                    <td style={{ ...td2, fontWeight: 700 }}>{o.brand}</td>
+                    <td style={td2}>{o.sku}</td>
+                    <td style={td2}>{chip(o.status === "out-of-stock" ? "#ef4444" : o.status === "low-stock" ? "#fbbf24" : "#4ade80", o.status)}</td>
+                    <td style={td2}>{chip(riskColor(o.riskLevel), o.riskLevel.toUpperCase())}</td>
+                    <td style={{ ...td2, textAlign: "center", fontWeight: 700, color: riskColor(o.riskLevel) }}>{o.facingsRemaining}</td>
+                    <td style={{ ...td2, color: "#888" }}>{o.action}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        }
+      </StepBox>
+
+      {/* Step 8 */}
+      {recs.length > 0 && (
+        <StepBox n={8} icon="💡" title="Gợi ý & Báo cáo">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>{["Priority","Action","Reason","Category"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {recs.map((r: {priority:string;action:string;reason:string;category:string}, i: number) => (
+                <tr key={i}>
+                  <td style={td2}>{chip(r.priority === "high" ? "#ef4444" : r.priority === "medium" ? "#fbbf24" : "#4ade80", r.priority === "high" ? "🔴 HIGH" : r.priority === "medium" ? "🟡 MED" : "🟢 LOW")}</td>
+                  <td style={{ ...td2, fontWeight: 600, color: "#f0f0f0" }}>{r.action}</td>
+                  <td style={{ ...td2, color: "#888" }}>{r.reason}</td>
+                  <td style={td2}>{chip("#818cf8", r.category)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </StepBox>
+      )}
+    </div>
   );
 }
