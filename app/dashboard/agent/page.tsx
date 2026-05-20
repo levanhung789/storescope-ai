@@ -456,6 +456,9 @@ export default function AgentPage() {
           </div>
         )}
 
+        {/* ── Multi-Channel Integration ── */}
+        <ChannelsPanel />
+
         {/* Tab switcher */}
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
           {([
@@ -637,6 +640,9 @@ export default function AgentPage() {
       </main>
 
       {/* Policy editor modal */}
+      {/* ── Webchat Modal ── */}
+      <WebChatModal onClose={() => {}} />
+
       {editOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 4000, display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setEditOpen(false)}>
@@ -671,6 +677,219 @@ export default function AgentPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Channels Panel ─────────────────────────────────────────────────────────────
+function ChannelsPanel() {
+  const [stats, setStats]   = useState<{telegram:{users:number;analyses:number};zalo:{users:number;analyses:number};webchat:{users:number;analyses:number};totalRevenue:number} | null>(null);
+  const [cfg, setCfg]       = useState<{telegram:boolean;zalo:boolean} | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/agent/channels").then(r => r.json()).then(d => {
+      setStats(d.stats);
+      setCfg(d.configured);
+    });
+  }, []);
+
+  const cardS: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: 20, marginBottom: 16 };
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontSize: 11, color: "#6366f1", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 12, fontWeight: 700 }}>
+        Multi-Channel Integration
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+
+        {/* Telegram */}
+        <div style={{ ...cardS, marginBottom: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(0,136,204,0.15)", border: "1px solid rgba(0,136,204,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>✈️</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>Telegram Bot</div>
+              <div style={{ fontSize: 11, color: cfg?.telegram ? "#4ade80" : "#f87171" }}>
+                {cfg?.telegram ? "✓ Connected" : "⚠ Token missing"}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+            <span style={{ color: "#555" }}>Users linked</span>
+            <span style={{ color: "#a78bfa", fontWeight: 700 }}>{stats?.telegram.users ?? 0}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 14 }}>
+            <span style={{ color: "#555" }}>Analyses done</span>
+            <span style={{ color: "#4ade80", fontWeight: 700 }}>{stats?.telegram.analyses ?? 0}</span>
+          </div>
+          {!cfg?.telegram
+            ? <div style={{ padding: "8px 12px", background: "#0a0a0a", borderRadius: 8, fontSize: 11 }}>
+                <div style={{ color: "#fbbf24", marginBottom: 4 }}>Setup required:</div>
+                <div style={{ color: "#555" }}>1. Tạo bot tại @BotFather</div>
+                <div style={{ color: "#555" }}>2. Set TELEGRAM_BOT_TOKEN</div>
+                <div style={{ color: "#555", marginTop: 4 }}>3. Webhook URL:</div>
+                <code style={{ fontSize: 10, color: "#818cf8", wordBreak: "break-all" }}>
+                  https://storescope-ai.vercel.app/api/agent/telegram
+                </code>
+              </div>
+            : <div style={{ padding: "8px 12px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, fontSize: 11, color: "#4ade80" }}>
+                Bot active — users can send images to analyze
+              </div>
+          }
+        </div>
+
+        {/* Zalo */}
+        <div style={{ ...cardS, marginBottom: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(0,102,255,0.15)", border: "1px solid rgba(0,102,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💬</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>Zalo OA</div>
+              <div style={{ fontSize: 11, color: cfg?.zalo ? "#4ade80" : "#f87171" }}>
+                {cfg?.zalo ? "✓ Connected" : "⚠ Token missing"}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+            <span style={{ color: "#555" }}>Users linked</span>
+            <span style={{ color: "#a78bfa", fontWeight: 700 }}>{stats?.zalo.users ?? 0}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 14 }}>
+            <span style={{ color: "#555" }}>Analyses done</span>
+            <span style={{ color: "#4ade80", fontWeight: 700 }}>{stats?.zalo.analyses ?? 0}</span>
+          </div>
+          {!cfg?.zalo
+            ? <div style={{ padding: "8px 12px", background: "#0a0a0a", borderRadius: 8, fontSize: 11 }}>
+                <div style={{ color: "#fbbf24", marginBottom: 4 }}>Setup required:</div>
+                <div style={{ color: "#555" }}>1. Tạo OA tại oa.zalo.me</div>
+                <div style={{ color: "#555" }}>2. Set ZALO_OA_TOKEN</div>
+                <div style={{ color: "#555", marginTop: 4 }}>3. Webhook URL:</div>
+                <code style={{ fontSize: 10, color: "#818cf8", wordBreak: "break-all" }}>
+                  https://storescope-ai.vercel.app/api/agent/zalo
+                </code>
+              </div>
+            : <div style={{ padding: "8px 12px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, fontSize: 11, color: "#4ade80" }}>
+                OA active — users can send images to analyze
+              </div>
+          }
+        </div>
+
+        {/* Web Chat */}
+        <div style={{ ...cardS, marginBottom: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🌐</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>Web Chat</div>
+              <div style={{ fontSize: 11, color: "#4ade80" }}>✓ Always active</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+            <span style={{ color: "#555" }}>Sessions</span>
+            <span style={{ color: "#a78bfa", fontWeight: 700 }}>{stats?.webchat.users ?? 0}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 14 }}>
+            <span style={{ color: "#555" }}>Analyses done</span>
+            <span style={{ color: "#4ade80", fontWeight: 700 }}>{stats?.webchat.analyses ?? 0}</span>
+          </div>
+          <button onClick={() => setChatOpen(true)}
+            style={{ width: "100%", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 8, padding: "9px 0", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            Open Web Chat
+          </button>
+        </div>
+      </div>
+
+      {/* Revenue */}
+      {stats && stats.totalRevenue > 0 && (
+        <div style={{ ...cardS, marginBottom: 0, marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 13, color: "#555" }}>Total revenue from all channels</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: "#4ade80" }}>${stats.totalRevenue.toFixed(3)} USDC</span>
+        </div>
+      )}
+
+      {chatOpen && <WebChatModal onClose={() => setChatOpen(false)} />}
+    </div>
+  );
+}
+
+// ── Web Chat Modal ─────────────────────────────────────────────────────────────
+function WebChatModal({ onClose }: { onClose: () => void }) {
+  const [messages, setMessages] = useState<{role:"user"|"agent";content:string;timestamp:number}[]>([
+    { role: "agent", content: "👋 Xin chào! Gửi ảnh kệ hàng để tôi phân tích 8 bước (OSA, SoS, Facing Count).\n\n💳 Phí: $0.025 USDC/lần\nLiên kết ví Circle tại: /login", timestamp: Date.now() }
+  ]);
+  const [loading,  setLoading]  = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const endRef  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const handleImage = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      const base64  = dataUrl.split(",")[1];
+      const mime    = file.type;
+
+      setMessages(prev => [...prev, { role: "user", content: dataUrl, timestamp: Date.now() }]);
+      setLoading(true);
+      setMessages(prev => [...prev, { role: "agent", content: "⏳ Đang phân tích ảnh (8 bước)...", timestamp: Date.now() }]);
+
+      const session = JSON.parse(localStorage.getItem("storescope-circle-session") || "null");
+      const userId  = session?.userId ?? `web-${Date.now()}`;
+
+      const res  = await fetch("/api/agent/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "analyze", userId, imageBase64: base64, mimeType: mime }),
+      });
+      const data = await res.json() as { text?: string; error?: string };
+
+      setMessages(prev => [
+        ...prev.slice(0, -1), // remove "analyzing..."
+        { role: "agent", content: data.text ?? `❌ ${data.error ?? "Analysis failed"}`, timestamp: Date.now() },
+      ]);
+      setLoading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  if (!onClose) return null; // hidden by default
+
+  return (
+    <div style={{ position: "fixed", bottom: 24, right: 24, width: 380, height: 560, zIndex: 5000, display: "flex", flexDirection: "column", background: "#111", border: "1px solid #2a2a2a", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.8)" }}>
+      {/* Header */}
+      <div style={{ padding: "14px 18px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "#0a0a0a" }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>StoreScope AI Agent</div>
+          <div style={{ fontSize: 10, color: "#4ade80" }}>● Online · $0.025/analysis</div>
+        </div>
+        <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#555", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+      </div>
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflow: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+            <div style={{
+              maxWidth: "85%", padding: "10px 14px", borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+              background: m.role === "user" ? "#7c3aed" : "#1a1a1a",
+              fontSize: 12, color: "#f0f0f0", lineHeight: 1.6, whiteSpace: "pre-wrap",
+            }}>
+              {m.content.startsWith("data:image") ? <img src={m.content} alt="shelf" style={{ maxWidth: "100%", borderRadius: 8 }} /> : m.content}
+            </div>
+          </div>
+        ))}
+        <div ref={endRef} />
+      </div>
+
+      {/* Input */}
+      <div style={{ padding: "12px 14px", borderTop: "1px solid #1f1f1f", display: "flex", gap: 8 }}>
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImage(f); }} />
+        <button onClick={() => fileRef.current?.click()} disabled={loading}
+          style={{ flex: 1, background: loading ? "#1a1a1a" : "#7c3aed", color: loading ? "#555" : "#fff", border: "none", borderRadius: 10, padding: "10px 0", fontSize: 12, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
+          {loading ? "Analyzing..." : "📸 Send Shelf Image"}
+        </button>
+      </div>
     </div>
   );
 }
