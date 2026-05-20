@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ANALYSIS_TASKS, TOTAL_ANALYSIS_PRICE, type TaskId } from "../_lib/arc";
+import { useLang } from "../_lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -131,6 +132,7 @@ interface Props {
 }
 
 export default function AnalysisReport({ report, onSaved }: Props) {
+  const { t } = useLang();
   const printRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
@@ -174,7 +176,7 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
               <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>
-                Storescope.ai · Shelf Analysis Report
+                {t("report.subtitle")}
               </div>
               <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}>
                 Report #{report.reportId}
@@ -187,19 +189,19 @@ export default function AnalysisReport({ report, onSaved }: Props) {
             <div className="no-print" style={{ display: "flex", gap: 8 }}>
               <button onClick={handleSave}
                 style={{ padding: "8px 14px", background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 8, color: "#a78bfa", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                Save to Account
+                {t("report.save")}
               </button>
               <button onClick={() => exportCSV(report)}
                 style={{ padding: "8px 14px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#888", fontSize: 12, cursor: "pointer" }}>
-                Export CSV
+                {t("report.csv")}
               </button>
               <button onClick={() => exportJSON(report)}
                 style={{ padding: "8px 14px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#888", fontSize: 12, cursor: "pointer" }}>
-                Export JSON
+                {t("report.json")}
               </button>
               <button onClick={printReport}
                 style={{ padding: "8px 14px", background: "#7c3aed", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                Print / PDF
+                {t("report.print")}
               </button>
             </div>
           </div>
@@ -207,12 +209,12 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           {/* Meta grid */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: 20 }}>
             {[
-              { label: "Image ID",    value: report.imageId },
-              { label: "Wallet",      value: report.walletAddress.startsWith("0x") && report.walletAddress.length === 42
+              { label: t("report.imageId"),   value: report.imageId },
+              { label: t("report.wallet"),     value: report.walletAddress.startsWith("0x") && report.walletAddress.length === 42
                   ? `${report.walletAddress.slice(0, 8)}…${report.walletAddress.slice(-6)}`
-                  : (report.walletAddress || "Not connected") },
-              { label: "Total Paid",  value: `$${report.totalPaid.toFixed(3)} USDC` },
-              { label: "ARC Chain",   value: "Testnet · ID 5042002" },
+                  : (report.walletAddress || t("report.notConnected")) },
+              { label: t("report.totalPaid"), value: `$${report.totalPaid.toFixed(3)} USDC` },
+              { label: t("report.arcChain"),  value: "Testnet · ID 5042002" },
             ].map(m => (
               <div key={m.label} style={{ background: "#0a0a0a", borderRadius: 10, padding: "12px 14px" }}>
                 <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 5 }}>{m.label}</div>
@@ -224,7 +226,7 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           {/* Proof hash */}
           {report.proofTxHash && report.proofTxHash.startsWith("0x") && report.proofTxHash.length === 66 ? (
             <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>Proof on ArcScan</span>
+              <span style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>{t("report.proof")}</span>
               <a href={`https://testnet.arcscan.app/tx/${report.proofTxHash}`} target="_blank" rel="noreferrer"
                 style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {report.proofTxHash.slice(0, 22)}…{report.proofTxHash.slice(-8)} ↗
@@ -232,22 +234,22 @@ export default function AnalysisReport({ report, onSaved }: Props) {
             </div>
           ) : (
             <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10 }}>
-              <span style={{ fontSize: 11, color: "#555" }}>On-chain proof recording... (run analysis to generate TX)</span>
+              <span style={{ fontSize: 11, color: "#555" }}>{t("report.proofPending")}</span>
             </div>
           )}
         </div>
 
         {/* ── Vision Agent 8-step Report (shown when Vision Agent was used) ── */}
-        {report.visionPipeline && <VisionPipelineReport p={report.visionPipeline} />}
+        {report.visionPipeline && <VisionPipelineReport p={report.visionPipeline} t={t} />}
 
         {/* ── Summary stats ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
           {[
-            { label: "SKUs Detected",   value: String(report.skus.length),                                                    color: "#f0f0f0" },
-            { label: "Matched",          value: String(report.skus.filter(s => s.status === "Matched").length),                color: "#4ade80" },
-            { label: "Review Needed",    value: String(report.skus.filter(s => s.status === "Review").length),                 color: "#fbbf24" },
-            { label: "Total Facings",    value: String(report.skus.reduce((a, s) => a + s.facings, 0)),                       color: "#a78bfa" },
-            { label: "Avg Confidence",   value: Math.round(report.skus.reduce((a, s) => a + s.confidence, 0) / report.skus.length) + "%", color: "#38bdf8" },
+            { label: t("report.skusDetected"), value: String(report.skus.length),                                                    color: "#f0f0f0" },
+            { label: t("report.matched"),      value: String(report.skus.filter(s => s.status === "Matched").length),                color: "#4ade80" },
+            { label: t("report.reviewNeeded"), value: String(report.skus.filter(s => s.status === "Review").length),                 color: "#fbbf24" },
+            { label: t("report.totalFacings"), value: String(report.skus.reduce((a, s) => a + s.facings, 0)),                       color: "#a78bfa" },
+            { label: t("report.avgConf"),      value: Math.round(report.skus.reduce((a, s) => a + s.confidence, 0) / report.skus.length) + "%", color: "#38bdf8" },
           ].map(s => (
             <div key={s.label} style={{ ...card, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7 }}>{s.label}</div>
@@ -259,14 +261,14 @@ export default function AnalysisReport({ report, onSaved }: Props) {
         {/* ── SKU Detection Table ── */}
         <div style={card}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f" }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>SKU Detection Results</div>
-            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{report.skus.length} products detected · AI confidence scoring applied</div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{t("report.skuTitle")}</div>
+            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{report.skus.length} {t("report.skuSub")}</div>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  {["SKU", "Product", "Brand", "Category", "Pack", "Facings", "Price (VND)", "Matched Company", "Confidence", "Status"].map(h => (
+                  {[t("report.colSku"),t("report.colProduct"),t("report.colBrand"),t("report.colCategory"),t("report.colPack"),t("report.colFacings"),t("report.colPrice"),t("report.colCompany"),t("report.colConf"),t("report.colStatus")].map(h => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
@@ -303,7 +305,7 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           {/* Shelf share */}
           <div style={card}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f" }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>Shelf Share Analysis</div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>{t("report.shelfShare")}</div>
             </div>
             <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               {report.shelfShare.map(s => (
@@ -323,11 +325,11 @@ export default function AnalysisReport({ report, onSaved }: Props) {
           {/* Stock risk */}
           <div style={card}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f" }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>Stock Risk Alerts</div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>{t("report.stockRisk")}</div>
             </div>
             <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
               {report.stockRisk.length === 0 ? (
-                <div style={{ fontSize: 13, color: "#4ade80" }}>No stock risks detected.</div>
+                <div style={{ fontSize: 13, color: "#4ade80" }}>{t("report.noRisk")}</div>
               ) : report.stockRisk.map((r, i) => (
                 <div key={i} style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 10 }}>
                   <span style={{ color: "#f87171", fontSize: 14, flexShrink: 0 }}>▲</span>
@@ -341,8 +343,8 @@ export default function AnalysisReport({ report, onSaved }: Props) {
         {/* ── Recommendations ── */}
         <div style={card}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f" }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>AI Recommendations</div>
-            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>Generated by storescope.ai Recommendation Engine</div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{t("report.aiRec")}</div>
+            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t("report.aiRecSub")}</div>
           </div>
           <div style={{ padding: 20 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -361,14 +363,14 @@ export default function AnalysisReport({ report, onSaved }: Props) {
         {/* ── Task log ── */}
         <div style={card}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f" }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>Task Payment Log</div>
-            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>10 micro-transactions · All verified on ARC Testnet</div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{t("report.taskLog")}</div>
+            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t("report.taskLogSub")}</div>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  {["#", "Task", "USDC Paid", "Transaction Hash", "Result"].map(h => (
+                  {["#", t("report.colTask"), t("report.colPaid"), t("report.colTxHash"), t("report.colResult")].map(h => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
@@ -385,14 +387,14 @@ export default function AnalysisReport({ report, onSaved }: Props) {
                             style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none" }}>
                             {t.txHash.slice(0, 18)}…{t.txHash.slice(-6)} ↗
                           </a>
-                        : <span style={{ fontSize: 11, color: "#444" }}>recording…</span>
+                        : <span style={{ fontSize: 11, color: "#444" }}>{t("report.recording")}</span>
                       }
                     </td>
                     <td style={{ ...td, fontSize: 12, color: "#888" }}>{t.result}</td>
                   </tr>
                 ))}
                 <tr style={{ background: "#0a0a0a" }}>
-                  <td colSpan={2} style={{ ...td, fontWeight: 700, color: "#f0f0f0" }}>Total</td>
+                  <td colSpan={2} style={{ ...td, fontWeight: 700, color: "#f0f0f0" }}>{t("report.total")}</td>
                   <td style={{ ...td, fontWeight: 800, color: "#4ade80", fontSize: 15 }}>${report.totalPaid.toFixed(3)}</td>
                   <td colSpan={2} style={td} />
                 </tr>
@@ -408,7 +410,7 @@ export default function AnalysisReport({ report, onSaved }: Props) {
 
 // ── Vision Agent 8-Step Pipeline Report ──────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function VisionPipelineReport({ p }: { p: Record<string, any> }) {
+function VisionPipelineReport({ p, t }: { p: Record<string, any>; t: (k: string) => string }) {
   const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 14, overflow: "hidden", marginBottom: 0 };
   const stepHeader = (icon: string, n: number, label: string, sub?: string): React.CSSProperties => ({ all: "unset" as "unset" });
   void stepHeader;
@@ -427,10 +429,10 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
         <div style={{ padding: "12px 18px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "rgba(124,58,237,0.04)" }}>
           <span style={{ fontSize: 18 }}>{icon}</span>
           <div>
-            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.1em" }}>Step {n}</div>
+            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.1em" }}>{t("report.step")} {n}</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>{title}</div>
           </div>
-          <span style={{ marginLeft: "auto", fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", padding: "2px 8px", borderRadius: 999 }}>✓ Done</span>
+          <span style={{ marginLeft: "auto", fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", padding: "2px 8px", borderRadius: 999 }}>{t("report.done")}</span>
         </div>
         <div style={{ padding: "16px 18px" }}>{children}</div>
       </div>
@@ -453,23 +455,23 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
       {/* Divider */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
-        <div style={{ fontSize: 11, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 700 }}>Vision Agent — 8-Step Analysis</div>
+        <div style={{ fontSize: 11, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 700 }}>{t("report.visionAgent")}</div>
         <div style={{ flex: 1, height: 1, background: "#1f1f1f" }} />
       </div>
 
       {/* Step 1 */}
-      <StepBox n={1} icon="🔍" title="Chất lượng ảnh & Phối cảnh">
+      <StepBox n={1} icon="🔍" title={`${t("task.quality.label")} & ${t("report.perspective")}`}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               {[
-                { k: "Score",            v: `${q.score ?? "—"}/100` },
-                { k: "Góc chụp",         v: q.angle ?? "—" },
-                { k: "Lighting",         v: q.lighting ?? "—" },
-                { k: "Blur",             v: q.blur ?? "—" },
+                { k: t("report.score"),    v: `${q.score ?? "—"}/100` },
+                { k: t("report.angle"),    v: q.angle ?? "—" },
+                { k: t("report.lighting"), v: q.lighting ?? "—" },
+                { k: t("report.blur"),     v: q.blur ?? "—" },
               ].map(r => (
                 <tr key={r.k}>
-                  <td style={{ ...td2, color: "#555", width: 120 }}>{r.k}</td>
+                  <td style={{ ...td2, color: "#555", width: 140 }}>{r.k}</td>
                   <td style={{ ...td2, fontWeight: 600, color: "#f0f0f0" }}>{r.v}</td>
                 </tr>
               ))}
@@ -477,13 +479,11 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
           </table>
           {persp.shootingAngle !== undefined && (
             <div style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-              <div style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, marginBottom: 8 }}>Phối cảnh (Perspective)</div>
+              <div style={{ fontSize: 11, color: "#818cf8", fontWeight: 700, marginBottom: 8 }}>{t("report.perspective")}</div>
               {[
-                { k: "Góc chụp",      v: `~${persp.shootingAngle}°` },
-                { k: "Loại",          v: persp.perspectiveType ?? "—" },
-                { k: "Hệ số hiệu chỉnh", v: persp.correctionFactor ?? 1 },
-                { k: "Phía gần",      v: persp.nearSide ?? "—" },
-                { k: "Tỉ lệ gần/xa",  v: `${persp.nearFarRatio ?? 1}×` },
+                { k: t("report.angle"),      v: `~${persp.shootingAngle}°` },
+                { k: t("report.corrFactor"), v: persp.correctionFactor ?? 1 },
+                { k: t("report.nearFar"),    v: `${persp.nearFarRatio ?? 1}×` },
               ].map(r => (
                 <div key={r.k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                   <span style={{ color: "#555" }}>{r.k}</span>
@@ -491,21 +491,20 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
                 </div>
               ))}
               {persp.depthVisible && <div style={{ marginTop: 8, fontSize: 11, color: "#fbbf24" }}>⚠ {persp.depthVisibleNote}</div>}
-              {persp.correctionNote && <div style={{ marginTop: 4, fontSize: 10, color: "#555" }}>{persp.correctionNote}</div>}
             </div>
           )}
         </div>
-        {q.issues?.length > 0 && <div style={{ marginTop: 10, fontSize: 12, color: "#fbbf24" }}>Issues: {q.issues.join(", ")}</div>}
+        {q.issues?.length > 0 && <div style={{ marginTop: 10, fontSize: 12, color: "#fbbf24" }}>{q.issues.join(", ")}</div>}
       </StepBox>
 
       {/* Step 2 */}
-      <StepBox n={2} icon="📦" title="Đếm sản phẩm">
+      <StepBox n={2} icon="📦" title={t("task.shelf_detect.desc")}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 12 }}>
           {[
-            { label: "Tổng units",   value: cnt.totalUnits ?? "—" },
-            { label: "Nhìn thấy rõ", value: cnt.visibleUnits ?? "—" },
-            { label: "Độ sâu kệ",    value: `~${cnt.estimatedDepth ?? 1}` },
-            { label: "Số tầng kệ",   value: cnt.shelfRows ?? "—" },
+            { label: t("report.totalUnits"),  value: cnt.totalUnits ?? "—" },
+            { label: t("report.visibleUnits"),value: cnt.visibleUnits ?? "—" },
+            { label: t("report.shelfDepth"),  value: `~${cnt.estimatedDepth ?? 1}` },
+            { label: t("report.shelfRows"),   value: cnt.shelfRows ?? "—" },
           ].map(k => (
             <div key={k.label} style={{ background: "#0a0a0a", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
               <div style={{ fontSize: 10, color: "#555", marginBottom: 4 }}>{k.label}</div>
@@ -518,11 +517,11 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
 
       {/* Step 3 */}
       {skus.length > 0 && (
-        <StepBox n={3} icon="🏷️" title={`Nhận diện Brand / SKU — ${skus.length} SKUs`}>
+        <StepBox n={3} icon="🏷️" title={`${t("task.sku_detect.label")} — ${skus.length} SKUs`}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr>{["Brand","SKU","Sector","Confidence","Giá"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+                <tr>{[t("report.colBrand"),t("report.sku"),t("report.colCategory"),t("report.colConf"),t("report.colPrice")].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {skus.map((s: {brand:string;sku:string;sector:string;confidence:number;price_vnd:number|null}, i: number) => (
@@ -548,7 +547,7 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr>{["Brand","SKU","Facing (raw)","Facing (adj)","Depth","Ghi chú"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+                <tr>{[t("report.colBrand"),t("report.sku"),t("report.facingRaw"),t("report.facingAdj"),t("report.depth"),t("report.note")].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {facs.map((f: {brand:string;sku:string;facing:number;facingAdjusted:number;depth:number;isDepthVisible:boolean;perspectiveNote:string}, i: number) => (
@@ -565,7 +564,7 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
                   </tr>
                 ))}
                 <tr style={{ background: "#0a0a0a" }}>
-                  <td colSpan={3} style={{ ...td2, fontWeight: 700, color: "#f0f0f0" }}>Total</td>
+                  <td colSpan={3} style={{ ...td2, fontWeight: 700, color: "#f0f0f0" }}>{t("report.total")}</td>
                   <td style={{ ...td2, fontWeight: 800, color: "#a78bfa", fontSize: 15, textAlign: "center" }}>{p.totalFacings ?? facs.reduce((s: number, f: {facingAdjusted:number}) => s + (f.facingAdjusted ?? 0), 0)}</td>
                   <td colSpan={2} style={td2} />
                 </tr>
@@ -580,11 +579,11 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
 
       {/* Step 5 */}
       {pos.length > 0 && (
-        <StepBox n={5} icon="📍" title="Vị trí kệ">
+        <StepBox n={5} icon="📍" title={t("task.layout_sim.label")}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr>{["Brand","SKU","Tier","Ghi chú"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+                <tr>{[t("report.colBrand"),t("report.sku"),t("report.tier"),t("report.note")].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {pos.map((p2: {brand:string;sku:string;tier:string;tierNote:string}, i: number) => (
@@ -603,14 +602,14 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
 
       {/* Step 6 */}
       {sos.length > 0 && (
-        <StepBox n={6} icon="📊" title={`Share of Shelf — tổng ${p.totalFacings ?? "?"} facings`}>
+        <StepBox n={6} icon="📊" title={`${t("report.shelfShare")} — ${p.totalFacings ?? "?"} ${t("report.facings")}`}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {sos.map((s: {brand:string;facings:number;shareOfShelf:number;blockLength:string}) => (
               <div key={s.brand}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, alignItems: "center" }}>
                   <div>
                     <span style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>{s.brand}</span>
-                    <span style={{ fontSize: 11, color: "#555", marginLeft: 10 }}>{s.facings} facings · {s.blockLength}</span>
+                    <span style={{ fontSize: 11, color: "#555", marginLeft: 10 }}>{s.facings} {t("report.facings")} · {s.blockLength}</span>
                   </div>
                   <span style={{ fontSize: 22, fontWeight: 800, color: "#a78bfa" }}>{s.shareOfShelf}%</span>
                 </div>
@@ -629,13 +628,13 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
       )}
 
       {/* Step 7 */}
-      <StepBox n={7} icon="⚠️" title="On-Shelf Availability (OSA)">
+      <StepBox n={7} icon="⚠️" title={`${t("task.stock_risk.label")} — OSA`}>
         {osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none").length === 0
-          ? <div style={{ fontSize: 13, color: "#4ade80" }}>✓ Tất cả sản phẩm đủ hàng — không có rủi ro OSA</div>
+          ? <div style={{ fontSize: 13, color: "#4ade80" }}>✓ {t("report.noRisk")}</div>
           : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr>{["Brand","SKU","Status","Risk","Facing còn","Action"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+                <tr>{[t("report.colBrand"),t("report.sku"),t("report.status"),t("report.riskLevel"),t("report.remaining"),t("report.action")].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {osa.filter((o: {riskLevel:string}) => o.riskLevel !== "none").map((o: {brand:string;sku:string;status:string;riskLevel:string;facingsRemaining:number;action:string}, i: number) => (
@@ -656,10 +655,10 @@ function VisionPipelineReport({ p }: { p: Record<string, any> }) {
 
       {/* Step 8 */}
       {recs.length > 0 && (
-        <StepBox n={8} icon="💡" title="Gợi ý & Báo cáo">
+        <StepBox n={8} icon="💡" title={t("task.recommend.label")}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr>{["Priority","Action","Reason","Category"].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              <tr>{[t("report.priority"),t("report.action"),t("report.reason"),t("report.category")].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {recs.map((r: {priority:string;action:string;reason:string;category:string}, i: number) => (
