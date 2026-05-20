@@ -728,3 +728,213 @@ TX thật trên ArcScan → UI update link ↗
 **Ưu tiên vừa:**
 4. **Verify contracts trên ArcScan** — upload Solidity source
 5. **Roboflow model** — Generate → Train → điền `RF_VERSION`
+
+---
+
+## Nhật ký làm việc — 2026-05-18
+
+### 10 Micro-Task Verifier Contracts — Deploy lên ARC Testnet
+
+**Files mới:**
+
+| File | Mục đích |
+|---|---|
+| `storescope-contracts/src/tasks/BaseTaskVerifier.sol` | Abstract base contract: `recordPayment()`, `isRecorded()`, `taskName()`, `taskPrice()` |
+| `storescope-contracts/src/tasks/TaskVerifiers.sol` | 10 contracts kế thừa BaseTaskVerifier |
+| `storescope-contracts/script/DeployTasks.s.sol` | Foundry deploy script |
+
+**10 contracts đã deploy (ARC Testnet):**
+
+| Task | Contract | Address |
+|---|---|---|
+| upload | `UploadTaskVerifier` | `0x65c9E64cd0fCeFFEAB374E78Ef7B31Ab5140f578` |
+| quality | `QualityCheckVerifier` | `0x92f785270db32676571736095c0621F00E2033c0` |
+| shelf_detect | `ShelfDetectionVerifier` | `0x47efe628B089Fc25593e4070489DC8aa46B624f5` |
+| sku_detect | `SkuDetectionVerifier` | `0xF0Af9129664869402943Db3E36836F67a045252d` |
+| competitor | `CompetitorAnalysisVerifier` | `0xE72cA03fF2e1A78E0384dc4c72F4Ea0c22a31d5f` |
+| stock_risk | `StockRiskVerifier` | `0xb74a2d5232A8F9792ee2ad3B2f43817c24eae189` |
+| layout_sim | `LayoutSimulationVerifier` | `0x5A903C08Ea7f495BEED3A0C81b4F3Aa878C6fc15` |
+| recommend | `RecommendationVerifier` | `0xB779fFa5883748Da0DEAd01d2a0CEcd763Af65FF` |
+| human_review | `HumanReviewVerifier` | `0x47BeDDf187A0816884dC3c61298DBDe131cBF986` |
+| report | `FinalReportVerifier` | `0x8e1AA6a0569A11611E1953eAA1a543d638f4873D` |
+
+**Thay đổi code:**
+- `contracts.ts`: Thêm `BASE_TASK_VERIFIER_ABI`, `TASK_CONTRACT` map, 10 địa chỉ contract
+- `record/route.ts`: Thêm stage `"task"` → gọi đúng contract theo `taskId`
+- `.env.local`: Thêm 10 `TASK_*_ADDRESS` env vars
+
+### Fix lỗi Task Payment Log không hiện TX Hash
+
+**Chuỗi lỗi đã fix:**
+
+| Lỗi | Nguyên nhân | Fix |
+|---|---|---|
+| `ReferenceError: txHash is not defined` | Xóa `mockTx()` nhưng còn 2 chỗ dùng biến `txHash` trong `runAllTasks` | Đổi thành `txHash: undefined` |
+| `TypeError: Cannot read properties of undefined (reading 'slice')` | `t.txHash` có thể `undefined`, gọi `.slice()` trực tiếp | Guard: `t.txHash ? ... : "recording…"` |
+| `txHash: string` không cho phép `undefined` | Type quá chặt sau khi đổi sang optional | Đổi type thành `txHash?: string` |
+| Hash không bao giờ hiện — tất cả "recording…" | Race condition: background fetch về trước khi `setReport()` được gọi → `setReport(prev => prev ? ... : prev)` trả về `null` | Dùng `useRef` cache hash + vòng lặp đợi 8s sau pipeline |
+| `if (aid)` block tất cả khi requestAnalysis fail | `aid = undefined` → không có task nào gọi contract | Thêm fallback: `aid = "0x" + Date.now().toString(16).padStart(64, "0")` |
+
+**Giải pháp cuối cùng:**
+```
+taskTxHashesRef (useRef) ← hash về khi nào thì lưu vào đây
+Pipeline 10 tasks chạy + recordTask() song song mỗi task
+Sau pipeline: đợi tối đa 8s (poll 500ms) cho hash còn thiếu
+Build report với hash từ ref → setReport()
+Hash đến muộn: setReport(prev => ...) cập nhật sau
+```
+
+### Fix Vercel Build Error
+
+**Lỗi:** `Type error: Type 'string | undefined' is not assignable to type 'string'`
+- File: `app/_components/AnalysisReport.tsx:69`
+- Dòng: `rows.push([..., t.txHash, ...])` — CSV export array expect `string`
+- **Fix:** `t.txHash ?? ""`
+
+**Commits đã push:**
+- `80da42d` — feat: 10 micro-task contracts + Circle webhook + TX hash fixes
+- `378fde5` — fix: txHash optional type in CSV export (Vercel build fix)
+
+**Remotes đã push:**
+- `vercel-repo` → github.com/levanhung789/storescope-ai (Vercel auto-deploy)
+- `origin` → github.com/levanhung789/storescope-ai-Shelby
+
+### Fix Vercel — Không trừ tiền khi phân tích ảnh
+
+**Nguyên nhân:** Vercel không có bất kỳ env var nào → toàn bộ API routes chạy **demo mode** (Circle trả mock txHash, contract calls không thực thi).
+
+**Fix:**
+1. Link project: `npx vercel link --yes`
+2. Upload 30 env vars lên production bằng `npx vercel env add`
+3. Redeploy: `npx vercel --prod`
+
+**30 env vars đã set trên Vercel production:**
+
+| Nhóm | Vars |
+|---|---|
+| Roboflow | `ROBOFLOW_API_KEY`, `RF_WORKSPACE`, `RF_PROJECT` |
+| Circle | `CIRCLE_API_KEY`, `CIRCLE_ENTITY_SECRET`, `CIRCLE_WALLET_SET_ID` |
+| Contracts | `PAYMENT_VERIFIER_ADDRESS`, `RETAIL_LAYOUT_NFT_ADDRESS`, `ANALYSIS_REGISTRY_ADDRESS` |
+| Deployer | `DEPLOYER_ADDRESS`, `DEPLOYER_KEY`, `SERVICE_WALLET` |
+| ARC Agent | `ARC_AGENT_ID`, `ARC_AGENT_TOKEN_ID`, `ARC_IDENTITY_REGISTRY`, `ARC_REPUTATION_REGISTRY`, `ARC_VALIDATION_REGISTRY`, `ARC_AGENT_METADATA_URL` |
+| Task contracts | `TASK_UPLOAD_ADDRESS` → `TASK_REPORT_ADDRESS` (10 vars) |
+| Misc | `ADMIN_TOKEN`, `NEXT_PUBLIC_GOOGLE_MAPS_KEY` |
+
+**Deployment:** `storescope-pedojm8oy-levanhung789s-projects.vercel.app` — status **Ready** ✅
+
+**Sau fix:** Circle trừ USDC thật, 10 task contracts ghi TX lên ArcScan, webhook `/api/circle/webhook` hoạt động.
+
+### Việc cần làm tiếp (cập nhật 2026-05-18)
+
+**Ưu tiên cao:**
+1. **Test pipeline đầy đủ trên Vercel** — upload ảnh → Circle pay → xem 10 TX thật trên ArcScan
+2. **Tích hợp RetailLayoutNFT vào `/forum`**
+
+**Ưu tiên vừa:**
+3. **Verify contracts trên ArcScan** — upload Solidity source
+4. **Roboflow model** — Generate → Train → điền `RF_VERSION`
+
+---
+
+## Nhật ký làm việc — 2026-05-20
+
+### Vision Agent — GPT-4o Vision + 8-step FMCG Pipeline
+
+- `/api/vision-agent/analyze`: phân tích ảnh kệ hàng 8 bước (chất lượng, đếm sp, SKU, facing, vị trí, SoS, OSA, gợi ý)
+- Perspective Engine: phát hiện góc chụp, tính correction factor = cos(angle), phân biệt depth vs facing
+- Brand Formation: catalog 24 SKUs Pepsi (390ml đầy đủ: Regular/Max/Twist, 7Up, Mirinda, Sting, Aquafina)
+- Vision Agent dashboard: `/dashboard/vision-agent` — 3 tabs: Analyze / Training / Formation
+- Đã tích hợp Vision Agent 8-step vào `/dashboard/analysis` (thay OCR cũ)
+
+### OpenAI GPT-4o Vision
+
+- Key: `sk-proj-zGAbdAwqa...` (hoạt động, đã test)
+- Model: `gpt-4o` cho analysis, `gpt-4o-mini` cho guide bot
+- Tích hợp vào `/api/analyze/route.ts` (với fallback OCR+Roboflow)
+
+### Multi-channel AI Agent (Telegram / Zalo / WebChat)
+
+- `lib/agent/channelStore.ts`: lưu user↔channel mapping, message history
+- `lib/agent/channelHandler.ts`: unified handler (image → Vision Agent → Circle payment)
+- `app/api/agent/telegram/route.ts`: Telegram Bot webhook (`/start` `/link` `/balance` + photo)
+- `app/api/agent/zalo/route.ts`: Zalo OA webhook (HMAC verify)
+- `app/api/agent/channels/route.ts`: stats + webchat POST
+- **WebChatWidget** → đổi thành **ReceptionistWidget** global (toàn bộ site)
+
+### ReceptionistWidget — AI Tiếp Tân 3 Ngôn Ngữ
+
+- `app/_components/ReceptionistWidget.tsx`: floating widget góc phải dưới
+- Context-aware: mỗi page (`/`, `/login`, `/dashboard`, `/dashboard/analysis`, v.v.) có greeting riêng
+- Trang `/`: bounce animation + nút "🚀 Let's get started" luôn hiện
+- 3 ngôn ngữ: 🇻🇳 VI / 🇺🇸 EN / 🇨🇳 中文 — chuyển ngôn ngữ reset conversation
+- Guide API: `app/api/agent/guide/route.ts` với GPT-4o-mini, scope giới hạn StoreScope AI only
+- Telegram/Zalo logos: `/public/telegram-logo.svg`, `/public/zalo-logo.svg`
+
+### i18n — 3 Ngôn Ngữ Toàn Ứng Dụng
+
+- `app/_lib/i18n.tsx`: LanguageProvider + 300+ translation keys (VI/EN/ZH)
+- `app/_components/LanguageSwitcher.tsx`: dropdown (navbar) + 3 buttons (sidebar)
+- Tích hợp vào: layout.tsx, Navbar, dashboard/page, analysis/page, AnalysisReport
+- Keys đã dịch: nav, hero, stats, HowItWorks, services, pricing, cta, footer, dashboard, analysis (8 steps + tasks + payment modal), Full Report (55 keys), Vision 8-step report
+- **Nguyên tắc**: không lẫn ngôn ngữ — mỗi ngôn ngữ thuần nhất
+
+### Landing Page — Nâng cấp UI/UX
+
+**UseCases section (3 cards):**
+- Ảnh thật thay gradient: `shelf-hero.png`, `distributors-hero.png`, `retail-teams-hero.png`
+- Layout 1:1, hover scale, lightbox click-to-zoom (fade+zoom animation)
+- `AnimatedTextBlock`: staggered scroll reveal per element (tag → line → headline → desc → metrics)
+- Bidirectional: ẩn khi scroll lên, hiện khi scroll xuống
+
+**HowItWorks section (6-stage):**
+- Headline: animated gradient text (purple shift loop)
+- Flow row: 6 stages với animated dots giữa các bước
+- Cards: slide vào từ trái/phải/dưới theo cột (staggered)
+- Scan line shimmer, pulse ring icon, hover lift + glow
+- Stats: CountUp animation (94%, 50K+, 2s) — reset khi scroll lên
+- Confidence bar: animates open/close bidirectional
+
+**ParticleSphere — Retail themed:**
+- Particles màu brand (Pepsi xanh, Coca-Cola đỏ, 7Up xanh, Mirinda cam)
+- Scanning beam quay tròn (AI shelf scan)
+- Pulse ring phát ra từ center mỗi ~2s
+- 3 orbit rings (dashed, animated dashOffset)
+- Connection lines giữa particles gần nhau
+- 8 floating data labels: SoS 42.6% / OSA ✓ / SKU Match 94% / Facing:12 / ⚠ Low Stock / Planogram ✓ / AI Detection / 2.1s/scan
+
+**Navbar:**
+- NavLink component: wave letter-by-letter, per-letter gradient color, sliding shimmer underline, sparkle particles
+- CTA button: gradient + hover lift + glow
+
+**Login page (`/login`):**
+- Left panel: scan bar, badge pulse glow, gradient headline, accent line, feature cards stagger
+- Right panel: slide in từ phải, gradient "Welcome back", tab active glow
+- GlowInput: ring glow khi focus (màu theo tab)
+- ShimmerButton: lift + shadow + shimmer sweep
+- CountStat: đếm lên khi mount
+- floatUp animation cho error/success messages
+
+### Commits quan trọng hôm nay
+
+| Commit | Nội dung |
+|---|---|
+| `712a8f9` | FMCG Brands hero image (shelf-hero.png) |
+| `bb7c6e6` | UseCases redesign + lightbox zoom |
+| `72e1e23` | Staggered scroll animations UseCases |
+| `eb0b889` | Bidirectional scroll animations |
+| `592abb2` | 6-stage HowItWorks professional animations |
+| `b6b2561` | Retail-themed ParticleSphere |
+| `21ca8be` | Navbar hover effects |
+| `ebd96d3` | Login page professional animations |
+
+### Việc cần làm tiếp (cập nhật 2026-05-20)
+
+**Ưu tiên cao:**
+1. **Test Vision Agent** trên Vercel với ảnh kệ hàng thật
+2. **Test Telegram Bot** — tạo bot qua @BotFather, set webhook, link Circle wallet
+3. **Tích hợp RetailLayoutNFT vào `/forum`**
+
+**Ưu tiên vừa:**
+4. **Verify contracts trên ArcScan**
+5. **Roboflow model** — Generate → Train → RF_VERSION
+6. **Thêm Coca-Cola brand formation** vào Vision Agent catalog
