@@ -26,6 +26,9 @@ interface PipelineResult {
   totalFacings: number; topBrand: string; summary: string;
 }
 interface Stats { totalAnalyses: number; avgFeedbackScore: number; trainingExamples: number; topBrands: { brand: string; count: number }[]; modelStatus: string; recentAnalyses: { id: string; createdAt: number; score?: number; summary: string; brands: number; quality: number }[]; exampleSummary: { id: string; quality: string; brands: number; score?: number; addedAt: number }[]; }
+interface BrandSKU { id: string; sku: string; variant: string; format: string; sizeML: number; color: string; label: string; distinguisher?: string; priceVND?: {min:number;max:number}; priceEUR?: {min:number;max:number}; }
+interface BrandFormationData { brandId: string; brandName: string; company: string; active: boolean; skuCount: number; }
+interface BrandsData { brands: BrandFormationData[]; skus: { pepsi: BrandSKU[] }; }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: "20px 24px" };
@@ -55,7 +58,8 @@ export default function VisionAgentPage() {
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [saveEx,    setSaveEx]    = useState(false);
-  const [tab,       setTab]       = useState<"analyze"|"training"|"stats">("analyze");
+  const [tab,       setTab]       = useState<"analyze"|"training"|"stats"|"formation">("analyze");
+  const [brandsData, setBrandsData] = useState<BrandsData | null>(null);
 
   const loadStats = useCallback(async () => {
     const res = await fetch("/api/vision-agent/stats");
@@ -63,6 +67,12 @@ export default function VisionAgentPage() {
   }, []);
 
   useEffect(() => { loadStats(); }, [loadStats]);
+
+  useEffect(() => {
+    if (tab === "formation" && !brandsData) {
+      fetch("/api/vision-agent/brands").then(r => r.json()).then(setBrandsData);
+    }
+  }, [tab, brandsData]);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) return;
@@ -133,9 +143,12 @@ export default function VisionAgentPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid #1f1f1f", padding: "0 28px" }}>
-          {(["analyze","training","stats"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: "12px 20px", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, background: "transparent", color: tab === t ? "#a78bfa" : "#555", borderBottom: tab === t ? "2px solid #7c3aed" : "2px solid transparent", textTransform: "capitalize" }}>
-              {t === "analyze" ? "Analyze" : t === "training" ? `Training (${stats?.trainingExamples ?? 0})` : "Stats"}
+          {(["analyze","formation","training","stats"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{ padding: "12px 20px", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, background: "transparent", color: tab === t ? "#a78bfa" : "#555", borderBottom: tab === t ? "2px solid #7c3aed" : "2px solid transparent" }}>
+              {t === "analyze" ? "Analyze"
+               : t === "formation" ? "🏷️ Formation"
+               : t === "training" ? `Training (${stats?.trainingExamples ?? 0})`
+               : "Stats"}
             </button>
           ))}
         </div>
@@ -469,6 +482,111 @@ export default function VisionAgentPage() {
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ── FORMATION TAB ── */}
+          {tab === "formation" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* Header */}
+              <div style={{ ...card, background: "rgba(124,58,237,0.05)", borderColor: "rgba(124,58,237,0.2)", padding: "20px 24px" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Formation à la reconnaissance des produits</div>
+                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.7 }}>
+                  Entraînez l&apos;agent à reconnaître les produits de chaque marque avec précision.<br/>
+                  Les catalogues de marques enrichissent le prompt GPT-4o avec les visuels et caractéristiques spécifiques.
+                </div>
+              </div>
+
+              {/* Active brands */}
+              {brandsData?.brands.map(b => (
+                <div key={b.brandId} style={{ ...card, padding: "20px 24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 12, background: b.brandId === "pepsi" ? "#003087" : "#111", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                      {b.brandId === "pepsi" ? "🔵" : "🏷️"}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#f0f0f0" }}>{b.brandName}</div>
+                      <div style={{ fontSize: 12, color: "#555" }}>{b.company} · {b.skuCount} SKUs dans la base</div>
+                    </div>
+                    <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" }}>
+                      ✓ Actif
+                    </span>
+                  </div>
+
+                  {/* SKU table for Pepsi */}
+                  {b.brandId === "pepsi" && brandsData.skus.pepsi && (
+                    <>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 10 }}>
+                        Catalogue SKU Pepsi ({brandsData.skus.pepsi.length} produits)
+                      </div>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
+                              {["SKU","Variant","Format","Taille","Couleur","Identificateur visuel","Prix VND","Prix EUR"].map(h => (
+                                <th key={h} style={{ padding: "6px 10px", textAlign: "left", fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em", background: "#0a0a0a" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {brandsData.skus.pepsi.map((s) => (
+                              <tr key={s.id} style={{ borderBottom: "1px solid #111" }}>
+                                <td style={{ padding: "10px", color: "#f0f0f0", fontWeight: 600 }}>{s.sku}</td>
+                                <td style={{ padding: "10px", color: "#a78bfa" }}>{s.variant}</td>
+                                <td style={{ padding: "10px", color: "#818cf8" }}>{s.format}</td>
+                                <td style={{ padding: "10px", color: "#555" }}>{s.sizeML}ml</td>
+                                <td style={{ padding: "10px" }}>
+                                  <div style={{ width: 20, height: 20, borderRadius: 4, background: s.color, border: "1px solid #2a2a2a", display: "inline-block" }} />
+                                </td>
+                                <td style={{ padding: "10px", fontSize: 11, color: "#888", maxWidth: 200 }}>
+                                  {s.distinguisher ?? s.label}
+                                </td>
+                                <td style={{ padding: "10px", color: "#fbbf24", fontSize: 11 }}>
+                                  {s.priceVND ? `${s.priceVND.min.toLocaleString()}–${s.priceVND.max.toLocaleString()}đ` : "—"}
+                                </td>
+                                <td style={{ padding: "10px", color: "#fbbf24", fontSize: 11 }}>
+                                  {s.priceEUR ? `${s.priceEUR.min}–${s.priceEUR.max}€` : "—"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Visual identification guide */}
+                      <div style={{ marginTop: 16, padding: "14px 16px", background: "rgba(0,48,135,0.1)", border: "1px solid rgba(0,48,135,0.3)", borderRadius: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#818cf8", marginBottom: 8 }}>Guide de différenciation visuelle</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+                          {[
+                            { color: "#003087", label: "Pepsi Regular", note: "Bleu profond + globe rouge" },
+                            { color: "#000000", label: "Pepsi Max/Zero", note: "NOIR — distinction critique!" },
+                            { color: "#00A550", label: "7Up", note: "Vert vif + logo rouge" },
+                            { color: "#FF6600", label: "Mirinda", note: "Orange vif" },
+                            { color: "#CC0000", label: "Sting Red", note: "Rouge foncé + éclair or" },
+                            { color: "#FFD700", label: "Sting Gold", note: "Or/jaune" },
+                          ].map(c => (
+                            <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "#0a0a0a", borderRadius: 8 }}>
+                              <div style={{ width: 24, height: 24, borderRadius: 6, background: c.color, border: "1px solid #2a2a2a", flexShrink: 0 }} />
+                              <div>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: "#f0f0f0" }}>{c.label}</div>
+                                <div style={{ fontSize: 10, color: "#555" }}>{c.note}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {/* Coming soon */}
+              <div style={{ ...card, padding: "20px 24px", opacity: 0.5 }}>
+                <div style={{ fontSize: 13, color: "#555", textAlign: "center" }}>
+                  + Ajouter une autre marque (Coca-Cola, Heineken, Vinamilk...) — à venir
+                </div>
               </div>
             </div>
           )}

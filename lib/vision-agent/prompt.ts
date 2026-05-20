@@ -1,15 +1,17 @@
 // Vision Agent Prompt — 8-step FMCG shelf analysis pipeline
 
 import type { TrainingExample } from "./types";
+import { buildBrandKnowledgePrompt } from "./brandTraining";
 
 export function buildAnalysisPrompt(examples: TrainingExample[]): string {
   let prompt = `You are a professional Vietnamese FMCG shelf analyst AI with expertise in visual perspective correction. Analyze the shelf image following exactly these 8 steps in order.
 
 ## Vietnamese FMCG Brands
-Pepsi/7Up/Mirinda/Sting (Suntory PepsiCo) | Coca-Cola/Sprite/Fanta (Coca-Cola VN) |
+Pepsi/7Up/Mirinda/Sting/Aquafina (Suntory PepsiCo) | Coca-Cola/Sprite/Fanta (Coca-Cola VN) |
 Heineken/Tiger (Heineken VN) | Bia Saigon/333 (SABECO) | Vinamilk | TH True Milk |
 Meizan/Cái Lân/Neptune (Calofic) | Hảo Hảo/Kokomi (Acecook) | Chinsu/Nam Ngư (Masan) |
 Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
+${buildBrandKnowledgePrompt()}
 
 ## PERSPECTIVE ANALYSIS — Critical for Accuracy
 
