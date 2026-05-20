@@ -29,20 +29,8 @@ interface TaskState {
   result?: string;
 }
 
-// ── Mock results per task ─────────────────────────────────────────────────────
-
-const TASK_RESULTS: Record<TaskId, string> = {
-  upload:       "Image registered · ID: IMG-20260426-0091 · SHA256: a3f7c2…",
-  quality:      "✓ Quality OK · Sharpness 87/100 · Brightness 79/100 · Angle: frontal",
-  shelf_detect: "3 shelf rows detected · 1 cooler wall · 40 total facings",
-  sku_detect:   "7 SKUs detected · Meizan Gold (×12) · Cái Lân (×10) · Neptune Light (×12) · Unknown (×6)",
-  competitor:   "Calofic 55% shelf share · Tường An 30% · Unknown 15% · Neptune premium +34%",
-  stock_risk:   "⚠ Low stock risk: Neptune Light row 3 (2 facings) · Reorder recommended",
-  layout_sim:   "Store layout updated · Cooler wall segment synced · 3 fixture positions logged",
-  recommend:    "Move Neptune Light to eye-level row 1 · Expand Calofic 2 facings · Investigate unknown brand",
-  human_review: "No human review needed · All confidence scores ≥ 84%",
-  report:       "Report ID: RPT-5042002-0091 · PDF ready · Result hash recorded on ARC Testnet",
-};
+// TASK_RESULTS is generated inside component using t() — see getTaskResults()
+const TASK_IDS: TaskId[] = ["upload","quality","shelf_detect","sku_detect","competitor","stock_risk","layout_sim","recommend","human_review","report"];
 
 const TASK_DURATION: Record<TaskId, number> = {
   upload: 700, quality: 900, shelf_detect: 1800, sku_detect: 2200,
@@ -69,6 +57,7 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
   circleSession: CircleSession | null;
   onCirclePaid?: (circleTxId: string) => void;
 }) {
+  const { t } = useLang();
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors } = useConnect();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
@@ -207,9 +196,9 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
         {step === "paid" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 26, color: "#4ade80" }}>✓</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#4ade80" }}>Payment Confirmed!</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#4ade80" }}>{t("pay.paid")}</h3>
             <p style={{ color: "#888", fontSize: 17, lineHeight: 1.6, margin: "0 0 4px" }}>
-              <strong style={{ color: "#f0f0f0" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> deducted via{" "}
+              <strong style={{ color: "#f0f0f0" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> {t("pay.paidSub")}{" "}
               <span style={{ color: payMethod === "circle" ? "#818cf8" : "#f0f0f0" }}>
                 {payMethod === "circle" ? "Circle Wallet" : "MetaMask"}
               </span>
@@ -221,14 +210,14 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
               </a>
             )}
             <button onClick={onPaid} style={{ width: "100%", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "13px 0", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-              Start Analysis (10 Tasks)
+              {t("pay.startBtn")}
             </button>
           </div>
 
         ) : step === "connect" ? (
           <div>
-            <h3 style={{ margin: "0 0 6px", fontSize: 17 }}>Connect Wallet</h3>
-            <p style={{ color: "#555", fontSize: 13, margin: "0 0 20px" }}>Connect to ARC Testnet to pay for analysis micro-tasks.</p>
+            <h3 style={{ margin: "0 0 6px", fontSize: 17 }}>{t("pay.connectTitle")}</h3>
+            <p style={{ color: "#555", fontSize: 13, margin: "0 0 20px" }}>{t("pay.connectSub")}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {connectors.map(c => (
                 <button key={c.id} onClick={() => connect({ connector: c, chainId: arcTestnet.id })}
@@ -238,36 +227,36 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
                 </button>
               ))}
             </div>
-            <button onClick={onClose} style={{ display: "block", width: "100%", marginTop: 12, background: "transparent", border: "1px solid #2a2a2a", color: "#555", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+            <button onClick={onClose} style={{ display: "block", width: "100%", marginTop: 12, background: "transparent", border: "1px solid #2a2a2a", color: "#555", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>{t("pay.cancel")}</button>
           </div>
 
         ) : step === "wrong_chain" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 36, marginBottom: 16, color: "#fbbf24" }}>⚠</div>
-            <h3 style={{ margin: "0 0 8px", color: "#fbbf24" }}>Wrong Network</h3>
-            <p style={{ color: "#888", fontSize: 13, margin: "0 0 20px" }}>Switch to ARC Testnet (Chain ID 5042002) to continue.</p>
+            <h3 style={{ margin: "0 0 8px", color: "#fbbf24" }}>{t("pay.wrongNet")}</h3>
+            <p style={{ color: "#888", fontSize: 13, margin: "0 0 20px" }}>{t("pay.wrongNetSub")}</p>
             <button onClick={() => switchChain({ chainId: arcTestnet.id })} disabled={isSwitching}
               style={{ width: "100%", background: "#b45309", color: "#fff", border: "none", borderRadius: 12, padding: "12px 0", fontSize: 14, fontWeight: 600, cursor: isSwitching ? "wait" : "pointer" }}>
-              {isSwitching ? "Switching…" : "Switch to ARC Testnet"}
+              {isSwitching ? t("pay.switching") : t("pay.switchBtn")}
             </button>
-            <button onClick={onClose} style={{ display: "block", width: "100%", marginTop: 10, background: "transparent", border: "1px solid #2a2a2a", color: "#555", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+            <button onClick={onClose} style={{ display: "block", width: "100%", marginTop: 10, background: "transparent", border: "1px solid #2a2a2a", color: "#555", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>{t("pay.cancel")}</button>
           </div>
 
         ) : step === "error" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 36, marginBottom: 12, color: "#f87171" }}>✗</div>
             <p style={{ color: "#f87171", fontSize: 13, whiteSpace: "pre-line" }}>{errMsg}</p>
-            <button onClick={() => setStep("confirm")} style={{ marginTop: 16, background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "10px 24px", fontSize: 13, cursor: "pointer" }}>Try Again</button>
+            <button onClick={() => setStep("confirm")} style={{ marginTop: 16, background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "10px 24px", fontSize: 13, cursor: "pointer" }}>{t("pay.tryAgain")}</button>
           </div>
 
         ) : step === "pending" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 36, marginBottom: 12, color: "#fbbf24" }}>⏳</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 16, color: "#fbbf24" }}>Transfer Submitted</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 16, color: "#fbbf24" }}>{t("pay.transferred")}</h3>
             <p style={{ color: "#888", fontSize: 13, whiteSpace: "pre-line", lineHeight: 1.6 }}>{errMsg}</p>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <button onClick={() => setStep("confirm")} style={{ flex: 1, background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>Try Again</button>
-              <button onClick={() => { setStep("paid"); }} style={{ flex: 2, background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Continue anyway →</button>
+              <button onClick={() => setStep("confirm")} style={{ flex: 1, background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 12, padding: "10px 0", fontSize: 13, cursor: "pointer" }}>{t("pay.tryAgain")}</button>
+              <button onClick={() => { setStep("paid"); }} style={{ flex: 2, background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t("pay.continueAnyway")}</button>
             </div>
           </div>
 
@@ -275,28 +264,27 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
           /* ── Confirm ── */
           <>
             <div style={{ marginBottom: 22 }}>
-              <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>ARC Network · USDC Micro-Payments</div>
-              <h3 style={{ margin: "0 0 6px", fontSize: 18 }}>Approve Analysis Budget</h3>
+              <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>ARC Network · USDC</div>
+              <h3 style={{ margin: "0 0 6px", fontSize: 18 }}>{t("pay.title")}</h3>
               <p style={{ color: "#555", fontSize: 13, margin: 0, lineHeight: 1.6 }}>
-                Approve <strong style={{ color: "#a78bfa" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> once.
-                Each of the 10 tasks deducts its micro-fee automatically as it completes.
+                {t("pay.subtitle").replace("$PRICE", TOTAL_ANALYSIS_PRICE.toFixed(3))}
               </p>
             </div>
 
             {/* Task list with prices */}
             <div style={{ background: "#0a0a0a", border: "1px solid #1f1f1f", borderRadius: 14, overflow: "hidden", marginBottom: 18 }}>
               <div style={{ padding: "10px 16px", borderBottom: "1px solid #1f1f1f", display: "grid", gridTemplateColumns: "1fr 70px", gap: 8 }}>
-                <span style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>Task</span>
-                <span style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", textAlign: "right" }}>USDC</span>
+                <span style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>{t("pay.taskCol")}</span>
+                <span style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", textAlign: "right" }}>{t("pay.priceCol")}</span>
               </div>
-              {ANALYSIS_TASKS.map((t, i) => (
-                <div key={t.id} style={{ display: "grid", gridTemplateColumns: "1fr 70px", gap: 8, padding: "9px 16px", borderBottom: i < ANALYSIS_TASKS.length - 1 ? "1px solid #111" : "none", alignItems: "center" }}>
-                  <span style={{ fontSize: 12, color: "#e0e0e0" }}>{t.label}</span>
-                  <span style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600, textAlign: "right" }}>${t.price.toFixed(3)}</span>
+              {ANALYSIS_TASKS.map((task, i) => (
+                <div key={task.id} style={{ display: "grid", gridTemplateColumns: "1fr 70px", gap: 8, padding: "9px 16px", borderBottom: i < ANALYSIS_TASKS.length - 1 ? "1px solid #111" : "none", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: "#e0e0e0" }}>{t(`task.${task.id}.label`)}</span>
+                  <span style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600, textAlign: "right" }}>${task.price.toFixed(3)}</span>
                 </div>
               ))}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 70px", gap: 8, padding: "12px 16px", borderTop: "1px solid #2a2a2a", background: "rgba(124,58,237,0.06)" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>Total</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>{t("pay.totalRow")}</span>
                 <span style={{ fontSize: 16, fontWeight: 800, color: "#a78bfa", textAlign: "right" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)}</span>
               </div>
             </div>
@@ -331,23 +319,23 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
 
             {txHash && isConfirming && (
               <div style={{ fontSize: 11, color: "#fbbf24", marginBottom: 12, fontFamily: "monospace", wordBreak: "break-all" }}>
-                Confirming: {txHash.slice(0, 20)}…
+                {t("pay.confirming")}: {txHash.slice(0, 20)}…
               </div>
             )}
             {step === "approving" && payMethod === "circle" && (
               <div style={{ fontSize: 12, color: "#818cf8", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #818cf8", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
-                Confirming Circle transfer...
+                {t("pay.circleConfirm")}
               </div>
             )}
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={onClose} disabled={isProcessing} style={{ flex: 1, background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 12, padding: "12px 0", fontSize: 13, cursor: isProcessing ? "not-allowed" : "pointer" }}>Cancel</button>
+              <button onClick={onClose} disabled={isProcessing} style={{ flex: 1, background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 12, padding: "12px 0", fontSize: 13, cursor: isProcessing ? "not-allowed" : "pointer" }}>{t("pay.cancel")}</button>
               <button onClick={handleApprove} disabled={isProcessing}
                 style={{ flex: 2, background: isProcessing ? "#5a2aad" : "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "12px 0", fontSize: 13, fontWeight: 600, cursor: isProcessing ? "wait" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                {isSending     && <><Spinner /> Confirm in wallet…</>}
-                {isConfirming  && <><Spinner /> Confirming on-chain…</>}
-                {step === "approving" && payMethod === "circle" && <><Spinner /> Confirming Circle…</>}
-                {!isProcessing && `Pay $${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC`}
+                {isSending     && <><Spinner /> {t("pay.confirmIn")}</>}
+                {isConfirming  && <><Spinner /> {t("pay.confirming")}</>}
+                {step === "approving" && payMethod === "circle" && <><Spinner /> {t("pay.circleConfirm")}</>}
+                {!isProcessing && `${t("pay.payBtn")} $${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC`}
               </button>
             </div>
             <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
@@ -362,6 +350,35 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
 
 export default function AnalysisPage() {
   const { t } = useLang();
+
+  // Task results fallback — translated
+  const TASK_RESULTS: Record<TaskId, string> = {
+    upload:       t("task.result.upload"),
+    quality:      t("task.result.quality"),
+    shelf_detect: t("task.result.shelf_detect"),
+    sku_detect:   t("task.result.sku_detect"),
+    competitor:   t("task.result.competitor"),
+    stock_risk:   t("task.result.stock_risk"),
+    layout_sim:   t("task.result.layout_sim"),
+    recommend:    t("task.result.recommend"),
+    human_review: t("task.result.human_review"),
+    report:       t("task.result.report"),
+  };
+
+  // Translated task labels/descs (override arc.ts English labels)
+  const TASK_I18N: Record<TaskId, { label: string; desc: string }> = {
+    upload:       { label: t("task.upload.label"),       desc: t("task.upload.desc") },
+    quality:      { label: t("task.quality.label"),      desc: t("task.quality.desc") },
+    shelf_detect: { label: t("task.shelf_detect.label"), desc: t("task.shelf_detect.desc") },
+    sku_detect:   { label: t("task.sku_detect.label"),   desc: t("task.sku_detect.desc") },
+    competitor:   { label: t("task.competitor.label"),   desc: t("task.competitor.desc") },
+    stock_risk:   { label: t("task.stock_risk.label"),   desc: t("task.stock_risk.desc") },
+    layout_sim:   { label: t("task.layout_sim.label"),   desc: t("task.layout_sim.desc") },
+    recommend:    { label: t("task.recommend.label"),    desc: t("task.recommend.desc") },
+    human_review: { label: t("task.human_review.label"),desc: t("task.human_review.desc") },
+    report:       { label: t("task.report.label"),       desc: t("task.report.desc") },
+  };
+
   const { isConnected, chain, address } = useAccount();
   const fileRef = useRef<HTMLInputElement>(null);
   const [anonUser, setAnonUser] = useState<AnonUser | null>(null);
@@ -1094,11 +1111,11 @@ export default function AnalysisPage() {
                       {/* Task info */}
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: ts.status === "done" ? "#f0f0f0" : isActive ? "#a78bfa" : "#888" }}>{task.label}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: ts.status === "done" ? "#f0f0f0" : isActive ? "#a78bfa" : "#888" }}>{TASK_I18N[task.id]?.label ?? task.label}</span>
                           {ts.status === "paying" && <span style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)", padding: "1px 8px", borderRadius: 999 }}>Paying…</span>}
                           {ts.status === "processing" && <span style={{ fontSize: 10, color: "#7c3aed", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", padding: "1px 8px", borderRadius: 999 }}>Processing…</span>}
                         </div>
-                        <div style={{ fontSize: 11, color: "#555" }}>{task.desc}</div>
+                        <div style={{ fontSize: 11, color: "#555" }}>{TASK_I18N[task.id]?.desc ?? task.desc}</div>
                         {ts.result && <div style={{ fontSize: 11, color: "#4ade80", marginTop: 4 }}>{ts.result}</div>}
                         {ts.status === "done" && (
                           ts.txHash
@@ -1169,7 +1186,7 @@ export default function AnalysisPage() {
                         <div key={task.id} style={{ display: "grid", gridTemplateColumns: "20px 1fr 80px 200px", gap: 14, padding: "10px 14px", background: "#0a0a0a", borderRadius: 10, alignItems: "center" }}>
                           <span style={{ color: "#4ade80", fontSize: 12 }}>✓</span>
                           <div>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "#f0f0f0" }}>{task.label}</div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#f0f0f0" }}>{TASK_I18N[task.id]?.label ?? task.label}</div>
                             {ts.result && <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{ts.result}</div>}
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 700, color: "#4ade80", textAlign: "right" }}>${task.price.toFixed(3)}</span>
