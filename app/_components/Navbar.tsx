@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const links = [
-  { label: "Services", href: "#services" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Forum", href: "/forum" },
-  { label: "Contact", href: "/contact" },
-];
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useLang } from "../_lib/i18n";
 
 export default function Navbar() {
+  const { t } = useLang();
+  const links = [
+    { labelKey: "nav.home",    href: "/" },
+    { labelKey: "services",    href: "#services",     label: t("nav.home") === "Home" ? "Services" : t("nav.home") === "首页" ? "服务" : "Dịch vụ" },
+    { labelKey: "how",         href: "#how-it-works", label: t("how.title") },
+    { labelKey: "nav.forum",   href: "/forum" },
+    { labelKey: "nav.contact", href: "/contact" },
+  ].map(l => ({ ...l, label: l.label ?? t(l.labelKey) }));
+
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -81,34 +85,20 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* CTA */}
+        {/* CTA + Language */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LanguageSwitcher variant="navbar" />
           <a
             href="/login"
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#fff",
-              background: "#7c3aed",
-              padding: "9px 22px",
-              borderRadius: 999,
-              textDecoration: "none",
-              letterSpacing: "0.01em",
-              transition: "background 0.25s, transform 0.2s, box-shadow 0.25s",
-              display: "inline-block",
+              fontSize: 13, fontWeight: 600, color: "#fff", background: "#7c3aed",
+              padding: "9px 22px", borderRadius: 999, textDecoration: "none",
+              letterSpacing: "0.01em", transition: "background 0.25s, transform 0.2s, box-shadow 0.25s", display: "inline-block",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#6d28d9";
-              e.currentTarget.style.transform = "translateY(-1px) scale(1.02)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(124,58,237,0.35)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#7c3aed";
-              e.currentTarget.style.transform = "translateY(0) scale(1)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#6d28d9"; e.currentTarget.style.transform = "translateY(-1px) scale(1.02)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(124,58,237,0.35)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#7c3aed"; e.currentTarget.style.transform = "translateY(0) scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
           >
-            Let&apos;s get started
+            {t("nav.getStarted")}
           </a>
 
           {/* Mobile hamburger */}

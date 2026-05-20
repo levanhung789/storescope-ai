@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { loadAnonUser, type AnonUser } from "../_lib/anonymousAuth";
+import LanguageSwitcher from "../_components/LanguageSwitcher";
+import { useLang } from "../_lib/i18n";
 
 const AnonBadge = dynamic(() => import("../_components/AnonBadge"), { ssr: false });
 
@@ -119,19 +121,22 @@ function ProductCard({ product, sectorFolder, companyFolder, sectorLabel }: {
 
 // ── Nav ────────────────────────────────────────────────────────────────────────
 
-const NAV = [
-  { label: "Dashboard",    href: "/dashboard",               active: true  },
-  { label: "AI Analysis",  href: "/dashboard/analysis",      active: false },
-  { label: "Vision Agent", href: "/dashboard/vision-agent",  active: false },
-  { label: "AI Agent",     href: "/dashboard/agent",         active: false },
-  { label: "My Reports",   href: "/dashboard/reports",       active: false },
-  { label: "Store Layout", href: "/layout-editor",           active: false },
-  { label: "Forum",        href: "/forum",                   active: false },
+// NAV is built inside the component to access translations
+const NAV_ITEMS = [
+  { key: "nav.dashboard",  href: "/dashboard",              active: true  },
+  { key: "nav.analysis",   href: "/dashboard/analysis",     active: false },
+  { key: "nav.visionAgent",href: "/dashboard/vision-agent", active: false },
+  { key: "nav.agent",      href: "/dashboard/agent",        active: false },
+  { key: "nav.reports",    href: "/dashboard/reports",      active: false },
+  { key: "nav.layout",     href: "/layout-editor",          active: false },
+  { key: "nav.forum",      href: "/forum",                  active: false },
 ];
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const { t } = useLang();
+  const NAV = NAV_ITEMS.map(n => ({ ...n, label: t(n.key) }));
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState("");
@@ -197,6 +202,7 @@ export default function DashboardPage() {
         </div>
 
         <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
+          <LanguageSwitcher variant="sidebar" />
           {NAV.map(item => (
             <Link key={item.label} href={item.href} style={{
               display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none",
