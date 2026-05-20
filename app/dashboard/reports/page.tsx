@@ -45,11 +45,13 @@ export default function ReportsPage() {
         </div>
         <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
           {[
-            { label: "Dashboard",   href: "/dashboard",          active: false },
-            { label: "AI Analysis", href: "/dashboard/analysis", active: false },
-            { label: "My Reports",  href: "/dashboard/reports",  active: true  },
-            { label: "Store Layout",href: "/layout-editor",      active: false },
-            { label: "Forum",       href: "/forum",              active: false },
+            { label: "Dashboard",    href: "/dashboard",              active: false },
+            { label: "AI Analysis",  href: "/dashboard/analysis",     active: false },
+            { label: "Vision Agent", href: "/dashboard/vision-agent", active: false },
+            { label: "AI Agent",     href: "/dashboard/agent",        active: false },
+            { label: "My Reports",   href: "/dashboard/reports",      active: true  },
+            { label: "Store Layout", href: "/layout-editor",          active: false },
+            { label: "Forum",        href: "/forum",                  active: false },
           ].map(item => (
             <Link key={item.label} href={item.href} style={{ display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: item.active ? 600 : 400, background: item.active ? "rgba(124,58,237,0.12)" : "transparent", color: item.active ? "#a78bfa" : "#666", border: item.active ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent" }}>
               {item.label}

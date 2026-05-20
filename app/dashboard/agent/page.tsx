@@ -458,6 +458,7 @@ export default function AgentPage() {
 
         {/* ── Multi-Channel Integration ── */}
         <ChannelsPanel />
+        <WebChatWidget />
 
         {/* Tab switcher */}
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
@@ -640,9 +641,6 @@ export default function AgentPage() {
       </main>
 
       {/* Policy editor modal */}
-      {/* ── Webchat Modal ── */}
-      <WebChatModal onClose={() => {}} />
-
       {editOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 4000, display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setEditOpen(false)}>
@@ -685,7 +683,7 @@ export default function AgentPage() {
 function ChannelsPanel() {
   const [stats, setStats]   = useState<{telegram:{users:number;analyses:number};zalo:{users:number;analyses:number};webchat:{users:number;analyses:number};totalRevenue:number} | null>(null);
   const [cfg, setCfg]       = useState<{telegram:boolean;zalo:boolean} | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
+  // chatOpen no longer needed — widget manages itself
 
   useEffect(() => {
     fetch("/api/agent/channels").then(r => r.json()).then(d => {
@@ -791,10 +789,9 @@ function ChannelsPanel() {
             <span style={{ color: "#555" }}>Analyses done</span>
             <span style={{ color: "#4ade80", fontWeight: 700 }}>{stats?.webchat.analyses ?? 0}</span>
           </div>
-          <button onClick={() => setChatOpen(true)}
-            style={{ width: "100%", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 8, padding: "9px 0", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-            Open Web Chat
-          </button>
+          <div style={{ padding: "8px 12px", background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 8, fontSize: 11, color: "#a78bfa", textAlign: "center" }}>
+            Chat widget · góc dưới bên phải ↘
+          </div>
         </div>
       </div>
 
@@ -806,90 +803,198 @@ function ChannelsPanel() {
         </div>
       )}
 
-      {chatOpen && <WebChatModal onClose={() => setChatOpen(false)} />}
     </div>
   );
 }
 
-// ── Web Chat Modal ─────────────────────────────────────────────────────────────
-function WebChatModal({ onClose }: { onClose: () => void }) {
+// ── Web Chat Floating Widget — always visible, minimize/expand anytime ────────
+function WebChatWidget() {
+  const [open,    setOpen]    = useState(false);
+  const [unread,  setUnread]  = useState(0);
+  const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<{role:"user"|"agent";content:string;timestamp:number}[]>([
-    { role: "agent", content: "👋 Xin chào! Gửi ảnh kệ hàng để tôi phân tích 8 bước (OSA, SoS, Facing Count).\n\n💳 Phí: $0.025 USDC/lần\nLiên kết ví Circle tại: /login", timestamp: Date.now() }
+    { role: "agent", content: "👋 Xin chào! Gửi ảnh kệ hàng để tôi phân tích 8 bước.\n\n💳 $0.025 USDC / lần phân tích", timestamp: Date.now() },
   ]);
-  const [loading,  setLoading]  = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef  = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    if (open) {
+      setUnread(0);
+      setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+  }, [open, messages]);
+
+  const addAgentMsg = (content: string) => {
+    setMessages(prev => [...prev, { role: "agent", content, timestamp: Date.now() }]);
+    if (!open) setUnread(u => u + 1);
+  };
 
   const handleImage = async (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
-      const base64  = dataUrl.split(",")[1];
-      const mime    = file.type;
-
       setMessages(prev => [...prev, { role: "user", content: dataUrl, timestamp: Date.now() }]);
       setLoading(true);
-      setMessages(prev => [...prev, { role: "agent", content: "⏳ Đang phân tích ảnh (8 bước)...", timestamp: Date.now() }]);
+      addAgentMsg("⏳ Đang phân tích ảnh (8 bước)...");
 
-      const session = JSON.parse(localStorage.getItem("storescope-circle-session") || "null");
-      const userId  = session?.userId ?? `web-${Date.now()}`;
-
-      const res  = await fetch("/api/agent/channels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "analyze", userId, imageBase64: base64, mimeType: mime }),
-      });
-      const data = await res.json() as { text?: string; error?: string };
-
-      setMessages(prev => [
-        ...prev.slice(0, -1), // remove "analyzing..."
-        { role: "agent", content: data.text ?? `❌ ${data.error ?? "Analysis failed"}`, timestamp: Date.now() },
-      ]);
-      setLoading(false);
+      try {
+        const base64  = dataUrl.split(",")[1];
+        const session = JSON.parse(localStorage.getItem("storescope-circle-session") || "null");
+        const userId  = session?.userId ?? `web-${Date.now()}`;
+        const res  = await fetch("/api/agent/channels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "analyze", userId, imageBase64: base64, mimeType: file.type }),
+        });
+        const data = await res.json() as { text?: string; error?: string };
+        setMessages(prev => [
+          ...prev.slice(0, -1),
+          { role: "agent", content: data.text ?? `❌ ${data.error ?? "Analysis failed"}`, timestamp: Date.now() },
+        ]);
+        if (!open) setUnread(u => u + 1);
+      } catch {
+        setMessages(prev => [...prev.slice(0, -1), { role: "agent", content: "❌ Lỗi kết nối. Thử lại.", timestamp: Date.now() }]);
+      } finally {
+        setLoading(false);
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  if (!onClose) return null; // hidden by default
-
   return (
-    <div style={{ position: "fixed", bottom: 24, right: 24, width: 380, height: 560, zIndex: 5000, display: "flex", flexDirection: "column", background: "#111", border: "1px solid #2a2a2a", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.8)" }}>
-      {/* Header */}
-      <div style={{ padding: "14px 18px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "#0a0a0a" }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>StoreScope AI Agent</div>
-          <div style={{ fontSize: 10, color: "#4ade80" }}>● Online · $0.025/analysis</div>
-        </div>
-        <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#555", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
-      </div>
+    <>
+      <style>{`
+        @keyframes chatPop {
+          from { opacity:0; transform: scale(0.85) translateY(20px); }
+          to   { opacity:1; transform: scale(1)    translateY(0); }
+        }
+        @keyframes badgePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+      `}</style>
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflow: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-        {messages.map((m, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-            <div style={{
-              maxWidth: "85%", padding: "10px 14px", borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-              background: m.role === "user" ? "#7c3aed" : "#1a1a1a",
-              fontSize: 12, color: "#f0f0f0", lineHeight: 1.6, whiteSpace: "pre-wrap",
-            }}>
-              {m.content.startsWith("data:image") ? <img src={m.content} alt="shelf" style={{ maxWidth: "100%", borderRadius: 8 }} /> : m.content}
-            </div>
-          </div>
-        ))}
-        <div ref={endRef} />
-      </div>
-
-      {/* Input */}
-      <div style={{ padding: "12px 14px", borderTop: "1px solid #1f1f1f", display: "flex", gap: 8 }}>
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImage(f); }} />
-        <button onClick={() => fileRef.current?.click()} disabled={loading}
-          style={{ flex: 1, background: loading ? "#1a1a1a" : "#7c3aed", color: loading ? "#555" : "#fff", border: "none", borderRadius: 10, padding: "10px 0", fontSize: 12, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
-          {loading ? "Analyzing..." : "📸 Send Shelf Image"}
+      {/* ── Floating bubble (minimized) ── */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          style={{
+            position: "fixed", bottom: 28, right: 28, zIndex: 6000,
+            width: 56, height: 56, borderRadius: "50%",
+            background: "linear-gradient(135deg,#7c3aed,#6366f1)",
+            border: "none", cursor: "pointer",
+            boxShadow: "0 4px 20px rgba(124,58,237,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 24, transition: "transform 0.2s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1)")}
+          onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          🤖
+          {unread > 0 && (
+            <span style={{
+              position: "absolute", top: -4, right: -4,
+              background: "#ef4444", color: "#fff",
+              width: 20, height: 20, borderRadius: "50%",
+              fontSize: 11, fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              animation: "badgePulse 1s infinite",
+            }}>{unread}</span>
+          )}
         </button>
-      </div>
-    </div>
+      )}
+
+      {/* ── Chat window (expanded) ── */}
+      {open && (
+        <div style={{
+          position: "fixed", bottom: 28, right: 28, zIndex: 6000,
+          width: 370, height: 560,
+          display: "flex", flexDirection: "column",
+          background: "#111", border: "1px solid #2a2a2a",
+          borderRadius: 20, overflow: "hidden",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.85)",
+          animation: "chatPop 0.2s ease-out",
+        }}>
+
+          {/* Header */}
+          <div style={{ padding: "13px 16px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "#0a0a0a", flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🤖</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>StoreScope AI Agent</div>
+              <div style={{ fontSize: 10, color: "#4ade80" }}>● Online · $0.025 / phân tích</div>
+            </div>
+            {/* Minimize button */}
+            <button
+              onClick={() => setOpen(false)}
+              title="Thu nhỏ"
+              style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 14, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.color = "#f0f0f0"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#888"; }}
+            >
+              ─
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflow: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 6 }}>
+                {m.role === "agent" && (
+                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0, marginBottom: 2 }}>🤖</div>
+                )}
+                <div style={{
+                  maxWidth: "78%", padding: "10px 13px",
+                  borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                  background: m.role === "user" ? "linear-gradient(135deg,#7c3aed,#6366f1)" : "#1a1a1a",
+                  border: m.role === "agent" ? "1px solid #2a2a2a" : "none",
+                  fontSize: 12, color: "#f0f0f0", lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word",
+                }}>
+                  {m.content.startsWith("data:image")
+                    ? <img src={m.content} alt="shelf" style={{ maxWidth: "100%", borderRadius: 8, display: "block" }} />
+                    : m.content
+                  }
+                  <div style={{ fontSize: 9, color: m.role === "user" ? "rgba(255,255,255,0.5)" : "#444", marginTop: 4, textAlign: "right" }}>
+                    {new Date(m.timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🤖</div>
+                <div style={{ padding: "10px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "16px 16px 16px 4px" }}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {[0,1,2].map(d => (
+                      <div key={d} style={{ width: 6, height: 6, borderRadius: "50%", background: "#7c3aed", animation: `badgePulse 1.2s ${d * 0.2}s infinite` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: "10px 12px", borderTop: "1px solid #1f1f1f", background: "#0a0a0a", flexShrink: 0 }}>
+            <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) { handleImage(f); e.target.value = ""; } }} />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={loading}
+              style={{
+                width: "100%", padding: "11px 0",
+                background: loading ? "#1a1a1a" : "linear-gradient(135deg,#7c3aed,#6366f1)",
+                color: loading ? "#555" : "#fff",
+                border: "none", borderRadius: 12,
+                fontSize: 13, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}
+            >
+              {loading
+                ? <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #555", borderTopColor: "#888", animation: "badgePulse 0.6s linear infinite" }} />Đang phân tích...</>
+                : "📸 Gửi ảnh kệ hàng"
+              }
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

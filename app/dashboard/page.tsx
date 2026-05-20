@@ -120,12 +120,13 @@ function ProductCard({ product, sectorFolder, companyFolder, sectorLabel }: {
 // ── Nav ────────────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { label: "Dashboard",   href: "/dashboard",          active: true  },
-  { label: "AI Analysis", href: "/dashboard/analysis", active: false },
-  { label: "My Reports",  href: "/dashboard/reports",  active: false },
-  { label: "Store Layout",href: "/layout-editor",      active: false },
-  { label: "Forum",       href: "/forum",              active: false },
-  { label: "Settings",    href: "#",                   active: false },
+  { label: "Dashboard",    href: "/dashboard",               active: true  },
+  { label: "AI Analysis",  href: "/dashboard/analysis",      active: false },
+  { label: "Vision Agent", href: "/dashboard/vision-agent",  active: false },
+  { label: "AI Agent",     href: "/dashboard/agent",         active: false },
+  { label: "My Reports",   href: "/dashboard/reports",       active: false },
+  { label: "Store Layout", href: "/layout-editor",           active: false },
+  { label: "Forum",        href: "/forum",                   active: false },
 ];
 
 // ── Main ──────────────────────────────────────────────────────────────────────
