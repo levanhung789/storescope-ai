@@ -705,7 +705,10 @@ function ChannelsPanel() {
         {/* Telegram */}
         <div style={{ ...cardS, marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(0,136,204,0.15)", border: "1px solid rgba(0,136,204,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>✈️</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/telegram-logo.svg" alt="Telegram" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>Telegram Bot</div>
               <div style={{ fontSize: 11, color: cfg?.telegram ? "#4ade80" : "#f87171" }}>
