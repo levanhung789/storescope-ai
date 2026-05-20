@@ -106,12 +106,12 @@ export default function UseCases() {
                   }),
                 }}
               >
-                {i === 0 ? (
-                  /* FMCG Brands — hero image */
+                {i === 0 || i === 1 ? (
+                  /* FMCG Brands + Distributors — hero images */
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src="/shelf-hero.png"
-                    alt="Know your shelf before your competitor does"
+                    src={i === 0 ? "/shelf-hero.png" : "/distributors-hero.png"}
+                    alt={c.headline}
                     style={{
                       width: "100%",
                       height: "100%",
