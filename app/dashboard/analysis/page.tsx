@@ -9,6 +9,8 @@ import AnalysisReport, { type ReportData } from "../../_components/AnalysisRepor
 import { loadAnonUser, type AnonUser } from "../../_lib/anonymousAuth";
 import { loadCircleSession, type CircleSession } from "../../_lib/circle";
 import { loadProfile, type UserProfile } from "../../_lib/profile";
+import { useLang } from "../../_lib/i18n";
+import LanguageSwitcher from "../../_components/LanguageSwitcher";
 
 const ProfileModal = dynamic(() => import("../../_components/ProfileModal"), { ssr: false });
 
@@ -359,6 +361,7 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 export default function AnalysisPage() {
+  const { t } = useLang();
   const { isConnected, chain, address } = useAccount();
   const fileRef = useRef<HTMLInputElement>(null);
   const [anonUser, setAnonUser] = useState<AnonUser | null>(null);
@@ -847,17 +850,18 @@ export default function AnalysisPage() {
           </a>
         </div>
         <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
+          <LanguageSwitcher variant="sidebar" />
           {[
-            { label: "Dashboard",    href: "/dashboard",              active: false },
-            { label: "AI Analysis",  href: "/dashboard/analysis",     active: true  },
-            { label: "Vision Agent", href: "/dashboard/vision-agent", active: false },
-            { label: "AI Agent",     href: "/dashboard/agent",        active: false },
-            { label: "My Reports",   href: "/dashboard/reports",      active: false },
-            { label: "Store Layout", href: "/layout-editor",          active: false },
-            { label: "Forum",        href: "/forum",                  active: false },
+            { labelKey: "nav.dashboard",  href: "/dashboard",              active: false },
+            { labelKey: "nav.analysis",   href: "/dashboard/analysis",     active: true  },
+            { labelKey: "nav.visionAgent",href: "/dashboard/vision-agent", active: false },
+            { labelKey: "nav.agent",      href: "/dashboard/agent",        active: false },
+            { labelKey: "nav.reports",    href: "/dashboard/reports",      active: false },
+            { labelKey: "nav.layout",     href: "/layout-editor",          active: false },
+            { labelKey: "nav.forum",      href: "/forum",                  active: false },
           ].map(item => (
-            <Link key={item.label} href={item.href} style={{ display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: item.active ? 600 : 400, background: item.active ? "rgba(124,58,237,0.12)" : "transparent", color: item.active ? "#a78bfa" : "#666", border: item.active ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent" }}>
-              {item.label}
+            <Link key={item.href} href={item.href} style={{ display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: item.active ? 600 : 400, background: item.active ? "rgba(124,58,237,0.12)" : "transparent", color: item.active ? "#a78bfa" : "#666", border: item.active ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent" }}>
+              {t(item.labelKey)}
             </Link>
           ))}
         </nav>
@@ -897,7 +901,7 @@ export default function AnalysisPage() {
               )}
             </button>
           )}
-          <Link href="/" style={{ display: "block", padding: "8px 12px", marginTop: 4, fontSize: 12, color: "#555", textDecoration: "none" }}>Log out</Link>
+          <Link href="/" style={{ display: "block", padding: "8px 12px", marginTop: 4, fontSize: 12, color: "#555", textDecoration: "none" }}>{t("analysis.logout")}</Link>
         </div>
       </aside>
 
@@ -907,8 +911,8 @@ export default function AnalysisPage() {
         {/* Header */}
         <header style={{ borderBottom: "1px solid #1f1f1f", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>10 Micro-Tasks · ARC Testnet · AnalysisRegistry Contract</div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>Shelf Image Analysis</h2>
+            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>{t("analysis.pageTag")}</div>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>{t("analysis.pageTitle")}</h2>
             {onChainTx && (
               <a
                 href={`https://testnet.arcscan.app/tx/${onChainTx}`}
@@ -944,8 +948,8 @@ export default function AnalysisPage() {
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, gap: 12 }}>
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
                     <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>Drop shelf image here</div>
-                      <div style={{ fontSize: 11, color: "#555" }}>JPG · PNG · WEBP</div>
+                      <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>{t("analysis.drop")}</div>
+                      <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.formats")}</div>
                     </div>
                   </div>
                 )}
@@ -955,21 +959,21 @@ export default function AnalysisPage() {
               {/* File + budget */}
               {imageUrl && (
                 <div style={{ ...card, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ fontSize: 11, color: "#555" }}>File: <span style={{ color: "#e0e0e0", fontWeight: 500 }}>{imageName}</span></div>
+                  <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.file")}: <span style={{ color: "#e0e0e0", fontWeight: 500 }}>{imageName}</span></div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>Total budget</div>
+                      <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{t("analysis.cost")}</div>
                       <div style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</div>
                     </div>
                     {running && (
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>Spent so far</div>
+                        <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{t("analysis.spent")}</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: "#fbbf24" }}>${spentTotal.toFixed(3)}</div>
                       </div>
                     )}
                     {done && (
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 10, color: "#4ade80", marginBottom: 2 }}>Total paid ✓</div>
+                        <div style={{ fontSize: 10, color: "#4ade80", marginBottom: 2 }}>{t("analysis.paidOk")}</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: "#4ade80" }}>${spentTotal.toFixed(3)}</div>
                       </div>
                     )}
@@ -1001,11 +1005,11 @@ export default function AnalysisPage() {
                 }}
                 onMouseEnter={e => { if (imageUrl && !running) e.currentTarget.style.background = done ? "#15803d" : "#6d28d9"; }}
                 onMouseLeave={e => { if (imageUrl && !running) e.currentTarget.style.background = done ? "#16a34a" : "#7c3aed"; }}>
-                {running ? <><Spinner /> Running {ANALYSIS_TASKS.find(t => taskStates[t.id].status === "paying" || taskStates[t.id].status === "processing")?.label ?? "…"}</> :
-                 done ? "✓ Analysis Complete" :
-                 !isConnected ? "Connect Wallet & Analyze" :
-                 wrongChain ? "Switch to ARC Testnet" :
-                 `Analyze · $${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC`}
+                {running ? <><Spinner /> {t("analysis.running")} {ANALYSIS_TASKS.find(task => taskStates[task.id].status === "paying" || taskStates[task.id].status === "processing")?.label ?? "…"}</> :
+                 done ? t("analysis.done") :
+                 !isConnected ? t("analysis.connectRun") :
+                 wrongChain ? t("analysis.switchNet") :
+                 `${t("analysis.run")} · $${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC`}
               </button>
 
               {imageUrl && !isConnected && (
@@ -1051,8 +1055,8 @@ export default function AnalysisPage() {
             {/* Right: task list */}
             <div style={{ ...card, overflow: "hidden" }}>
               <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>10 Micro-Tasks</div>
-                <div style={{ fontSize: 11, color: "#555" }}>Each task = 1 on-chain transaction · ARC Testnet</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{t("analysis.tasksHeader")}</div>
+                <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.tasksSub")}</div>
               </div>
 
               <div>
@@ -1134,9 +1138,9 @@ export default function AnalysisPage() {
 
               {/* Footer total */}
               <div style={{ padding: "14px 20px", borderTop: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0a0a0a" }}>
-                <span style={{ fontSize: 12, color: "#555" }}>{completedTasks} of {ANALYSIS_TASKS.length} tasks complete</span>
+                <span style={{ fontSize: 12, color: "#555" }}>{completedTasks} / {ANALYSIS_TASKS.length} {t("analysis.tasksOf")}</span>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontSize: 12, color: "#555" }}>Total:</span>
+                  <span style={{ fontSize: 12, color: "#555" }}>{t("analysis.total")}:</span>
                   <span style={{ fontSize: 18, fontWeight: 800, color: done ? "#4ade80" : "#a78bfa" }}>
                     ${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC
                   </span>
@@ -1149,7 +1153,7 @@ export default function AnalysisPage() {
           {done && (
             <div style={{ ...card, overflow: "hidden" }}>
               <div style={{ display: "flex", borderBottom: "1px solid #1f1f1f" }}>
-                {([["tasks", "Task Log"], ["report", "Analysis Report"], ["full-report", "Full Report"]] as const).map(([id, label]) => (
+                {([["tasks", t("analysis.tabTasks")], ["report", t("analysis.tabReport")], ["full-report", t("analysis.tabFull")]] as const).map(([id, label]) => (
                   <button key={id} onClick={() => setActiveTab(id as typeof activeTab)} style={{ padding: "13px 20px", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, background: activeTab === id ? "rgba(124,58,237,0.08)" : "transparent", color: activeTab === id ? "#a78bfa" : "#555", borderBottom: activeTab === id ? "2px solid #7c3aed" : "2px solid transparent", transition: "all 0.2s" }}>
                     {label}
                     {id === "full-report" && <span style={{ marginLeft: 6, fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.1)", padding: "1px 6px", borderRadius: 999 }}>NEW</span>}
@@ -1182,7 +1186,7 @@ export default function AnalysisPage() {
                       );
                     })}
                     <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 14px 0" }}>
-                      <span style={{ fontSize: 15, fontWeight: 800, color: "#4ade80" }}>Total paid: ${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</span>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "#4ade80" }}>{t("analysis.paidOk")}: ${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</span>
                     </div>
                   </div>
                 )}
@@ -1312,10 +1316,10 @@ export default function AnalysisPage() {
           {!imageUrl && (
             <div style={{ ...card, padding: 48, textAlign: "center" }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2a2a2a" strokeWidth="1.5" style={{ margin: "0 auto 16px", display: "block" }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
-              <div style={{ fontSize: 14, color: "#555", marginBottom: 8 }}>Upload a shelf image to begin</div>
+              <div style={{ fontSize: 14, color: "#555", marginBottom: 8 }}>{t("analysis.noImage")}</div>
               <div style={{ fontSize: 12, color: "#333", lineHeight: 1.6 }}>
-                10 micro-tasks · Each task is a separate USDC transaction on ARC Testnet<br/>
-                Total: <strong style={{ color: "#a78bfa" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> per analysis
+                {t("analysis.noImageSub")}<br/>
+                {t("analysis.total")}: <strong style={{ color: "#a78bfa" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong>
               </div>
             </div>
           )}
