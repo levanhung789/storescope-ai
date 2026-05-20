@@ -2,14 +2,37 @@
 
 // ── Step results ───────────────────────────────────────────────────────────────
 
-// Step 1: Image Quality
+// Perspective analysis — art/painting principles applied to shelf photos
+export interface PerspectiveAnalysis {
+  // Góc chụp
+  shootingAngle:    number;   // ước tính độ lệch so với thẳng góc (0=frontal, 30=xiên 30°, 90=side)
+  vanishingPoint:   "left" | "right" | "center" | "none";  // điểm tụ phối cảnh
+  perspectiveType:  "frontal" | "one-point" | "two-point" | "top-down";
+
+  // Phân tích near/far (gần/xa)
+  nearSide:         "left" | "right" | "bottom" | "none";  // phía nào gần camera hơn
+  nearFarRatio:     number;   // tỉ lệ pixel gần/xa — VD: 1.8 = sản phẩm gần chiếm 1.8× pixels
+  depthVisible:     boolean;  // có thấy mặt bên sản phẩm không (depth đang bị nhầm với facing)
+  depthVisibleNote: string;   // "Thấy mặt bên chai Pepsi — đây là depth, không phải facing"
+
+  // Correction factor cho facing count
+  correctionFactor: number;   // nhân với facing đếm được để ra facing thật. VD: 0.85 khi xiên 30°
+  correctionNote:   string;   // giải thích: "Góc 30° → nhân 0.87 (cos30°) để hiệu chỉnh"
+
+  // Shelf lines (đường kệ hội tụ về điểm tụ)
+  shelfLinesConverge: boolean;  // các đường kệ có hội tụ không
+  estimatedDistance:  string;   // ước tính khoảng cách chụp: "~1.5m", "~2m"
+}
+
+// Step 1: Image Quality + Perspective
 export interface StepQuality {
   score:       number;    // 0-100
   angle:       "frontal" | "angled" | "top-down" | "unknown";
   lighting:    "good" | "low-light" | "overexposed";
   blur:        "sharp" | "slight-blur" | "blurry";
   issues:      string[];
-  usable:      boolean;   // false = image too bad to analyze
+  usable:      boolean;
+  perspective: PerspectiveAnalysis;  // phân tích phối cảnh
 }
 
 // Step 2: Product Count
@@ -31,12 +54,15 @@ export interface SKUItem {
   price_vnd:  number | null;
 }
 
-// Step 4: Facing Count
+// Step 4: Facing Count (with perspective correction)
 export interface FacingItem {
-  brand:   string;
-  sku:     string;
-  facing:  number;
-  depth:   number;   // units deep (not facing, but quantity)
+  brand:          string;
+  sku:            string;
+  facing:         number;   // facing đếm được từ ảnh (raw)
+  facingAdjusted: number;   // facing sau hiệu chỉnh phối cảnh
+  depth:          number;   // units sâu (không phải facing)
+  isDepthVisible: boolean;  // có thấy mặt bên không
+  perspectiveNote: string;  // "Gần camera — có thể overcounted 15%"
 }
 
 // Step 5: Shelf Position

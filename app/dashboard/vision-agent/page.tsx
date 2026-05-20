@@ -4,10 +4,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface StepQuality { score: number; angle: string; lighting: string; blur: string; issues: string[]; usable: boolean; }
+interface Perspective { shootingAngle: number; vanishingPoint: string; perspectiveType: string; nearSide: string; nearFarRatio: number; depthVisible: boolean; depthVisibleNote: string; correctionFactor: number; correctionNote: string; shelfLinesConverge: boolean; estimatedDistance: string; }
+interface StepQuality { score: number; angle: string; lighting: string; blur: string; issues: string[]; usable: boolean; perspective: Perspective; }
 interface StepCount { totalUnits: number; visibleUnits: number; estimatedDepth: number; shelfRows: number; note: string; }
 interface SKUItem { brand: string; company: string; sku: string; sector: string; confidence: number; price_vnd: number | null; }
-interface FacingItem { brand: string; sku: string; facing: number; depth: number; }
+interface FacingItem { brand: string; sku: string; facing: number; facingAdjusted: number; depth: number; isDepthVisible: boolean; perspectiveNote: string; }
 interface PositionItem { brand: string; sku: string; tier: string; tierNote: string; }
 interface ShelfShareItem { brand: string; facings: number; shareOfShelf: number; blockLength: string; }
 interface OsaItem { brand: string; sku: string; status: string; facingsRemaining: number; riskLevel: string; action: string; }
@@ -279,6 +280,43 @@ export default function VisionAgentPage() {
                         {result.step1_quality.issues.length > 0 && (
                           <div style={{ marginTop: 10, fontSize: 12, color: "#fbbf24" }}>Issues: {result.step1_quality.issues.join(", ")}</div>
                         )}
+
+                        {/* Perspective Analysis */}
+                        {result.step1_quality.perspective && (
+                          <div style={{ marginTop: 16, padding: "14px 16px", background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.2)", borderRadius: 12 }}>
+                            <div style={{ fontSize: 11, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontWeight: 700 }}>
+                              Phân tích phối cảnh (Perspective)
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 12 }}>
+                              {[
+                                { label: "Góc chụp",       value: `~${result.step1_quality.perspective.shootingAngle}°`, color: result.step1_quality.perspective.shootingAngle > 30 ? "#fbbf24" : "#4ade80" },
+                                { label: "Loại phối cảnh", value: result.step1_quality.perspective.perspectiveType, color: "#818cf8" },
+                                { label: "Điểm tụ",        value: result.step1_quality.perspective.vanishingPoint, color: "#818cf8" },
+                                { label: "Phía gần",       value: result.step1_quality.perspective.nearSide, color: "#f0f0f0" },
+                                { label: "Tỉ lệ gần/xa",   value: `${result.step1_quality.perspective.nearFarRatio}×`, color: result.step1_quality.perspective.nearFarRatio > 1.5 ? "#fbbf24" : "#4ade80" },
+                                { label: "Hệ số hiệu chỉnh", value: result.step1_quality.perspective.correctionFactor.toFixed(2), color: "#a78bfa" },
+                              ].map(k => (
+                                <div key={k.label} style={{ background: "#0a0a0a", borderRadius: 8, padding: "8px 12px" }}>
+                                  <div style={{ fontSize: 10, color: "#555", marginBottom: 3 }}>{k.label}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: k.color }}>{k.value}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {result.step1_quality.perspective.depthVisible && (
+                              <div style={{ padding: "8px 12px", background: "rgba(251,191,36,0.08)", borderRadius: 8, marginBottom: 8 }}>
+                                <div style={{ fontSize: 11, color: "#fbbf24", fontWeight: 600, marginBottom: 3 }}>⚠ Depth visible — cần phân biệt với Facing</div>
+                                <div style={{ fontSize: 11, color: "#888" }}>{result.step1_quality.perspective.depthVisibleNote}</div>
+                              </div>
+                            )}
+
+                            <div style={{ padding: "8px 12px", background: "#0a0a0a", borderRadius: 8 }}>
+                              <div style={{ fontSize: 11, color: "#818cf8", marginBottom: 2, fontWeight: 600 }}>Công thức hiệu chỉnh</div>
+                              <div style={{ fontSize: 11, color: "#888" }}>{result.step1_quality.perspective.correctionNote}</div>
+                              <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Khoảng cách ước tính: {result.step1_quality.perspective.estimatedDistance}</div>
+                            </div>
+                          </div>
+                        )}
                       </StepCard>
                     )}
 
@@ -325,11 +363,11 @@ export default function VisionAgentPage() {
 
                     {/* Step 4 */}
                     {(activeStep === 0 || activeStep === 4) && result.step4_facings.length > 0 && (
-                      <StepCard n={4} icon="📐" label="Đếm Facing">
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                      <StepCard n={4} icon="📐" label="Đếm Facing (có hiệu chỉnh phối cảnh)">
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                           <thead>
                             <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
-                              {["Brand / SKU","Facing","Depth","Qty ước tính"].map(h => (
+                              {["Brand / SKU","Facing (raw)","Facing (adjusted)","Depth","Ghi chú"].map(h => (
                                 <th key={h} style={{ padding: "6px 12px", textAlign: "left", fontSize: 10, color: "#555", textTransform: "uppercase" }}>{h}</th>
                               ))}
                             </tr>
@@ -340,14 +378,19 @@ export default function VisionAgentPage() {
                                 <td style={{ padding: "10px 12px" }}>
                                   <div style={{ fontWeight: 600, color: "#f0f0f0" }}>{f.brand}</div>
                                   <div style={{ fontSize: 11, color: "#555" }}>{f.sku}</div>
+                                  {f.isDepthVisible && <span style={{ ...chip("#fbbf24"), fontSize: 9, marginTop: 4 }}>depth visible</span>}
                                 </td>
-                                <td style={{ padding: "10px 12px", color: "#a78bfa", fontWeight: 800, fontSize: 16, textAlign: "center" }}>{f.facing}</td>
+                                <td style={{ padding: "10px 12px", color: "#555", textAlign: "center", textDecoration: f.facingAdjusted !== f.facing ? "line-through" : "none" }}>{f.facing}</td>
+                                <td style={{ padding: "10px 12px", color: "#a78bfa", fontWeight: 800, fontSize: 16, textAlign: "center" }}>{f.facingAdjusted}</td>
                                 <td style={{ padding: "10px 12px", color: "#555", textAlign: "center" }}>{f.depth}</td>
-                                <td style={{ padding: "10px 12px", color: "#818cf8", textAlign: "center" }}>{f.facing * f.depth}</td>
+                                <td style={{ padding: "10px 12px", fontSize: 11, color: "#666", maxWidth: 180 }}>{f.perspectiveNote}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                        <div style={{ marginTop: 10, fontSize: 11, color: "#818cf8", padding: "8px 12px", background: "rgba(129,140,248,0.06)", borderRadius: 8 }}>
+                          ℹ️ Facing (adjusted) = giá trị dùng để tính Share of Shelf — đã hiệu chỉnh theo góc chụp và loại trừ depth
+                        </div>
                       </StepCard>
                     )}
 

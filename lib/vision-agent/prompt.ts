@@ -3,7 +3,7 @@
 import type { TrainingExample } from "./types";
 
 export function buildAnalysisPrompt(examples: TrainingExample[]): string {
-  let prompt = `You are a professional Vietnamese FMCG shelf analyst AI. Analyze the shelf image following exactly these 8 steps in order.
+  let prompt = `You are a professional Vietnamese FMCG shelf analyst AI with expertise in visual perspective correction. Analyze the shelf image following exactly these 8 steps in order.
 
 ## Vietnamese FMCG Brands
 Pepsi/7Up/Mirinda/Sting (Suntory PepsiCo) | Coca-Cola/Sprite/Fanta (Coca-Cola VN) |
@@ -11,17 +11,62 @@ Heineken/Tiger (Heineken VN) | Bia Saigon/333 (SABECO) | Vinamilk | TH True Milk
 Meizan/Cái Lân/Neptune (Calofic) | Hảo Hảo/Kokomi (Acecook) | Chinsu/Nam Ngư (Masan) |
 Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
 
+## PERSPECTIVE ANALYSIS — Critical for Accuracy
+
+### Principles from Art/Painting (Luật Phối Cảnh):
+
+**1. Vanishing Point (Điểm tụ)**
+- Frontal shot (0°): shelf lines are parallel → no vanishing point → most accurate
+- Angled shot: shelf lines converge to a vanishing point (left or right)
+- The angle of convergence tells you how distorted the image is
+
+**2. Near/Far Distortion (Gần/Xa)**
+- Products NEAR the camera appear LARGER (more pixels per product)
+- Products FAR from camera appear SMALLER (fewer pixels per product)
+- Rule: at 30° angle → near side products appear ~1.3× larger than far side
+- At 45°: near side appears ~1.7× larger | At 60°: ~2.5× larger
+
+**3. Depth vs Facing Confusion (Chiều sâu vs Mặt trưng bày)**
+- In angled shots, you can SEE the SIDE of products → this is DEPTH, not FACING
+- A bottle showing its side label is NOT a new facing
+- Facing = only the FRONT-FACING units visible from customer viewpoint
+- If you see 8 Pepsi bottles but 3 are showing side labels → facing = 5, depth ≈ 3
+
+**4. Correction Formula (Công thức hiệu chỉnh)**
+- correctionFactor = cos(shootingAngle in radians)
+- 0°=1.00, 15°=0.97, 30°=0.87, 45°=0.71, 60°=0.50
+- facingAdjusted = facing_raw × correctionFactor
+- Example: counted 12 facings at 30° → adjusted = 12 × 0.87 = ~10 true facings
+
+**5. Shelf Lines as Rulers**
+- Look at the horizontal shelf edges — do they converge?
+- Parallel = frontal (accurate) | Converging left = camera is to the right
+- Use convergence angle to estimate shooting angle
+
 ## 8-Step Analysis — Return as JSON:
 
 \`\`\`json
 {
   "step1_quality": {
     "score": 85,
-    "angle": "frontal",
+    "angle": "angled",
     "lighting": "good",
     "blur": "sharp",
-    "issues": [],
-    "usable": true
+    "issues": ["shot at ~30° angle — perspective correction applied"],
+    "usable": true,
+    "perspective": {
+      "shootingAngle": 30,
+      "vanishingPoint": "left",
+      "perspectiveType": "one-point",
+      "nearSide": "right",
+      "nearFarRatio": 1.3,
+      "depthVisible": true,
+      "depthVisibleNote": "Mặt bên chai Pepsi thấy rõ ở cạnh phải — đây là depth, không phải facing",
+      "correctionFactor": 0.87,
+      "correctionNote": "Góc ~30° → nhân cos(30°)=0.87 để hiệu chỉnh facing đếm được",
+      "shelfLinesConverge": true,
+      "estimatedDistance": "~2m"
+    }
   },
 
   "step2_count": {
@@ -47,8 +92,11 @@ Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
     {
       "brand": "Pepsi",
       "sku": "Pepsi chai 1.5L",
-      "facing": 12,
-      "depth": 2
+      "facing": 14,
+      "facingAdjusted": 12,
+      "depth": 2,
+      "isDepthVisible": true,
+      "perspectiveNote": "Đếm được 14 nhưng 2 là mặt bên (depth) + hiệu chỉnh 30° → thực tế 12 facing"
     }
   ],
 
@@ -97,12 +145,16 @@ Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
 \`\`\`
 
 ## Rules:
-- Step 1 FIRST — if usable=false, still complete all steps with best effort
-- Step 2: Count ALL visible units including partially visible ones
-- Step 4: facing = number of product faces visible FROM THE FRONT only (not depth)
-- Step 6: shareOfShelf% must sum to 100 for all brands in same category
-- Step 7: riskLevel HIGH = 0-1 facing, MEDIUM = 2-3 facing, LOW = 4 facing, NONE = 5+
-- Step 8: Sort recommendations by priority (high first)
+- Step 1 FIRST — detect perspective BEFORE counting anything
+- Step 2: Count ALL visible units. If angled shot, note near-side may overrepresent
+- Step 4: ALWAYS use facingAdjusted (after perspective correction) for shelf share calc
+  - If you see depth (side of products) → subtract from raw facing count FIRST
+  - Then apply correctionFactor: facingAdjusted = (raw - depth_visible) × correctionFactor
+- Step 6: Use facingAdjusted values (NOT raw facing) for shareOfShelf calculation
+- Step 7: riskLevel HIGH = 0-1 facing, MEDIUM = 2-3, LOW = 4, NONE = 5+
+- Step 8: If angle > 20°, add recommendation: "Chụp thẳng góc để phân tích chính xác hơn"
+- shootingAngle: estimate by looking at how much shelf lines converge
+  - Parallel lines = 0° | Slight convergence = 15-20° | Clear convergence = 30-45° | Sharp = 60°+
 - Return ONLY valid JSON, no markdown outside JSON`;
 
   if (examples.length > 0) {

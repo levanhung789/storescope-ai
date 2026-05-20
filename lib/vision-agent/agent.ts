@@ -56,6 +56,19 @@ export async function analyzeImage(
       blur:     p.step1_quality?.blur ?? "sharp",
       issues:   p.step1_quality?.issues ?? [],
       usable:   p.step1_quality?.usable ?? true,
+      perspective: {
+        shootingAngle:      Number(p.step1_quality?.perspective?.shootingAngle ?? 0),
+        vanishingPoint:     p.step1_quality?.perspective?.vanishingPoint ?? "none",
+        perspectiveType:    p.step1_quality?.perspective?.perspectiveType ?? "frontal",
+        nearSide:           p.step1_quality?.perspective?.nearSide ?? "none",
+        nearFarRatio:       Number(p.step1_quality?.perspective?.nearFarRatio ?? 1),
+        depthVisible:       Boolean(p.step1_quality?.perspective?.depthVisible ?? false),
+        depthVisibleNote:   String(p.step1_quality?.perspective?.depthVisibleNote ?? ""),
+        correctionFactor:   Number(p.step1_quality?.perspective?.correctionFactor ?? 1),
+        correctionNote:     String(p.step1_quality?.perspective?.correctionNote ?? ""),
+        shelfLinesConverge: Boolean(p.step1_quality?.perspective?.shelfLinesConverge ?? false),
+        estimatedDistance:  String(p.step1_quality?.perspective?.estimatedDistance ?? "unknown"),
+      },
     },
 
     step2_count: {
@@ -76,10 +89,13 @@ export async function analyzeImage(
     })),
 
     step4_facings: (p.step4_facings ?? []).map((f: Record<string, unknown>) => ({
-      brand:  String(f.brand ?? ""),
-      sku:    String(f.sku ?? ""),
-      facing: Number(f.facing ?? 1),
-      depth:  Number(f.depth ?? 1),
+      brand:           String(f.brand ?? ""),
+      sku:             String(f.sku ?? ""),
+      facing:          Number(f.facing ?? 1),
+      facingAdjusted:  Number(f.facingAdjusted ?? f.facing ?? 1),
+      depth:           Number(f.depth ?? 1),
+      isDepthVisible:  Boolean(f.isDepthVisible ?? false),
+      perspectiveNote: String(f.perspectiveNote ?? ""),
     })),
 
     step5_positions: (p.step5_positions ?? []).map((pos: Record<string, unknown>) => ({
