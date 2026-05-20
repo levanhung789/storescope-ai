@@ -813,59 +813,57 @@ function ChannelsPanel() {
   );
 }
 
-// ── Web Chat Floating Widget — always visible, minimize/expand anytime ────────
+// ── Web Chat Guide Widget — StoreScope AI assistant, only on /dashboard/agent ─
 function WebChatWidget() {
   const [open,    setOpen]    = useState(false);
   const [unread,  setUnread]  = useState(0);
   const [loading, setLoading] = useState(false);
+  const [input,   setInput]   = useState("");
   const [messages, setMessages] = useState<{role:"user"|"agent";content:string;timestamp:number}[]>([
-    { role: "agent", content: "👋 Xin chào! Gửi ảnh kệ hàng để tôi phân tích 8 bước.\n\n💳 $0.025 USDC / lần phân tích", timestamp: Date.now() },
+    { role: "agent", content: "👋 Xin chào! Tôi là **StoreScope AI Assistant**.\n\nTôi có thể giúp bạn:\n• Hướng dẫn sử dụng tính năng\n• Giải thích cách phân tích kệ hàng\n• Hỗ trợ kết nối Telegram/Zalo\n• Giải đáp về thanh toán USDC\n\nBạn cần hỗ trợ gì?", timestamp: Date.now() },
   ]);
-  const fileRef = useRef<HTMLInputElement>(null);
   const endRef  = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setUnread(0);
       setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, messages]);
 
-  const addAgentMsg = (content: string) => {
-    setMessages(prev => [...prev, { role: "agent", content, timestamp: Date.now() }]);
-    if (!open) setUnread(u => u + 1);
-  };
+  const sendMessage = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
 
-  const handleImage = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string;
-      setMessages(prev => [...prev, { role: "user", content: dataUrl, timestamp: Date.now() }]);
-      setLoading(true);
-      addAgentMsg("⏳ Đang phân tích ảnh (8 bước)...");
+    const userMsg = { role: "user" as const, content: text, timestamp: Date.now() };
+    setMessages(prev => [...prev, userMsg]);
+    setLoading(true);
 
-      try {
-        const base64  = dataUrl.split(",")[1];
-        const session = JSON.parse(localStorage.getItem("storescope-circle-session") || "null");
-        const userId  = session?.userId ?? `web-${Date.now()}`;
-        const res  = await fetch("/api/agent/channels", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "analyze", userId, imageBase64: base64, mimeType: file.type }),
-        });
-        const data = await res.json() as { text?: string; error?: string };
-        setMessages(prev => [
-          ...prev.slice(0, -1),
-          { role: "agent", content: data.text ?? `❌ ${data.error ?? "Analysis failed"}`, timestamp: Date.now() },
-        ]);
-        if (!open) setUnread(u => u + 1);
-      } catch {
-        setMessages(prev => [...prev.slice(0, -1), { role: "agent", content: "❌ Lỗi kết nối. Thử lại.", timestamp: Date.now() }]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Only send last 10 messages for context
+      const history = [...messages, userMsg].slice(-10).map(m => ({
+        role: m.role === "agent" ? "assistant" : "user",
+        content: m.content,
+      }));
+
+      const res  = await fetch("/api/agent/guide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await res.json() as { reply?: string };
+      const reply = data.reply ?? "Xin lỗi, tôi không thể trả lời lúc này.";
+
+      setMessages(prev => [...prev, { role: "agent", content: reply, timestamp: Date.now() }]);
+      if (!open) setUnread(u => u + 1);
+    } catch {
+      setMessages(prev => [...prev, { role: "agent", content: "❌ Lỗi kết nối. Thử lại nhé.", timestamp: Date.now() }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -924,8 +922,8 @@ function WebChatWidget() {
           <div style={{ padding: "13px 16px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "#0a0a0a", flexShrink: 0 }}>
             <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🤖</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>StoreScope AI Agent</div>
-              <div style={{ fontSize: 10, color: "#4ade80" }}>● Online · $0.025 / phân tích</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>Hướng dẫn sử dụng</div>
+              <div style={{ fontSize: 10, color: "#4ade80" }}>● StoreScope AI Assistant</div>
             </div>
             {/* Minimize button */}
             <button
@@ -978,25 +976,42 @@ function WebChatWidget() {
             <div ref={endRef} />
           </div>
 
-          {/* Input */}
-          <div style={{ padding: "10px 12px", borderTop: "1px solid #1f1f1f", background: "#0a0a0a", flexShrink: 0 }}>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) { handleImage(f); e.target.value = ""; } }} />
-            <button
-              onClick={() => fileRef.current?.click()}
+          {/* Quick questions */}
+          <div style={{ padding: "8px 12px", borderTop: "1px solid #1f1f1f", background: "#0a0a0a", display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {["Cách phân tích ảnh?", "Kết nối Telegram?", "Nạp USDC?"].map(q => (
+              <button key={q} onClick={() => { setInput(q); setTimeout(() => inputRef.current?.focus(), 50); }}
+                style={{ fontSize: 10, padding: "4px 10px", borderRadius: 999, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa", cursor: "pointer" }}>
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {/* Text input */}
+          <div style={{ padding: "10px 12px", borderTop: "1px solid #111", background: "#0a0a0a", flexShrink: 0, display: "flex", gap: 8 }}>
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              placeholder="Hỏi về cách sử dụng StoreScope AI..."
               disabled={loading}
               style={{
-                width: "100%", padding: "11px 0",
-                background: loading ? "#1a1a1a" : "linear-gradient(135deg,#7c3aed,#6366f1)",
-                color: loading ? "#555" : "#fff",
-                border: "none", borderRadius: 12,
-                fontSize: 13, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                flex: 1, background: "#111", border: "1px solid #2a2a2a", borderRadius: 10,
+                padding: "9px 12px", color: "#f0f0f0", fontSize: 12, outline: "none",
+              }}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim() || loading}
+              style={{
+                width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                background: input.trim() && !loading ? "linear-gradient(135deg,#7c3aed,#6366f1)" : "#1a1a1a",
+                color: input.trim() && !loading ? "#fff" : "#555",
+                border: "none", cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
               }}
             >
-              {loading
-                ? <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #555", borderTopColor: "#888", animation: "badgePulse 0.6s linear infinite" }} />Đang phân tích...</>
-                : "📸 Gửi ảnh kệ hàng"
-              }
+              {loading ? <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #555", borderTopColor: "#a78bfa", animation: "badgePulse 0.6s linear infinite" }} /> : "↑"}
             </button>
           </div>
         </div>
