@@ -3,25 +3,58 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 
-interface Detection { brand: string; company: string; product: string; sector: string; confidence: number; price_vnd: number | null; }
-interface AnalysisResult { id: string; imageHash: string; detections: Detection[]; shelfShare: { brand: string; pct: number }[]; imageQuality: { score: number; issues: string[] }; recommendations: string[]; stockRisks: string[]; rawSummary: string; model: string; createdAt: number; }
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface StepQuality { score: number; angle: string; lighting: string; blur: string; issues: string[]; usable: boolean; }
+interface StepCount { totalUnits: number; visibleUnits: number; estimatedDepth: number; shelfRows: number; note: string; }
+interface SKUItem { brand: string; company: string; sku: string; sector: string; confidence: number; price_vnd: number | null; }
+interface FacingItem { brand: string; sku: string; facing: number; depth: number; }
+interface PositionItem { brand: string; sku: string; tier: string; tierNote: string; }
+interface ShelfShareItem { brand: string; facings: number; shareOfShelf: number; blockLength: string; }
+interface OsaItem { brand: string; sku: string; status: string; facingsRemaining: number; riskLevel: string; action: string; }
+interface RecommendItem { priority: string; action: string; reason: string; category: string; }
+interface PipelineResult {
+  id: string; model: string; createdAt: number;
+  step1_quality: StepQuality;
+  step2_count: StepCount;
+  step3_skus: SKUItem[];
+  step4_facings: FacingItem[];
+  step5_positions: PositionItem[];
+  step6_shelfShare: ShelfShareItem[];
+  step7_osa: OsaItem[];
+  step8_recommendations: RecommendItem[];
+  totalFacings: number; topBrand: string; summary: string;
+}
 interface Stats { totalAnalyses: number; avgFeedbackScore: number; trainingExamples: number; topBrands: { brand: string; count: number }[]; modelStatus: string; recentAnalyses: { id: string; createdAt: number; score?: number; summary: string; brands: number; quality: number }[]; exampleSummary: { id: string; quality: string; brands: number; score?: number; addedAt: number }[]; }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: "20px 24px" };
-const tag = (color: string): React.CSSProperties => ({ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: `${color}18`, border: `1px solid ${color}40`, color });
+const chip = (color: string): React.CSSProperties => ({ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: `${color}18`, border: `1px solid ${color}40`, color, display: "inline-block" });
+const riskColor = (r: string) => r === "high" ? "#ef4444" : r === "medium" ? "#f97316" : r === "low" ? "#fbbf24" : "#4ade80";
+
+const STEP_LABELS = [
+  { n: 1, label: "Chất lượng ảnh",      icon: "🔍" },
+  { n: 2, label: "Đếm sản phẩm",         icon: "📦" },
+  { n: 3, label: "Nhận diện Brand/SKU",  icon: "🏷️" },
+  { n: 4, label: "Đếm Facing",           icon: "📐" },
+  { n: 5, label: "Vị trí kệ",            icon: "📍" },
+  { n: 6, label: "Share of Shelf",       icon: "📊" },
+  { n: 7, label: "On-Shelf Availability",icon: "⚠️" },
+  { n: 8, label: "Gợi ý & Báo cáo",     icon: "💡" },
+];
 
 export default function VisionAgentPage() {
-  const fileRef   = useRef<HTMLInputElement>(null);
-  const [imageUrl, setImageUrl]   = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [imageUrl,  setImageUrl]  = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [result, setResult]       = useState<AnalysisResult | null>(null);
-  const [stats, setStats]         = useState<Stats | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [feedback, setFeedback]   = useState<number>(0);
+  const [result,    setResult]    = useState<PipelineResult | null>(null);
+  const [stats,     setStats]     = useState<Stats | null>(null);
+  const [loading,   setLoading]   = useState(false);
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const [feedback,  setFeedback]  = useState(0);
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
-  const [saveEx, setSaveEx]       = useState(false);
-  const [tab, setTab]             = useState<"analyze"|"training"|"stats">("analyze");
+  const [saveEx,    setSaveEx]    = useState(false);
+  const [tab,       setTab]       = useState<"analyze"|"training"|"stats">("analyze");
 
   const loadStats = useCallback(async () => {
     const res = await fetch("/api/vision-agent/stats");
@@ -34,19 +67,19 @@ export default function VisionAgentPage() {
     if (!file.type.startsWith("image/")) return;
     setImageFile(file);
     setImageUrl(URL.createObjectURL(file));
-    setResult(null); setFeedback(0); setFeedbackNote(""); setFeedbackSent(false);
+    setResult(null); setFeedback(0); setFeedbackNote(""); setFeedbackSent(false); setActiveStep(0);
   };
 
   const handleAnalyze = async () => {
     if (!imageFile) return;
-    setLoading(true); setResult(null);
+    setLoading(true); setResult(null); setActiveStep(0);
     try {
       const fd = new FormData();
       fd.append("image", imageFile);
       fd.append("saveExample", String(saveEx));
-      const res = await fetch("/api/vision-agent/analyze", { method: "POST", body: fd });
+      const res  = await fetch("/api/vision-agent/analyze", { method: "POST", body: fd });
       const data = await res.json();
-      if (data.result) { setResult(data.result); loadStats(); }
+      if (data.result) { setResult(data.result); setActiveStep(1); loadStats(); }
       else alert("Error: " + (data.error ?? "Unknown"));
     } finally { setLoading(false); }
   };
@@ -54,8 +87,7 @@ export default function VisionAgentPage() {
   const handleFeedback = async () => {
     if (!result || !feedback) return;
     await fetch("/api/vision-agent/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ analysisId: result.id, score: feedback, notes: feedbackNote, saveAsExample: feedback >= 4 }),
     });
     setFeedbackSent(true); loadStats();
@@ -72,16 +104,16 @@ export default function VisionAgentPage() {
       {/* Sidebar */}
       <aside style={{ width: 220, flexShrink: 0, background: "#0a0a0a", borderRight: "1px solid #1f1f1f", display: "flex", flexDirection: "column" }}>
         <div style={{ padding: "16px 14px", borderBottom: "1px solid #1f1f1f" }}>
-          <a href="/"><img src="/logo.png" alt="StoreScope AI" style={{ height: 73, width: "auto", filter: "invert(1)" }} /></a>
+          <a href="/"><img src="/logo.png" alt="StoreScope" style={{ height: 73, width: "auto", filter: "invert(1)" }} /></a>
         </div>
         <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
           {[
-            { label: "Dashboard",     href: "/dashboard" },
-            { label: "AI Analysis",   href: "/dashboard/analysis" },
-            { label: "Vision Agent",  href: "/dashboard/vision-agent", active: true },
-            { label: "AI Agent",      href: "/dashboard/agent" },
-            { label: "Store Layout",  href: "/layout-editor" },
-            { label: "Forum",         href: "/forum" },
+            { label: "Dashboard",    href: "/dashboard" },
+            { label: "AI Analysis",  href: "/dashboard/analysis" },
+            { label: "Vision Agent", href: "/dashboard/vision-agent", active: true },
+            { label: "AI Agent",     href: "/dashboard/agent" },
+            { label: "Store Layout", href: "/layout-editor" },
+            { label: "Forum",        href: "/forum" },
           ].map(item => (
             <Link key={item.label} href={item.href} style={{ display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: (item as {active?:boolean}).active ? 600 : 400, background: (item as {active?:boolean}).active ? "rgba(124,58,237,0.12)" : "transparent", color: (item as {active?:boolean}).active ? "#a78bfa" : "#666", border: (item as {active?:boolean}).active ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent" }}>
               {item.label}
@@ -93,36 +125,38 @@ export default function VisionAgentPage() {
       {/* Main */}
       <main style={{ flex: 1, overflow: "auto" }}>
         <header style={{ borderBottom: "1px solid #1f1f1f", padding: "16px 28px" }}>
-          <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 4 }}>GPT-4o Vision · Few-Shot Learning · Self-Improving</div>
+          <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 4 }}>GPT-4o Vision · 8-Step FMCG Pipeline · Self-Learning</div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Vision AI Agent</h2>
-          {stats && <div style={{ marginTop: 4, fontSize: 12, color: "#555" }}>{stats.modelStatus}</div>}
+          {stats && <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{stats.modelStatus}</div>}
         </header>
 
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid #1f1f1f", padding: "0 28px" }}>
           {(["analyze","training","stats"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{ padding: "12px 20px", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, background: "transparent", color: tab === t ? "#a78bfa" : "#555", borderBottom: tab === t ? "2px solid #7c3aed" : "2px solid transparent", textTransform: "capitalize" }}>
-              {t === "analyze" ? "Analyze Image" : t === "training" ? `Training (${stats?.trainingExamples ?? 0})` : "Statistics"}
+              {t === "analyze" ? "Analyze" : t === "training" ? `Training (${stats?.trainingExamples ?? 0})` : "Stats"}
             </button>
           ))}
         </div>
 
         <div style={{ padding: 28 }}>
 
-          {/* ── Analyze Tab ── */}
+          {/* ── ANALYZE TAB ── */}
           {tab === "analyze" && (
-            <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24, alignItems: "start" }}>
 
-              {/* Left */}
+              {/* Left panel */}
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {/* Upload */}
-                <div onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+                <div
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
                   onClick={() => fileRef.current?.click()}
-                  style={{ border: "2px dashed #2a2a2a", borderRadius: 16, cursor: "pointer", overflow: "hidden", background: "#0a0a0a", minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  style={{ border: "2px dashed #2a2a2a", borderRadius: 16, cursor: "pointer", overflow: "hidden", background: "#0a0a0a", minHeight: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {imageUrl
-                    ? <img src={imageUrl} alt="shelf" style={{ width: "100%", maxHeight: 260, objectFit: "cover", display: "block" }} />
-                    : <div style={{ textAlign: "center", padding: 32 }}>
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>🖼️</div>
+                    ? <img src={imageUrl} alt="shelf" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block" }} />
+                    : <div style={{ textAlign: "center", padding: 28 }}>
+                        <div style={{ fontSize: 32, marginBottom: 8 }}>🖼️</div>
                         <div style={{ fontSize: 13, color: "#666" }}>Drop shelf image here</div>
                         <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>JPG · PNG · WEBP</div>
                       </div>
@@ -130,7 +164,6 @@ export default function VisionAgentPage() {
                   <input ref={fileRef} type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} style={{ display: "none" }} />
                 </div>
 
-                {/* Options */}
                 <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "#888", padding: "10px 14px", background: "#0a0a0a", borderRadius: 10, border: "1px solid #1f1f1f" }}>
                   <input type="checkbox" checked={saveEx} onChange={e => setSaveEx(e.target.checked)} style={{ accentColor: "#7c3aed" }} />
                   Save as training example
@@ -138,220 +171,340 @@ export default function VisionAgentPage() {
 
                 <button onClick={handleAnalyze} disabled={!imageFile || loading}
                   style={{ background: !imageFile || loading ? "#1a1a1a" : "#7c3aed", color: !imageFile || loading ? "#555" : "#fff", border: "none", borderRadius: 12, padding: "13px 0", fontSize: 13, fontWeight: 600, cursor: imageFile && !loading ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                  {loading ? <>
-                    <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #a78bfa", borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} />
-                    GPT-4o Analyzing...
-                  </> : "Analyze with Vision Agent"}
+                  {loading
+                    ? <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #a78bfa", borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} />Analyzing 8 steps...</>
+                    : "Run 8-Step Analysis"}
                 </button>
                 <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+                {/* 8-step navigator */}
+                {result && (
+                  <div style={{ ...card, padding: 16 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 12 }}>8 Analysis Steps</div>
+                    {STEP_LABELS.map(s => (
+                      <button key={s.n} onClick={() => setActiveStep(s.n)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", marginBottom: 4, borderRadius: 8, border: `1px solid ${activeStep === s.n ? "rgba(124,58,237,0.4)" : "transparent"}`, background: activeStep === s.n ? "rgba(124,58,237,0.1)" : "transparent", cursor: "pointer", textAlign: "left" }}>
+                        <span style={{ fontSize: 14 }}>{s.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: activeStep === s.n ? "#a78bfa" : "#888" }}>Step {s.n}</div>
+                          <div style={{ fontSize: 11, color: activeStep === s.n ? "#ccc" : "#555" }}>{s.label}</div>
+                        </div>
+                        <span style={{ marginLeft: "auto", fontSize: 10, color: "#4ade80" }}>✓</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Feedback */}
                 {result && !feedbackSent && (
                   <div style={{ ...card, padding: 16 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 10, color: "#a78bfa" }}>Rate this analysis</div>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                       {[1,2,3,4,5].map(s => (
                         <button key={s} onClick={() => setFeedback(s)}
-                          style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${feedback >= s ? "#7c3aed" : "#2a2a2a"}`, background: feedback >= s ? "rgba(124,58,237,0.15)" : "transparent", cursor: "pointer", fontSize: 16, color: feedback >= s ? "#a78bfa" : "#555" }}>
-                          ★
-                        </button>
+                          style={{ flex: 1, height: 32, borderRadius: 6, border: `1px solid ${feedback >= s ? "#7c3aed" : "#2a2a2a"}`, background: feedback >= s ? "rgba(124,58,237,0.15)" : "transparent", cursor: "pointer", fontSize: 14, color: feedback >= s ? "#a78bfa" : "#555" }}>★</button>
                       ))}
                     </div>
-                    <textarea value={feedbackNote} onChange={e => setFeedbackNote(e.target.value)} placeholder="Notes (optional)..." style={{ width: "100%", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 10px", color: "#f0f0f0", fontSize: 12, resize: "none", boxSizing: "border-box" }} rows={2} />
-                    <button onClick={handleFeedback} disabled={!feedback} style={{ width: "100%", marginTop: 8, background: feedback ? "#7c3aed" : "#1a1a1a", color: feedback ? "#fff" : "#555", border: "none", borderRadius: 8, padding: "9px 0", fontSize: 12, fontWeight: 600, cursor: feedback ? "pointer" : "not-allowed" }}>
-                      Submit Feedback {feedback >= 4 ? "& Save as Example" : ""}
+                    <textarea value={feedbackNote} onChange={e => setFeedbackNote(e.target.value)} placeholder="Notes..." style={{ width: "100%", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px", color: "#f0f0f0", fontSize: 12, resize: "none", boxSizing: "border-box" }} rows={2} />
+                    <button onClick={handleFeedback} disabled={!feedback}
+                      style={{ width: "100%", marginTop: 8, background: feedback ? "#7c3aed" : "#1a1a1a", color: feedback ? "#fff" : "#555", border: "none", borderRadius: 8, padding: "9px 0", fontSize: 12, fontWeight: 600, cursor: feedback ? "pointer" : "not-allowed" }}>
+                      Submit {feedback >= 4 ? "& Save as Example" : "Feedback"}
                     </button>
                   </div>
                 )}
                 {feedbackSent && (
-                  <div style={{ padding: "12px 16px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, fontSize: 12, color: "#4ade80" }}>
-                    ✓ Feedback saved — agent will learn from this analysis
+                  <div style={{ padding: "10px 14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, fontSize: 12, color: "#4ade80" }}>
+                    ✓ Saved — agent learns from this
                   </div>
                 )}
               </div>
 
-              {/* Right — Results */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Right: step results */}
+              <div>
                 {!result && !loading && (
-                  <div style={{ ...card, textAlign: "center", padding: 48 }}>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>🤖</div>
-                    <div style={{ color: "#555", fontSize: 14 }}>Upload a shelf image to begin AI analysis</div>
-                    <div style={{ color: "#333", fontSize: 12, marginTop: 8 }}>Agent uses GPT-4o + {stats?.trainingExamples ?? 0} training examples</div>
+                  <div style={{ ...card, textAlign: "center", padding: 60 }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
+                    <div style={{ fontSize: 15, color: "#555", marginBottom: 8 }}>Upload a shelf image to begin</div>
+                    <div style={{ fontSize: 12, color: "#333" }}>{stats?.trainingExamples ?? 0} training examples · GPT-4o Vision</div>
+                    <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+                      {STEP_LABELS.map(s => (
+                        <div key={s.n} style={{ textAlign: "center", opacity: 0.4 }}>
+                          <div style={{ fontSize: 20 }}>{s.icon}</div>
+                          <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>Step {s.n}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
+
                 {loading && (
-                  <div style={{ ...card, textAlign: "center", padding: 48 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid #7c3aed", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-                    <div style={{ color: "#a78bfa", fontSize: 14, fontWeight: 600 }}>GPT-4o Vision analyzing...</div>
-                    <div style={{ color: "#555", fontSize: 12, marginTop: 4 }}>Detecting brands, prices, shelf share</div>
+                  <div style={{ ...card, textAlign: "center", padding: 60 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid #7c3aed", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 20px" }} />
+                    <div style={{ color: "#a78bfa", fontSize: 15, fontWeight: 600 }}>Running 8-step analysis...</div>
+                    <div style={{ color: "#555", fontSize: 12, marginTop: 6 }}>GPT-4o Vision is analyzing your shelf image</div>
                   </div>
                 )}
+
                 {result && (
-                  <>
-                    {/* Summary */}
-                    <div style={card}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>Analysis Complete</div>
-                        <div style={{ ...tag("#4ade80"), fontSize: 11 }}>Quality: {result.imageQuality.score}/100</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+                    {/* Summary bar */}
+                    <div style={{ ...card, background: "rgba(124,58,237,0.06)", borderColor: "rgba(124,58,237,0.2)" }}>
+                      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#a78bfa", flex: 1 }}>{result.summary}</div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <span style={chip("#4ade80")}>Quality {result.step1_quality.score}/100</span>
+                          <span style={chip("#a78bfa")}>{result.totalFacings} facings</span>
+                          <span style={chip("#818cf8")}>Top: {result.topBrand}</span>
+                        </div>
                       </div>
-                      <p style={{ margin: 0, fontSize: 13, color: "#ccc", lineHeight: 1.6 }}>{result.rawSummary}</p>
-                      <div style={{ marginTop: 8, fontSize: 11, color: "#555" }}>Model: {result.model} · ID: {result.id}</div>
                     </div>
 
-                    {/* Detections */}
-                    {result.detections.length > 0 && (
-                      <div style={card}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "#a78bfa" }}>Products Detected ({result.detections.length})</div>
+                    {/* Step 1 */}
+                    {(activeStep === 0 || activeStep === 1) && (
+                      <StepCard n={1} icon="🔍" label="Chất lượng ảnh">
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+                          {[
+                            { label: "Score",    value: `${result.step1_quality.score}/100` },
+                            { label: "Angle",    value: result.step1_quality.angle },
+                            { label: "Lighting", value: result.step1_quality.lighting },
+                            { label: "Blur",     value: result.step1_quality.blur },
+                          ].map(k => (
+                            <div key={k.label} style={{ background: "#0a0a0a", borderRadius: 10, padding: "10px 14px" }}>
+                              <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", marginBottom: 4 }}>{k.label}</div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: "#f0f0f0" }}>{k.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {result.step1_quality.issues.length > 0 && (
+                          <div style={{ marginTop: 10, fontSize: 12, color: "#fbbf24" }}>Issues: {result.step1_quality.issues.join(", ")}</div>
+                        )}
+                      </StepCard>
+                    )}
+
+                    {/* Step 2 */}
+                    {(activeStep === 0 || activeStep === 2) && (
+                      <StepCard n={2} icon="📦" label="Đếm sản phẩm">
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+                          {[
+                            { label: "Tổng units",    value: result.step2_count.totalUnits },
+                            { label: "Nhìn thấy rõ",  value: result.step2_count.visibleUnits },
+                            { label: "Độ sâu kệ",     value: `~${result.step2_count.estimatedDepth} sản phẩm` },
+                            { label: "Số tầng kệ",    value: result.step2_count.shelfRows },
+                          ].map(k => (
+                            <div key={k.label} style={{ background: "#0a0a0a", borderRadius: 10, padding: "10px 14px" }}>
+                              <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", marginBottom: 4 }}>{k.label}</div>
+                              <div style={{ fontSize: 18, fontWeight: 800, color: "#a78bfa" }}>{k.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {result.step2_count.note && <div style={{ marginTop: 10, fontSize: 12, color: "#888" }}>{result.step2_count.note}</div>}
+                      </StepCard>
+                    )}
+
+                    {/* Step 3 */}
+                    {(activeStep === 0 || activeStep === 3) && result.step3_skus.length > 0 && (
+                      <StepCard n={3} icon="🏷️" label={`Nhận diện Brand/SKU — ${result.step3_skus.length} SKUs`}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                          {result.detections.map((d, i) => (
-                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "#0a0a0a", borderRadius: 10 }}>
-                              <div style={{ width: 8, height: 8, borderRadius: "50%", background: d.confidence >= 80 ? "#4ade80" : "#fbbf24", flexShrink: 0 }} />
+                          {result.step3_skus.map((s, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#0a0a0a", borderRadius: 10 }}>
+                              <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.confidence >= 85 ? "#4ade80" : "#fbbf24", flexShrink: 0 }} />
                               <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{d.brand}</div>
-                                <div style={{ fontSize: 11, color: "#555" }}>{d.product} · {d.company}</div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{s.brand}</div>
+                                <div style={{ fontSize: 11, color: "#555" }}>{s.sku} · {s.company}</div>
                               </div>
                               <div style={{ textAlign: "right" }}>
-                                <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700 }}>{d.confidence}%</div>
-                                {d.price_vnd && <div style={{ fontSize: 11, color: "#fbbf24" }}>{d.price_vnd.toLocaleString()}đ</div>}
+                                <div style={{ fontSize: 12, color: "#a78bfa" }}>{s.confidence}%</div>
+                                {s.price_vnd && <div style={{ fontSize: 11, color: "#fbbf24" }}>{s.price_vnd.toLocaleString()}đ</div>}
                               </div>
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </StepCard>
                     )}
 
-                    {/* Shelf Share */}
-                    {result.shelfShare.length > 0 && (
-                      <div style={card}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "#a78bfa" }}>Shelf Share</div>
-                        {result.shelfShare.map(s => (
-                          <div key={s.brand} style={{ marginBottom: 10 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                              <span style={{ color: "#e0e0e0" }}>{s.brand}</span>
-                              <span style={{ color: "#a78bfa", fontWeight: 700 }}>{s.pct}%</span>
+                    {/* Step 4 */}
+                    {(activeStep === 0 || activeStep === 4) && result.step4_facings.length > 0 && (
+                      <StepCard n={4} icon="📐" label="Đếm Facing">
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
+                              {["Brand / SKU","Facing","Depth","Qty ước tính"].map(h => (
+                                <th key={h} style={{ padding: "6px 12px", textAlign: "left", fontSize: 10, color: "#555", textTransform: "uppercase" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {result.step4_facings.map((f, i) => (
+                              <tr key={i} style={{ borderBottom: "1px solid #111" }}>
+                                <td style={{ padding: "10px 12px" }}>
+                                  <div style={{ fontWeight: 600, color: "#f0f0f0" }}>{f.brand}</div>
+                                  <div style={{ fontSize: 11, color: "#555" }}>{f.sku}</div>
+                                </td>
+                                <td style={{ padding: "10px 12px", color: "#a78bfa", fontWeight: 800, fontSize: 16, textAlign: "center" }}>{f.facing}</td>
+                                <td style={{ padding: "10px 12px", color: "#555", textAlign: "center" }}>{f.depth}</td>
+                                <td style={{ padding: "10px 12px", color: "#818cf8", textAlign: "center" }}>{f.facing * f.depth}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </StepCard>
+                    )}
+
+                    {/* Step 5 */}
+                    {(activeStep === 0 || activeStep === 5) && result.step5_positions.length > 0 && (
+                      <StepCard n={5} icon="📍" label="Vị trí kệ">
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                          {result.step5_positions.map((p, i) => (
+                            <div key={i} style={{ padding: "10px 14px", background: "#0a0a0a", borderRadius: 10, minWidth: 160 }}>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: "#f0f0f0", marginBottom: 4 }}>{p.brand}</div>
+                              <div style={{ fontSize: 11, color: "#555", marginBottom: 6 }}>{p.sku}</div>
+                              <span style={chip(p.tier === "eye-level" ? "#4ade80" : p.tier === "end-cap" ? "#fbbf24" : "#818cf8")}>{p.tier}</span>
+                              {p.tierNote && <div style={{ fontSize: 10, color: "#555", marginTop: 4 }}>{p.tierNote}</div>}
                             </div>
-                            <div style={{ height: 6, background: "#1a1a1a", borderRadius: 99, overflow: "hidden" }}>
-                              <div style={{ height: "100%", width: `${s.pct}%`, background: "#7c3aed", borderRadius: 99 }} />
+                          ))}
+                        </div>
+                      </StepCard>
+                    )}
+
+                    {/* Step 6 */}
+                    {(activeStep === 0 || activeStep === 6) && result.step6_shelfShare.length > 0 && (
+                      <StepCard n={6} icon="📊" label={`Share of Shelf — tổng ${result.totalFacings} facings`}>
+                        {result.step6_shelfShare.map(s => (
+                          <div key={s.brand} style={{ marginBottom: 12 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, alignItems: "center" }}>
+                              <div>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{s.brand}</span>
+                                <span style={{ fontSize: 11, color: "#555", marginLeft: 8 }}>{s.facings} facings · {s.blockLength}</span>
+                              </div>
+                              <span style={{ fontSize: 18, fontWeight: 800, color: "#a78bfa" }}>{s.shareOfShelf}%</span>
+                            </div>
+                            <div style={{ height: 10, background: "#1a1a1a", borderRadius: 99, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${s.shareOfShelf}%`, background: "linear-gradient(90deg,#7c3aed,#a78bfa)", borderRadius: 99 }} />
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </StepCard>
                     )}
 
-                    {/* Recommendations + Risks */}
-                    {(result.recommendations.length > 0 || result.stockRisks.length > 0) && (
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                        {result.recommendations.length > 0 && (
-                          <div style={card}>
-                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "#a78bfa" }}>Recommendations</div>
-                            {result.recommendations.map((r, i) => (
-                              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12, color: "#ccc", lineHeight: 1.5 }}>
-                                <span style={{ color: "#7c3aed", flexShrink: 0 }}>→</span>{r}
+                    {/* Step 7 */}
+                    {(activeStep === 0 || activeStep === 7) && (
+                      <StepCard n={7} icon="⚠️" label="On-Shelf Availability (OSA)">
+                        {result.step7_osa.filter(o => o.riskLevel !== "none").length === 0
+                          ? <div style={{ fontSize: 13, color: "#4ade80" }}>✓ Tất cả sản phẩm đủ hàng — không có rủi ro OSA</div>
+                          : result.step7_osa.filter(o => o.riskLevel !== "none").map((o, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", background: "#0a0a0a", borderRadius: 10, marginBottom: 8 }}>
+                              <div style={{ width: 10, height: 10, borderRadius: "50%", background: riskColor(o.riskLevel), flexShrink: 0 }} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{o.sku}</div>
+                                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{o.action}</div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                        {result.stockRisks.length > 0 && (
-                          <div style={card}>
-                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "#fbbf24" }}>Stock Risks</div>
-                            {result.stockRisks.map((r, i) => (
-                              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12, color: "#ccc", lineHeight: 1.5 }}>
-                                <span style={{ color: "#fbbf24", flexShrink: 0 }}>⚠</span>{r}
+                              <div style={{ textAlign: "right" }}>
+                                <span style={chip(riskColor(o.riskLevel))}>{o.riskLevel.toUpperCase()}</span>
+                                <div style={{ fontSize: 11, color: "#555", marginTop: 4 }}>{o.facingsRemaining} facing còn lại</div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                            </div>
+                          ))
+                        }
+                      </StepCard>
                     )}
-                  </>
+
+                    {/* Step 8 */}
+                    {(activeStep === 0 || activeStep === 8) && result.step8_recommendations.length > 0 && (
+                      <StepCard n={8} icon="💡" label="Gợi ý & Báo cáo">
+                        {result.step8_recommendations.map((r, i) => (
+                          <div key={i} style={{ display: "flex", gap: 14, padding: "12px 14px", background: "#0a0a0a", borderRadius: 10, marginBottom: 8 }}>
+                            <span style={chip(r.priority === "high" ? "#ef4444" : r.priority === "medium" ? "#fbbf24" : "#4ade80")}>{r.priority}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{r.action}</div>
+                              <div style={{ fontSize: 11, color: "#666", marginTop: 3 }}>{r.reason}</div>
+                            </div>
+                            <span style={chip("#818cf8")}>{r.category}</span>
+                          </div>
+                        ))}
+                      </StepCard>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* ── Training Tab ── */}
+          {/* ── TRAINING TAB ── */}
           {tab === "training" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ ...card, background: "rgba(124,58,237,0.06)", borderColor: "rgba(124,58,237,0.2)" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>How the agent learns</div>
-                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.7 }}>
-                  1. Analyze images and rate them (4-5 stars) → auto-saved as training examples<br/>
-                  2. Each new analysis uses the best examples as few-shot context for GPT-4o<br/>
-                  3. More high-quality examples = more accurate detections<br/>
-                  4. Agent improves continuously without retraining any model
+              <div style={{ ...card, background: "rgba(124,58,237,0.05)", borderColor: "rgba(124,58,237,0.2)" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Cách agent học hỏi</div>
+                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.8 }}>
+                  1. Phân tích ảnh → Rate 4-5 ★ → Tự lưu làm training example<br/>
+                  2. Lần phân tích sau: agent đọc examples tốt nhất → đưa vào context GPT-4o<br/>
+                  3. Càng nhiều examples chất lượng cao → 8 bước càng chính xác<br/>
+                  4. Không cần fine-tune model — few-shot learning tự động
                 </div>
               </div>
-
-              {stats?.exampleSummary.length === 0 && (
-                <div style={{ ...card, textAlign: "center", padding: 40 }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
-                  <div style={{ color: "#555", fontSize: 14 }}>No training examples yet</div>
-                  <div style={{ color: "#333", fontSize: 12, marginTop: 6 }}>Analyze images and rate them 4-5 stars to build the training set</div>
-                </div>
-              )}
-
-              {stats?.exampleSummary.map(ex => (
-                <div key={ex.id} style={{ ...card, display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ ...tag(ex.quality === "excellent" ? "#fbbf24" : "#4ade80") }}>{ex.quality}</span>
-                      {ex.score && <span style={{ fontSize: 12, color: "#a78bfa" }}>{"★".repeat(ex.score)}{"☆".repeat(5 - ex.score)}</span>}
-                    </div>
-                    <div style={{ fontSize: 13, color: "#ccc" }}>{ex.brands} brands detected</div>
-                    <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Added: {new Date(ex.addedAt).toLocaleString()}</div>
+              {stats?.exampleSummary.length === 0
+                ? <div style={{ ...card, textAlign: "center", padding: 48 }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
+                    <div style={{ color: "#555" }}>Chưa có training examples. Rate ảnh 4-5 ★ để tạo.</div>
                   </div>
-                  <button onClick={() => handleDeleteExample(ex.id)} style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#555", borderRadius: 8, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>Remove</button>
-                </div>
-              ))}
+                : stats?.exampleSummary.map(ex => (
+                  <div key={ex.id} style={{ ...card, display: "flex", alignItems: "center", gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
+                        <span style={chip(ex.quality === "excellent" ? "#fbbf24" : "#4ade80")}>{ex.quality}</span>
+                        {ex.score && <span style={{ fontSize: 12, color: "#a78bfa" }}>{"★".repeat(ex.score)}{"☆".repeat(5-ex.score)}</span>}
+                      </div>
+                      <div style={{ fontSize: 13, color: "#ccc" }}>{ex.brands} SKUs detected</div>
+                      <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{new Date(ex.addedAt).toLocaleString()}</div>
+                    </div>
+                    <button onClick={() => handleDeleteExample(ex.id)} style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#555", borderRadius: 8, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>Remove</button>
+                  </div>
+                ))
+              }
             </div>
           )}
 
-          {/* ── Stats Tab ── */}
+          {/* ── STATS TAB ── */}
           {tab === "stats" && stats && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {/* KPIs */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>
                 {[
-                  { label: "Total Analyses",     value: stats.totalAnalyses },
-                  { label: "Training Examples",  value: stats.trainingExamples },
-                  { label: "Avg Feedback Score", value: stats.avgFeedbackScore ? `${stats.avgFeedbackScore}/5` : "—" },
-                  { label: "Top Brand",          value: stats.topBrands[0]?.brand ?? "—" },
+                  { label: "Total Analyses",    value: stats.totalAnalyses },
+                  { label: "Training Examples", value: stats.trainingExamples },
+                  { label: "Avg Score",         value: stats.avgFeedbackScore ? `${stats.avgFeedbackScore}/5` : "—" },
+                  { label: "Top Brand",         value: stats.topBrands[0]?.brand ?? "—" },
                 ].map(k => (
                   <div key={k.label} style={{ ...card, textAlign: "center" }}>
                     <div style={{ fontSize: 24, fontWeight: 800, color: "#a78bfa", marginBottom: 4 }}>{k.value}</div>
-                    <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em" }}>{k.label}</div>
+                    <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em" }}>{k.label}</div>
                   </div>
                 ))}
               </div>
-
-              {/* Top brands */}
               {stats.topBrands.length > 0 && (
                 <div style={card}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14, color: "#a78bfa" }}>Most Detected Brands</div>
                   {stats.topBrands.map(b => (
                     <div key={b.brand} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <div style={{ width: 120, fontSize: 13, color: "#e0e0e0" }}>{b.brand}</div>
+                      <div style={{ width: 110, fontSize: 13, color: "#e0e0e0" }}>{b.brand}</div>
                       <div style={{ flex: 1, height: 6, background: "#1a1a1a", borderRadius: 99, overflow: "hidden" }}>
                         <div style={{ height: "100%", width: `${(b.count / stats.topBrands[0].count) * 100}%`, background: "#7c3aed", borderRadius: 99 }} />
                       </div>
-                      <div style={{ width: 30, fontSize: 12, color: "#555", textAlign: "right" }}>{b.count}</div>
+                      <div style={{ width: 24, fontSize: 12, color: "#555", textAlign: "right" }}>{b.count}</div>
                     </div>
                   ))}
                 </div>
               )}
-
-              {/* Recent analyses */}
               {stats.recentAnalyses.length > 0 && (
                 <div style={card}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14, color: "#a78bfa" }}>Recent Analyses</div>
                   {stats.recentAnalyses.map(a => (
                     <div key={a.id} style={{ display: "flex", gap: 14, padding: "10px 0", borderBottom: "1px solid #111" }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>{a.id} · {a.brands} brands · Quality {a.quality}/100</div>
-                        <div style={{ fontSize: 12, color: "#ccc" }}>{a.summary}</div>
+                        <div style={{ fontSize: 11, color: "#555" }}>{a.id} · {a.brands} SKUs · Quality {a.quality}/100</div>
+                        <div style={{ fontSize: 12, color: "#ccc", marginTop: 2 }}>{a.summary}</div>
                       </div>
-                      <div style={{ fontSize: 11, color: "#555", flexShrink: 0 }}>
-                        {a.score ? `${"★".repeat(a.score)}` : "unrated"}<br/>
+                      <div style={{ fontSize: 11, color: "#555", flexShrink: 0, textAlign: "right" }}>
+                        {a.score ? "★".repeat(a.score) : "unrated"}<br/>
                         {new Date(a.createdAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -362,6 +515,23 @@ export default function VisionAgentPage() {
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+// ── Step Card component ───────────────────────────────────────────────────────
+function StepCard({ n, icon, label, children }: { n: number; icon: string; label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, overflow: "hidden" }}>
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 10, background: "rgba(124,58,237,0.04)" }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div>
+          <span style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.1em" }}>Step {n}</span>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{label}</div>
+        </div>
+        <span style={{ marginLeft: "auto", fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", padding: "2px 8px", borderRadius: 999 }}>✓ Done</span>
+      </div>
+      <div style={{ padding: "16px 20px" }}>{children}</div>
     </div>
   );
 }

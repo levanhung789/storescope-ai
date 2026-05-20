@@ -1,86 +1,129 @@
-// Vision Agent Prompt Builder
-// Dynamically constructs prompts with few-shot examples from memory
+// Vision Agent Prompt — 8-step FMCG shelf analysis pipeline
 
 import type { TrainingExample } from "./types";
 
-// Vietnamese FMCG knowledge base — grows as agent learns
-const KNOWLEDGE_BASE = `
-## Vietnamese FMCG Brand Knowledge Base
-- Calofic: Meizan Gold, Cái Lân, Neptune Light — Cooking Oil
-- Masan Consumer: Chinsu fish sauce, Nam Ngư, Tiến Vua, Hảo Hảo noodles
-- Acecook Vietnam: Hảo Hảo, Kokomi instant noodles
-- Vinamilk: milk, yogurt, condensed milk
-- TH True Milk: fresh milk, juice
-- Suntory PepsiCo: Pepsi, 7Up, Mirinda, Sting, Aquafina, Lipton
-- Coca-Cola Vietnam: Coca-Cola, Sprite, Fanta, Dasani
-- Heineken Vietnam: Heineken, Tiger, Larue, Bivina
-- SABECO: Bia Saigon, 333 beer
-- Ajinomoto Vietnam: Aji-ngon, Aji-mayo, MSG
-- Nestlé Vietnam: Maggi, Milo, Kit-Kat
-- Unilever Vietnam: Knorr, Lipton (food)
-- Cholimex: sauces, condiments
-
-## Price Reference (VND)
-- Instant noodles: 5,000–15,000đ/pack
-- Cooking oil 1L: 35,000–60,000đ
-- Beer 330ml: 8,000–25,000đ
-- Milk 1L: 25,000–45,000đ
-- Soft drink 330ml: 10,000–18,000đ
-`;
-
 export function buildAnalysisPrompt(examples: TrainingExample[]): string {
-  let prompt = `You are a specialized Vietnamese FMCG retail shelf analyst AI. Your task is to analyze shelf images and return structured JSON data.
+  let prompt = `You are a professional Vietnamese FMCG shelf analyst AI. Analyze the shelf image following exactly these 8 steps in order.
 
-${KNOWLEDGE_BASE}
+## Vietnamese FMCG Brands
+Pepsi/7Up/Mirinda/Sting (Suntory PepsiCo) | Coca-Cola/Sprite/Fanta (Coca-Cola VN) |
+Heineken/Tiger (Heineken VN) | Bia Saigon/333 (SABECO) | Vinamilk | TH True Milk |
+Meizan/Cái Lân/Neptune (Calofic) | Hảo Hảo/Kokomi (Acecook) | Chinsu/Nam Ngư (Masan) |
+Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
 
-## Output Format (JSON only, no markdown):
+## 8-Step Analysis — Return as JSON:
+
+\`\`\`json
 {
-  "detections": [
+  "step1_quality": {
+    "score": 85,
+    "angle": "frontal",
+    "lighting": "good",
+    "blur": "sharp",
+    "issues": [],
+    "usable": true
+  },
+
+  "step2_count": {
+    "totalUnits": 60,
+    "visibleUnits": 45,
+    "estimatedDepth": 2,
+    "shelfRows": 4,
+    "note": "Kệ 4 tầng, ước tính 2 sản phẩm chiều sâu"
+  },
+
+  "step3_skus": [
     {
-      "brand": "exact brand name",
-      "company": "parent company",
-      "product": "specific product name and variant",
-      "sector": "Cooking Oil|Beverages|Dairy|Condiments|Beer|Instant Food|Snacks|Personal Care|Other",
-      "confidence": 0-100,
-      "price_vnd": number or null
+      "brand": "Pepsi",
+      "company": "Suntory PepsiCo",
+      "sku": "Pepsi chai 1.5L",
+      "sector": "Beverages",
+      "confidence": 95,
+      "price_vnd": null
     }
   ],
-  "shelf_share": [{ "brand": "name", "pct": 0-100 }],
-  "image_quality": { "score": 0-100, "issues": ["blur","low-light","partial-view","wrong-angle"] },
-  "prices_detected": [number],
-  "recommendations": ["actionable recommendation"],
-  "stock_risks": ["specific risk"],
-  "summary": "2-3 sentence analysis summary"
+
+  "step4_facings": [
+    {
+      "brand": "Pepsi",
+      "sku": "Pepsi chai 1.5L",
+      "facing": 12,
+      "depth": 2
+    }
+  ],
+
+  "step5_positions": [
+    {
+      "brand": "Pepsi",
+      "sku": "Pepsi chai 1.5L",
+      "tier": "eye-level",
+      "tierNote": "Tầng 2 từ trên — ngang tầm mắt"
+    }
+  ],
+
+  "step6_shelfShare": [
+    {
+      "brand": "Pepsi",
+      "facings": 18,
+      "shareOfShelf": 45,
+      "blockLength": "~1.5m"
+    }
+  ],
+
+  "step7_osa": [
+    {
+      "brand": "Coca-Cola",
+      "sku": "Coca-Cola chai 1.5L",
+      "status": "low-stock",
+      "facingsRemaining": 2,
+      "riskLevel": "medium",
+      "action": "Bổ hàng trong 24h"
+    }
+  ],
+
+  "step8_recommendations": [
+    {
+      "priority": "high",
+      "action": "Bổ sung Pepsi 390ml lên tầng ngang mắt",
+      "reason": "SKU nhỏ hiện ở tầng dưới, doanh số thấp hơn tiềm năng",
+      "category": "placement"
+    }
+  ],
+
+  "totalFacings": 40,
+  "topBrand": "Pepsi",
+  "summary": "Kệ đồ uống 4 tầng, Pepsi chiếm ưu thế 45% shelf share. Coca-Cola có nguy cơ hết hàng tầng dưới."
 }
+\`\`\`
 
 ## Rules:
-- shelf_share percentages must sum to 100
-- confidence: 90+ = clearly visible, 70-89 = mostly visible, 50-69 = partially visible
-- Only list prices you can actually read from the image
-- Be specific: "Meizan Gold 1L" not just "cooking oil"
-- Flag empty shelves, missing price tags, damaged products in stock_risks`;
+- Step 1 FIRST — if usable=false, still complete all steps with best effort
+- Step 2: Count ALL visible units including partially visible ones
+- Step 4: facing = number of product faces visible FROM THE FRONT only (not depth)
+- Step 6: shareOfShelf% must sum to 100 for all brands in same category
+- Step 7: riskLevel HIGH = 0-1 facing, MEDIUM = 2-3 facing, LOW = 4 facing, NONE = 5+
+- Step 8: Sort recommendations by priority (high first)
+- Return ONLY valid JSON, no markdown outside JSON`;
 
-  // Add few-shot examples if available
   if (examples.length > 0) {
-    prompt += `\n\n## Learning from Past Analyses (${examples.length} examples):\n`;
-    prompt += `These are verified correct analyses — use them as reference:\n`;
+    prompt += `\n\n## ${examples.length} Verified Training Examples (learn from these):\n`;
     examples.forEach((ex, i) => {
       const r = ex.result;
-      prompt += `\nExample ${i + 1} (quality: ${ex.quality}, score: ${r.feedbackScore ?? "N/A"}/5):\n`;
-      prompt += `- Detected ${r.detections.length} products: ${r.detections.slice(0, 3).map(d => d.brand).join(", ")}${r.detections.length > 3 ? "..." : ""}\n`;
-      prompt += `- Top shelf share: ${r.shelfShare.slice(0, 2).map(s => `${s.brand} ${s.pct}%`).join(", ")}\n`;
-      if (r.feedbackNotes) prompt += `- Human feedback: "${r.feedbackNotes}"\n`;
+      prompt += `\nExample ${i + 1} (${ex.quality}, score: ${r.feedbackScore ?? "N/A"}/5):\n`;
+      prompt += `- Total units: ${r.step2_count?.totalUnits ?? "?"}, Shelf rows: ${r.step2_count?.shelfRows ?? "?"}\n`;
+      prompt += `- SKUs found: ${r.step3_skus?.length ?? 0} | Total facings: ${r.totalFacings ?? 0}\n`;
+      prompt += `- Top brand: ${r.topBrand ?? "—"} | OSA risks: ${r.step7_osa?.filter(o => o.riskLevel !== "none").length ?? 0}\n`;
+      if (r.feedbackNotes) prompt += `- Expert note: "${r.feedbackNotes}"\n`;
     });
-    prompt += `\nApply the same level of detail and accuracy to the new image.\n`;
   }
 
-  prompt += `\nReturn ONLY valid JSON. No explanations outside JSON.`;
+  prompt += `\nReturn ONLY valid JSON.`;
   return prompt;
 }
 
 export function buildImprovementSummary(exampleCount: number, avgScore: number): string {
-  if (exampleCount === 0) return "Base model — no training examples yet";
-  if (avgScore >= 4.5) return `Highly trained — ${exampleCount} examples, avg score ${avgScore}/5`;
-  if (avgScore >= 3.5) return `Well trained — ${exampleCount} examples, avg score ${avgScore}/5`;
-  return `Learning — ${exampleCount} examples, avg score ${avgScore}/5`;
+  if (exampleCount === 0) return "Base model — 8-step FMCG pipeline loaded, 0 training examples";
+  if (avgScore >= 4.5) return `Expert — ${exampleCount} examples, avg ${avgScore}/5 ★`;
+  if (avgScore >= 3.5) return `Trained — ${exampleCount} examples, avg ${avgScore}/5 ★`;
+  return `Learning — ${exampleCount} examples, avg ${avgScore}/5 ★`;
 }

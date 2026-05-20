@@ -523,7 +523,7 @@ export default function AnalysisPage() {
             apiData = await res.json();
             const model = apiData.model ?? "ai";
             const detCount = apiData.detections?.length ?? 0;
-            result = `Image registered · GPT-4o Vision (${model}) · ${detCount} products pre-detected`;
+            result = `Image registered · ${detCount} products pre-detected`;
           } else {
             result = "Image registered · AI analysis queued";
           }

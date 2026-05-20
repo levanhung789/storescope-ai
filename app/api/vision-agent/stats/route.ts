@@ -11,9 +11,9 @@ export async function GET() {
     id:        a.id,
     createdAt: a.createdAt,
     score:     a.feedbackScore,
-    summary:   a.rawSummary.slice(0, 100),
-    brands:    a.detections.length,
-    quality:   a.imageQuality.score,
+    summary:   (a.summary ?? "").slice(0, 100),
+    brands:    a.step3_skus?.length ?? 0,
+    quality:   a.step1_quality?.score ?? 0,
   }));
 
   return NextResponse.json({

@@ -2,7 +2,8 @@
 // Uses global in-memory store (persists across hot reloads in dev)
 // Production: replace with Vercel KV or database
 
-import type { AgentMemory, AnalysisResult, TrainingExample, FeedbackPayload } from "./types";
+import type { AgentMemory, PipelineResult, TrainingExample, FeedbackPayload } from "./types";
+type AnalysisResult = PipelineResult;
 
 const DEFAULT_MEMORY: AgentMemory = {
   analyses: [],
@@ -52,7 +53,7 @@ export function applyFeedback(payload: FeedbackPayload): AnalysisResult | null {
   }
 
   // Auto-save as training example if score >= 4 or explicitly requested
-  if ((payload.score >= 4 || payload.saveAsExample) && analysis.imageQuality.score >= 70) {
+  if ((payload.score >= 4 || payload.saveAsExample) && (analysis.step1_quality?.score ?? 80) >= 70) {
     saveTrainingExample(analysis);
   }
 
@@ -120,9 +121,11 @@ function updateStats(): void {
     : 0;
 
   const brandCount: Record<string, number> = {};
-  m.analyses.forEach(a =>
-    a.detections.forEach(d => { brandCount[d.brand] = (brandCount[d.brand] ?? 0) + 1; })
-  );
+  m.analyses.forEach(a => {
+    (a.step3_skus ?? []).forEach(d => {
+      brandCount[d.brand] = (brandCount[d.brand] ?? 0) + 1;
+    });
+  });
   const topBrands = Object.entries(brandCount)
     .map(([brand, count]) => ({ brand, count }))
     .sort((a, b) => b.count - a.count)
