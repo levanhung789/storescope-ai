@@ -88,52 +88,75 @@ export default function UseCases() {
               }}
               className="usecase-card"
             >
-              {/* Color block */}
+              {/* Visual block — image for FMCG Brands, gradient for others */}
               <div
                 style={{
                   order: i % 2 === 0 ? 0 : 1,
-                  background: `linear-gradient(135deg, ${c.color}22, ${c.color}08)`,
                   borderRight: i % 2 === 0 ? "1px solid #242424" : "none",
                   borderLeft: i % 2 !== 0 ? "1px solid #242424" : "none",
-                  padding: "48px 40px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  overflow: "hidden",
+                  position: "relative",
+                  minHeight: 280,
+                  ...(i === 0 ? {} : {
+                    background: `linear-gradient(135deg, ${c.color}22, ${c.color}08)`,
+                    padding: "48px 40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }),
                 }}
               >
-                <div style={{ textAlign: "center" }}>
-                  <span
+                {i === 0 ? (
+                  /* FMCG Brands — hero image */
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src="/shelf-hero.png"
+                    alt="Know your shelf before your competitor does"
                     style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      color: c.color,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "center top",
                       display: "block",
-                      marginBottom: 12,
+                      position: "absolute",
+                      inset: 0,
                     }}
-                  >
-                    {c.industry}
-                  </span>
-                  <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: "50%",
-                      background: `${c.color}20`,
-                      border: `1px solid ${c.color}40`,
-                      margin: "0 auto",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="1.8">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="m9 12 2 2 4-4" />
-                    </svg>
+                  />
+                ) : (
+                  <div style={{ textAlign: "center" }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: c.color,
+                        display: "block",
+                        marginBottom: 12,
+                      }}
+                    >
+                      {c.industry}
+                    </span>
+                    <div
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        background: `${c.color}20`,
+                        border: `1px solid ${c.color}40`,
+                        margin: "0 auto",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="1.8">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Text block */}
