@@ -144,17 +144,33 @@ Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
 }
 \`\`\`
 
-## Rules:
-- Step 1 FIRST — detect perspective BEFORE counting anything
-- Step 2: Count ALL visible units. If angled shot, note near-side may overrepresent
-- Step 4: ALWAYS use facingAdjusted (after perspective correction) for shelf share calc
-  - If you see depth (side of products) → subtract from raw facing count FIRST
-  - Then apply correctionFactor: facingAdjusted = (raw - depth_visible) × correctionFactor
-- Step 6: Use facingAdjusted values (NOT raw facing) for shareOfShelf calculation
-- Step 7: riskLevel HIGH = 0-1 facing, MEDIUM = 2-3, LOW = 4, NONE = 5+
-- Step 8: If angle > 20°, add recommendation: "Chụp thẳng góc để phân tích chính xác hơn"
-- shootingAngle: estimate by looking at how much shelf lines converge
-  - Parallel lines = 0° | Slight convergence = 15-20° | Clear convergence = 30-45° | Sharp = 60°+
+## CRITICAL RULES — READ CAREFULLY:
+
+### Step 3 & 4 — SCAN EVERY SHELF TIER, LEFT TO RIGHT:
+- DO NOT stop at 2-3 SKUs. You MUST list EVERY distinct SKU visible in the image
+- Method: scan row by row, left to right
+  - Tier 1 (top): what SKUs? how many facings each?
+  - Tier 2: what SKUs? how many facings each?
+  - Tier 3: what SKUs? how many facings each?
+  - Tier 4 (bottom): what SKUs? how many facings each?
+- A "SKU" = specific product variant: brand + size + variant (e.g. "Pepsi Max 2L" ≠ "Pepsi Max lon 330ml")
+- List EACH size/variant as a SEPARATE SKU entry in step3_skus
+- Minimum expected: if you see 4 tiers with 2-3 brands each = at least 8-12 SKU entries
+- If same SKU appears on multiple tiers → one entry with combined facing count
+
+### Step 4 — FACING COUNT METHOD:
+- Count from LEFT to RIGHT across each tier
+- facing = number of columns of that product visible from front (NOT rows)
+- Record EACH SKU × EACH tier separately in step4_facings
+  - e.g. "Pepsi Max lon tier 3: 8 facing" AND "Pepsi Max lon tier 4: 6 facing" = 2 entries
+- facingAdjusted = (raw_facing - depth_visible_count) × correctionFactor
+
+### Other rules:
+- Step 1 FIRST — detect perspective BEFORE counting
+- Step 6: shareOfShelf% must sum to 100 within same product category
+- Step 7: riskLevel HIGH=0-1 facing, MEDIUM=2-3, LOW=4, NONE=5+
+- Step 8: sort by priority (high first). If angle > 20° add "Chụp thẳng góc" recommendation
+- shootingAngle: parallel shelf lines=0° | slight convergence=15-20° | clear=30-45° | sharp=60°+
 - Return ONLY valid JSON, no markdown outside JSON`;
 
   if (examples.length > 0) {

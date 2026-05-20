@@ -28,15 +28,21 @@ export async function analyzeImage(
 
   const response = await client.chat.completions.create({
     model: "gpt-4o",
-    messages: [{
-      role: "user",
-      content: [
-        { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" } },
-        { type: "text", text: prompt },
-      ],
-    }],
+    messages: [
+      {
+        role: "system",
+        content: "You are a meticulous FMCG shelf analyst. When analyzing shelf images, you MUST enumerate EVERY distinct SKU visible — scan tier by tier, left to right. Never summarize or truncate the SKU list. A complete analysis of a typical supermarket shelf should have 8-20+ SKU entries.",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" } },
+          { type: "text", text: prompt },
+        ],
+      },
+    ],
     response_format: { type: "json_object" },
-    max_tokens: 2500,
+    max_tokens: 4000,
   });
 
   const raw = response.choices[0]?.message?.content ?? "{}";
