@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useInView } from "../_hooks/useInView";
 
-// Per-element scroll animation hook
+// Bidirectional scroll reveal — animates on both scroll down AND scroll up
 function useScrollReveal(delay = 0) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -11,7 +11,7 @@ function useScrollReveal(delay = 0) {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
+      setVisible(e.isIntersecting); // toggles on enter AND leave
     }, { threshold: 0.15 });
     obs.observe(el);
     return () => obs.disconnect();

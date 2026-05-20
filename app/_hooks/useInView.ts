@@ -8,7 +8,7 @@ interface Options {
   once?: boolean;
 }
 
-export function useInView({ threshold = 0.15, rootMargin = "0px", once = true }: Options = {}) {
+export function useInView({ threshold = 0.15, rootMargin = "0px", once = false }: Options = {}) {
   const ref = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
 
@@ -21,7 +21,7 @@ export function useInView({ threshold = 0.15, rootMargin = "0px", once = true }:
         if (entry.isIntersecting) {
           setInView(true);
           if (once) observer.disconnect();
-        } else if (!once) {
+        } else {
           setInView(false);
         }
       },

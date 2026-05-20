@@ -49,14 +49,14 @@ const confidenceWeights = [
   { label: "Visual cues",     pct: 10, color: "#ddd6fe" },
 ];
 
-// ── Scroll reveal hook ──────────────────────────────────────────────────────
+// ── Bidirectional scroll reveal (animates on scroll down AND up) ────────────
 function useReveal(delay = 0, direction: "up" | "left" | "right" = "up") {
   const ref = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setVis(true); obs.disconnect(); }
+      setVis(e.isIntersecting); // toggles on both enter AND leave
     }, { threshold: 0.12 });
     obs.observe(el);
     return () => obs.disconnect();
@@ -68,29 +68,28 @@ function useReveal(delay = 0, direction: "up" | "left" | "right" = "up") {
     style: {
       opacity: vis ? 1 : 0,
       transform: vis ? "translate(0,0)" : `translate(${dx},${dy})`,
-      transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
+      transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`,
     },
   };
 }
 
-// ── Animated number counter ─────────────────────────────────────────────────
+// ── Animated number counter — resets when scrolling back up ─────────────────
 function CountUp({ to, suffix = "", delay = 0 }: { to: number; suffix?: string; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [val, setVal] = useState(0);
-  const [started, setStarted] = useState(false);
+  const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !started) { setStarted(true); obs.disconnect(); }
+      setInView(e.isIntersecting);
     }, { threshold: 0.5 });
     obs.observe(el);
     return () => obs.disconnect();
-  }, [started]);
+  }, []);
   useEffect(() => {
-    if (!started) return;
+    if (!inView) { setVal(0); return; } // reset when leaving viewport
     const timer = setTimeout(() => {
-      let frame = 0;
-      const total = 60;
+      let frame = 0; const total = 60;
       const tick = () => {
         frame++;
         setVal(Math.round(to * Math.pow(frame / total, 2)));
@@ -100,7 +99,7 @@ function CountUp({ to, suffix = "", delay = 0 }: { to: number; suffix?: string; 
       requestAnimationFrame(tick);
     }, delay);
     return () => clearTimeout(timer);
-  }, [started, to, delay]);
+  }, [inView, to, delay]);
   return <span ref={ref}>{val}{suffix}</span>;
 }
 
@@ -128,7 +127,7 @@ export default function HowItWorks() {
   useEffect(() => {
     const el = confRef.current; if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setConfVis(true); obs.disconnect(); }
+      setConfVis(e.isIntersecting); // bidirectional
     }, { threshold: 0.3 });
     obs.observe(el);
     return () => obs.disconnect();
