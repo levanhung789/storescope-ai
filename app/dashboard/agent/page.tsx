@@ -458,7 +458,6 @@ export default function AgentPage() {
 
         {/* ── Multi-Channel Integration ── */}
         <ChannelsPanel />
-        <WebChatWidget />
 
         {/* Tab switcher */}
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>

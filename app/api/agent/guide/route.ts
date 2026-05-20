@@ -73,7 +73,14 @@ StoreScope AI là nền tảng giúp đội ngũ FMCG/bán lẻ:
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json() as { messages: { role: string; content: string }[] };
+    const { messages, page } = await req.json() as { messages: { role: string; content: string }[]; page?: string };
+
+    // Append page context to system prompt
+    const pageNote = page
+      ? `\n\n## Trang hiện tại: ${page}\nUser đang xem trang này — hãy ưu tiên hướng dẫn liên quan đến trang này.` +
+        (page === "/" ? "\n⭐ Đây là trang chủ — hãy chào đón nhiệt tình và khuyến khích nhấn 'Let's get started'." : "")
+      : "";
+    const fullPrompt = SYSTEM_PROMPT + pageNote;
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ reply: "Tôi đang được cấu hình. Vui lòng thử lại sau." });
@@ -81,9 +88,9 @@ export async function POST(req: NextRequest) {
 
     const client = new OpenAI({ apiKey });
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",  // mini — nhanh hơn, rẻ hơn cho guide bot
+      model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: fullPrompt },
         ...messages.slice(-10).map(m => ({ // giữ 10 tin nhắn gần nhất
           role: m.role as "user" | "assistant",
           content: m.content,
