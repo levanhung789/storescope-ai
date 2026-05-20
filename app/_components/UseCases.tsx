@@ -1,7 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useInView } from "../_hooks/useInView";
+
+// Per-element scroll animation hook
+function useScrollReveal(delay = 0) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { threshold: 0.15 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, style: {
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateY(0)" : "translateY(28px)",
+    transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`,
+  }};
+}
 
 const cases = [
   {
@@ -29,6 +49,93 @@ const cases = [
     image:       "/retail-teams-hero.png",
   },
 ];
+
+function AnimatedTextBlock({ c, order, baseDelay }: {
+  c: typeof cases[0]; order: number; baseDelay: number;
+}) {
+  const tag      = useScrollReveal(baseDelay);
+  const line     = useScrollReveal(baseDelay + 80);
+  const headline = useScrollReveal(baseDelay + 150);
+  const desc     = useScrollReveal(baseDelay + 240);
+  const m1       = useScrollReveal(baseDelay + 320);
+  const m2       = useScrollReveal(baseDelay + 400);
+  const m3       = useScrollReveal(baseDelay + 480);
+  const metaRefs = [m1, m2, m3];
+
+  return (
+    <div style={{
+      order,
+      padding: "52px 48px",
+      display: "flex", flexDirection: "column", justifyContent: "center",
+    }}>
+      {/* Tag */}
+      <div ref={tag.ref} style={{ ...tag.style, marginBottom: 20 }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: "0.18em",
+          textTransform: "uppercase", color: c.color,
+          background: `${c.color}15`, border: `1px solid ${c.color}30`,
+          padding: "4px 12px", borderRadius: 999,
+        }}>
+          {c.industry}
+        </span>
+      </div>
+
+      {/* Accent line */}
+      <div ref={line.ref} style={{
+        ...line.style,
+        width: 40, height: 3, borderRadius: 99,
+        background: `linear-gradient(90deg, ${c.color}, transparent)`,
+        marginBottom: 22,
+        transformOrigin: "left",
+      }} />
+
+      {/* Headline */}
+      <div ref={headline.ref} style={headline.style}>
+        <h3 style={{
+          fontSize: "clamp(1.25rem, 2vw, 1.65rem)",
+          fontWeight: 700, color: "#f0f0f0",
+          letterSpacing: "-0.03em", lineHeight: 1.25,
+          marginBottom: 16,
+        }}>
+          {c.headline}
+        </h3>
+      </div>
+
+      {/* Description */}
+      <div ref={desc.ref} style={{ ...desc.style, marginBottom: 32 }}>
+        <p style={{ fontSize: 14, color: "#888", lineHeight: 1.85, margin: 0 }}>
+          {c.description}
+        </p>
+      </div>
+
+      {/* Metrics — staggered */}
+      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+        {c.metrics.map((m, idx) => {
+          const { ref: mRef, style: mStyle } = metaRefs[idx] ?? metaRefs[0];
+          return (
+            <li key={m} ref={mRef} style={{
+              ...mStyle,
+              display: "flex", alignItems: "center", gap: 12,
+              fontSize: 13, color: "#ccc",
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                background: `${c.color}18`, border: `1px solid ${c.color}40`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "background 0.3s",
+              }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="2.5">
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+              </div>
+              {m}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 export default function UseCases() {
   const { ref, inView } = useInView({ threshold: 0.08 });
@@ -133,45 +240,8 @@ export default function UseCases() {
                 </div>
               </div>
 
-              {/* Text side */}
-              <div style={{
-                order: i % 2 === 0 ? 1 : 0,
-                padding: "52px 48px",
-                display: "flex", flexDirection: "column", justifyContent: "center",
-              }}>
-                {/* Accent line */}
-                <div style={{ width: 36, height: 3, borderRadius: 99, background: c.color, marginBottom: 24 }} />
-
-                <h3 style={{
-                  fontSize: "clamp(1.25rem, 2vw, 1.65rem)",
-                  fontWeight: 700, color: "#f0f0f0",
-                  letterSpacing: "-0.03em", lineHeight: 1.25,
-                  marginBottom: 16,
-                }}>
-                  {c.headline}
-                </h3>
-
-                <p style={{ fontSize: 14, color: "#888", lineHeight: 1.8, marginBottom: 32 }}>
-                  {c.description}
-                </p>
-
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                  {c.metrics.map((m) => (
-                    <li key={m} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "#ccc" }}>
-                      <div style={{
-                        width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-                        background: `${c.color}20`, border: `1px solid ${c.color}50`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="2.5">
-                          <path d="m9 12 2 2 4-4"/>
-                        </svg>
-                      </div>
-                      {m}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {/* Text side — animated */}
+              <AnimatedTextBlock c={c} order={i % 2 === 0 ? 1 : 0} baseDelay={i * 80} />
             </div>
           ))}
         </div>
