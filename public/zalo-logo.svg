@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <rect width="240" height="240" fill="#fff" rx="36"/>
+  <!-- Zalo speech bubble arc -->
+  <path fill="#0068FF" d="
+    M38 178
+    C18 155 10 125 16 96
+    C26 48 72 16 124 16
+    C176 16 222 48 232 96
+    C242 144 210 188 162 206
+    C148 211 132 213 116 212
+    L60 228
+    L72 196
+    C54 192 44 186 38 178Z
+  "/>
+  <!-- White inner area -->
+  <path fill="#fff" d="
+    M46 174
+    C28 152 22 126 28 100
+    C38 58 78 30 124 30
+    C170 30 210 58 220 100
+    C230 142 202 180 158 196
+    C144 201 130 203 116 202
+    L66 216
+    L76 188
+    C60 184 50 180 46 174Z
+  "/>
+  <!-- Zalo text -->
+  <text x="120" y="140" font-family="Arial, sans-serif" font-weight="900" font-size="64" fill="#0068FF" text-anchor="middle" letter-spacing="-2">Zalo</text>
+</svg>
