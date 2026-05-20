@@ -8,9 +8,9 @@ export async function GET() {
     imageHash: e.imageHash,
     quality:   e.quality,
     addedAt:   e.addedAt,
-    brands:    e.result.detections.map(d => d.brand),
+    brands:    (e.result.step3_skus ?? []).map((s: {brand: string}) => s.brand),
     score:     e.result.feedbackScore,
-    summary:   e.result.rawSummary.slice(0, 120),
+    summary:   (e.result.summary ?? "").slice(0, 120),
   }));
   return NextResponse.json({ examples });
 }

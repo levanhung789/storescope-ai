@@ -376,21 +376,21 @@ export default function AnalysisReport({ report, onSaved }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {report.tasks.map((t, i) => (
-                  <tr key={t.id}>
+                {report.tasks.map((task, i) => (
+                  <tr key={task.id}>
                     <td style={{ ...td, color: "#555", textAlign: "center", fontWeight: 700 }}>{i + 1}</td>
-                    <td style={{ ...td, fontWeight: 600 }}>{t.label}</td>
-                    <td style={{ ...td, fontWeight: 700, color: "#4ade80", textAlign: "center" }}>${t.price.toFixed(3)}</td>
+                    <td style={{ ...td, fontWeight: 600 }}>{task.label}</td>
+                    <td style={{ ...td, fontWeight: 700, color: "#4ade80", textAlign: "center" }}>${task.price.toFixed(3)}</td>
                     <td style={{ ...td }}>
-                      {t.txHash
-                        ? <a href={`https://testnet.arcscan.app/tx/${t.txHash}`} target="_blank" rel="noreferrer"
+                      {task.txHash
+                        ? <a href={`https://testnet.arcscan.app/tx/${task.txHash}`} target="_blank" rel="noreferrer"
                             style={{ fontSize: 11, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none" }}>
-                            {t.txHash.slice(0, 18)}…{t.txHash.slice(-6)} ↗
+                            {task.txHash.slice(0, 18)}…{task.txHash.slice(-6)} ↗
                           </a>
                         : <span style={{ fontSize: 11, color: "#444" }}>{t("report.recording")}</span>
                       }
                     </td>
-                    <td style={{ ...td, fontSize: 12, color: "#888" }}>{t.result}</td>
+                    <td style={{ ...td, fontSize: 12, color: "#888" }}>{task.result}</td>
                   </tr>
                 ))}
                 <tr style={{ background: "#0a0a0a" }}>

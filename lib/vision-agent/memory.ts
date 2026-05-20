@@ -41,16 +41,7 @@ export function applyFeedback(payload: FeedbackPayload): AnalysisResult | null {
   analysis.feedbackScore = payload.score;
   analysis.feedbackNotes = payload.notes;
 
-  // Apply corrections to detections
-  if (payload.corrections?.length) {
-    analysis.detections = analysis.detections.map(d => {
-      const correction = payload.corrections!.find(c => c.brand === d.brand);
-      if (!correction) return d;
-      if (correction.isCorrect) return { ...d, verified: true };
-      if (correction.actualBrand) return { ...d, brand: correction.actualBrand, verified: true };
-      return d;
-    });
-  }
+  // Note: corrections on PipelineResult apply to step3_skus (legacy field removed)
 
   // Auto-save as training example if score >= 4 or explicitly requested
   if ((payload.score >= 4 || payload.saveAsExample) && (analysis.step1_quality?.score ?? 80) >= 70) {

@@ -720,7 +720,7 @@ export default function AnalysisPage() {
         const facings4 = visionData.step4_facings ?? [];
         if (skus3.length > 0) {
           return skus3.map((s: {brand:string;company:string;sku:string;sector:string;confidence:number;price_vnd:number|null}, i: number) => {
-            const facing = facings4.find((f: {sku:string;facingAdjusted:number}) => f.sku === s.sku || f.brand === s.brand);
+            const facing = facings4.find((f: {sku:string;brand?:string;facingAdjusted:number}) => f.sku === s.sku || f.brand === s.brand);
             return {
               sku:            `SKU-${String(i + 1).padStart(3, "0")}`,
               product:        s.sku ?? s.brand,

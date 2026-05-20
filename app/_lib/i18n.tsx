@@ -556,14 +556,6 @@ export const T: Record<Lang, Record<string, string>> = {
     "dash.connected":    "已连接",
     "dash.notConnected": "未连接",
 
-    "analysis.upload":   "上传货架图片",
-    "analysis.drop":     "将图片拖放到此处",
-    "analysis.formats":  "JPG · PNG · WEBP",
-    "analysis.run":      "开始分析",
-    "analysis.running":  "分析中...",
-    "analysis.done":     "✓ 完成",
-    "analysis.cost":     "分析费用",
-
     "common.save":       "保存",
     "common.cancel":     "取消",
     "common.close":      "关闭",

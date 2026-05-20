@@ -113,7 +113,7 @@ function AnimatedTextBlock({ c, order, baseDelay }: {
         {c.metrics.map((m, idx) => {
           const { ref: mRef, style: mStyle } = metaRefs[idx] ?? metaRefs[0];
           return (
-            <li key={m} ref={mRef} style={{
+            <li key={m} ref={mRef as React.Ref<HTMLLIElement>} style={{
               ...mStyle,
               display: "flex", alignItems: "center", gap: 12,
               fontSize: 13, color: "#ccc",

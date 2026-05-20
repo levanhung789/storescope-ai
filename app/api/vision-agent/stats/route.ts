@@ -24,7 +24,7 @@ export async function GET() {
     exampleSummary:     examples.map(e => ({
       id:       e.id,
       quality:  e.quality,
-      brands:   e.result.detections.length,
+      brands:   e.result.step3_skus?.length ?? 0,
       score:    e.result.feedbackScore,
       addedAt:  e.addedAt,
     })),
