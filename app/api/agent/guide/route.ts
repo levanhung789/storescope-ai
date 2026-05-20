@@ -73,14 +73,20 @@ StoreScope AI là nền tảng giúp đội ngũ FMCG/bán lẻ:
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, page } = await req.json() as { messages: { role: string; content: string }[]; page?: string };
+    const { messages, page, lang } = await req.json() as { messages: { role: string; content: string }[]; page?: string; lang?: string };
 
-    // Append page context to system prompt
+    const langNote = lang === "en"
+      ? "\n\n## Language: ENGLISH — You MUST reply in English only."
+      : lang === "zh"
+      ? "\n\n## 语言：简体中文 — 您必须只用简体中文回复。"
+      : "\n\n## Ngôn ngữ: TIẾNG VIỆT — Bạn PHẢI trả lời hoàn toàn bằng tiếng Việt.";
+
     const pageNote = page
-      ? `\n\n## Trang hiện tại: ${page}\nUser đang xem trang này — hãy ưu tiên hướng dẫn liên quan đến trang này.` +
-        (page === "/" ? "\n⭐ Đây là trang chủ — hãy chào đón nhiệt tình và khuyến khích nhấn 'Let's get started'." : "")
+      ? `\n\n## Current page: ${page}` +
+        (page === "/" ? "\n⭐ Landing page — be warm and encourage clicking Let's get started." : "")
       : "";
-    const fullPrompt = SYSTEM_PROMPT + pageNote;
+
+    const fullPrompt = SYSTEM_PROMPT + langNote + pageNote;
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ reply: "Tôi đang được cấu hình. Vui lòng thử lại sau." });
