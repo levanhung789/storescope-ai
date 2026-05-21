@@ -154,10 +154,15 @@ export default function LoginPage() {
   const [status,       setStatus]       = useState<"idle"|"loading"|"error"|"success">("idle");
   const [anonLoading,  setAnonLoading]  = useState(false);
   const [circleEmail,  setCircleEmail]  = useState("");
-  const [circleStatus, setCircleStatus] = useState<"idle"|"loading"|"error"|"success">("idle");
+  const [circleStatus, setCircleStatus] = useState<"idle"|"loading"|"error"|"success"|"existing">("idle");
   const [circleError,  setCircleError]  = useState("");
+  const [isReturning,  setIsReturning]  = useState(false); // wallet đã tồn tại
 
   useEffect(() => { setTimeout(() => setMounted(true), 50); }, []);
+
+  // Validate email format
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const emailOk = isValidEmail(circleEmail);
 
   const handleAnonymous = async () => {
     setAnonLoading(true);
@@ -169,19 +174,41 @@ export default function LoginPage() {
   const handleCircleWallet = async (e: FormEvent) => {
     e.preventDefault();
     if (!circleEmail.trim()) return;
+
+    // Validate email format trước khi gọi API
+    if (!isValidEmail(circleEmail)) {
+      setCircleError("Please enter a valid email address (e.g. name@gmail.com)");
+      setCircleStatus("error");
+      return;
+    }
+
     setCircleStatus("loading"); setCircleError("");
     try {
-      const userId = circleEmail.trim().toLowerCase().replace(/[^a-z0-9@._-]/g, "");
+      // userId = email chuẩn hóa lowercase
+      const userId = circleEmail.trim().toLowerCase();
       const res    = await fetch("/api/circle/wallet", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create wallet");
-      saveCircleSession({ walletId: data.walletId, walletAddress: data.walletAddress, walletSetId: data.walletSetId, userId: data.userId });
+
+      saveCircleSession({
+        walletId: data.walletId,
+        walletAddress: data.walletAddress,
+        walletSetId: data.walletSetId,
+        userId: data.userId,
+      });
+
+      const returning = data.reused === true;
+      setIsReturning(returning);
       setCircleStatus("success");
-      sessionStorage.setItem("justCreatedWallet", "1");
-      setTimeout(() => router.push("/dashboard/analysis"), 600);
+
+      // Ví mới → mở profile setup; ví cũ → thẳng dashboard
+      if (!returning) {
+        sessionStorage.setItem("justCreatedWallet", "1");
+      }
+      setTimeout(() => router.push("/dashboard/analysis"), 1200);
     } catch (err) {
       setCircleError(err instanceof Error ? err.message : "Unknown error");
       setCircleStatus("error");
@@ -464,6 +491,7 @@ export default function LoginPage() {
           {/* ── Circle Wallet ── */}
           {tab === "circle" && (
             <div style={{ animation:"floatUp 0.4s ease" }}>
+              {/* Header card */}
               <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderRadius:12, marginBottom:20, background:"rgba(99,102,241,0.06)", border:"1px solid rgba(99,102,241,0.18)" }}>
                 <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
                   💳
@@ -473,26 +501,71 @@ export default function LoginPage() {
                   <p style={{ margin:0, fontSize:12, color:"#555" }}>MPC wallet on ARC Testnet — no MetaMask needed</p>
                 </div>
               </div>
+
               <form onSubmit={handleCircleWallet} style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+                {/* Email field */}
                 <div>
-                  <label style={{ display:"block", fontSize:11, color:"#666", marginBottom:7, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase" }}>Email or username</label>
-                  <GlowInput value={circleEmail} onChange={setCircleEmail} placeholder="e.g. user@email.com" required glowColor="#6366f1" autoFocus />
-                  <p style={{ margin:"6px 0 0", fontSize:12, color:"#444" }}>Used to identify your wallet. No password required.</p>
+                  <label style={{ display:"flex", alignItems:"center", justifyContent:"space-between", fontSize:11, color:"#666", marginBottom:7, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase" }}>
+                    <span>Email Address <span style={{ color:"#ef4444" }}>*</span></span>
+                    {circleEmail && !emailOk && (
+                      <span style={{ fontSize:10, color:"#f87171", fontWeight:500, letterSpacing:0, textTransform:"none" }}>Invalid format</span>
+                    )}
+                    {emailOk && (
+                      <span style={{ fontSize:10, color:"#4ade80", fontWeight:500, letterSpacing:0, textTransform:"none" }}>✓ Valid email</span>
+                    )}
+                  </label>
+                  <GlowInput
+                    type="email"
+                    value={circleEmail}
+                    onChange={v => { setCircleEmail(v); setCircleStatus("idle"); setCircleError(""); }}
+                    placeholder="name@gmail.com"
+                    required
+                    glowColor={emailOk ? "#4ade80" : "#6366f1"}
+                    autoFocus
+                  />
+                  {/* Info box */}
+                  <div style={{ marginTop:8, padding:"9px 13px", borderRadius:9, background:"rgba(255,255,255,0.02)", border:"1px solid #1a1a1a", fontSize:12, color:"#555", lineHeight:1.65 }}>
+                    <span style={{ color:"#6366f1", fontWeight:600 }}>1 email = 1 wallet.</span>{" "}
+                    Each email address creates exactly one wallet. If you already have an account, entering the same email will log you back in.
+                  </div>
                 </div>
+
+                {/* Error */}
                 {circleStatus === "error" && (
-                  <div style={{ padding:"11px 14px", borderRadius:10, fontSize:13, background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", color:"#f87171", animation:"floatUp 0.3s ease" }}>
+                  <div style={{ padding:"11px 14px", borderRadius:10, fontSize:13, background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", color:"#f87171", animation:"floatUp 0.3s ease", display:"flex", alignItems:"flex-start", gap:8 }}>
+                    <span style={{ fontSize:16, flexShrink:0 }}>⚠</span>
                     {circleError}
                   </div>
                 )}
-                {circleStatus === "success" && (
+
+                {/* Success — new wallet */}
+                {circleStatus === "success" && !isReturning && (
                   <div style={{ padding:"11px 14px", borderRadius:10, fontSize:13, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", color:"#4ade80", animation:"floatUp 0.3s ease" }}>
-                    ✓ Wallet created! Redirecting…
+                    ✓ Wallet created for <strong>{circleEmail}</strong>! Setting up your profile…
                   </div>
                 )}
-                <ShimmerButton type="submit" disabled={circleStatus === "loading" || circleStatus === "success"} color="#6366f1">
-                  {circleStatus === "loading" ? "Creating wallet…" : circleStatus === "success" ? "Success!" : "Create Circle Wallet →"}
+
+                {/* Success — existing wallet */}
+                {circleStatus === "success" && isReturning && (
+                  <div style={{ padding:"11px 14px", borderRadius:10, fontSize:13, background:"rgba(99,102,241,0.08)", border:"1px solid rgba(99,102,241,0.2)", color:"#a5b4fc", animation:"floatUp 0.3s ease" }}>
+                    👋 Welcome back! Wallet found for <strong>{circleEmail}</strong>. Redirecting…
+                  </div>
+                )}
+
+                <ShimmerButton
+                  type="submit"
+                  disabled={circleStatus === "loading" || circleStatus === "success" || !emailOk}
+                  color="#6366f1"
+                >
+                  {circleStatus === "loading"
+                    ? "Connecting…"
+                    : circleStatus === "success"
+                    ? "✓ Redirecting…"
+                    : "Continue with Email →"}
                 </ShimmerButton>
               </form>
+
               <div style={{ marginTop:14, padding:"10px 14px", borderRadius:10, background:"rgba(255,255,255,0.02)", border:"1px solid #1a1a1a", fontSize:12, color:"#444", lineHeight:1.7 }}>
                 Get testnet USDC at{" "}
                 <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer" style={{ color:"#6366f1", textDecoration:"none" }}>faucet.circle.com</a>

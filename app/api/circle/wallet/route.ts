@@ -28,31 +28,45 @@ function demoBuild(userId: string) {
   };
 }
 
+// Validate email format
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
 // ── POST /api/circle/wallet — create or retrieve wallet for userId ─────────────
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await req.json();
     if (!userId) return NextResponse.json({ error: "userId is required" }, { status: 400 });
 
+    // Enforce email format — mỗi ví phải gắn với email hợp lệ
+    const normalizedEmail = userId.trim().toLowerCase();
+    if (!isValidEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: "A valid email address is required (e.g. name@gmail.com). Each email creates exactly one wallet." },
+        { status: 400 }
+      );
+    }
+
     // Demo mode: Circle API keys not configured
     if (!isConfigured()) {
-      return NextResponse.json({ ...demoBuild(userId), mode: "demo" });
+      return NextResponse.json({ ...demoBuild(normalizedEmail), mode: "demo", reused: false });
     }
 
     const client = getClient();
 
-    // Kiem tra neu da co wallet cho userId nay (tranh tao trung)
+    // Enforce 1 email = 1 wallet: kiểm tra wallet đã tồn tại theo email (refId)
     const existing = await client.listWallets({ pageSize: 50 });
     const allWallets = existing.data?.wallets ?? [];
     const existingWallet = allWallets.find(
-      w => w.refId === userId && w.blockchain === "ARC-TESTNET" && w.state === "LIVE"
+      w => w.refId === normalizedEmail && w.blockchain === "ARC-TESTNET" && w.state === "LIVE"
     );
 
     if (existingWallet) {
-      // Tra ve wallet cu co san — uu tien wallet co balance
+      // Trả về wallet cũ — 1 email chỉ có 1 wallet, ưu tiên wallet có balance
       const withBalance = await Promise.all(
         allWallets
-          .filter(w => w.refId === userId && w.blockchain === "ARC-TESTNET" && w.state === "LIVE")
+          .filter(w => w.refId === normalizedEmail && w.blockchain === "ARC-TESTNET" && w.state === "LIVE")
           .map(async w => {
             const b = await client.getWalletTokenBalance({ id: w.id }).catch(() => null);
             const usdc = b?.data?.tokenBalances?.find(t =>
@@ -69,13 +83,13 @@ export async function POST(req: NextRequest) {
         walletId:      best.id,
         walletAddress: best.address,
         walletSetId:   best.walletSetId ?? process.env.CIRCLE_WALLET_SET_ID ?? "",
-        userId,
+        userId:        normalizedEmail,
         mode:          "live",
-        reused:        true,
+        reused:        true,  // wallet cũ — user đăng nhập lại
       });
     }
 
-    // Tao wallet moi neu chua co
+    // Tạo wallet mới — email này chưa có wallet
     let walletSetId = process.env.CIRCLE_WALLET_SET_ID;
     if (!walletSetId) {
       const wsRes = await client.createWalletSet({ name: "StoreScope AI" });
@@ -87,7 +101,7 @@ export async function POST(req: NextRequest) {
       walletSetId,
       blockchains: ["ARC-TESTNET"],
       count: 1,
-      metadata: [{ name: `user-${userId}`, refId: userId }],
+      metadata: [{ name: `user-${normalizedEmail}`, refId: normalizedEmail }],
     });
 
     const wallet = walletRes.data?.wallets?.[0];
@@ -97,9 +111,9 @@ export async function POST(req: NextRequest) {
       walletId:      wallet.id,
       walletAddress: wallet.address,
       walletSetId,
-      userId,
+      userId:        normalizedEmail,
       mode:          "live",
-      reused:        false,
+      reused:        false,  // wallet mới tạo
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
