@@ -938,3 +938,138 @@ Hash đến muộn: setReport(prev => ...) cập nhật sau
 4. **Verify contracts trên ArcScan**
 5. **Roboflow model** — Generate → Train → RF_VERSION
 6. **Thêm Coca-Cola brand formation** vào Vision Agent catalog
+
+---
+
+## Nhật ký làm việc — 2026-05-21
+
+### Text Effects — `/dashboard/analysis`
+
+Thêm hiệu ứng chữ chuyên nghiệp cho trang phân tích:
+
+| CSS Class | Hiệu ứng | Dùng ở đâu |
+|---|---|---|
+| `.analysis-page-title` | Shimmer gradient sweep 4s infinite | h2 tiêu đề trang |
+| `.analysis-page-tag` | Letter appear (fade + blur in + letter-spacing) | Tag "AI Vision Agent" |
+| `.tasks-header-text` | Gradient tĩnh white→purple | Section headers |
+| `.task-label-active` | Glow purple pulse 1.8s infinite | Task label khi đang chạy |
+| `.analysis-cost-text` | Purple shimmer 3s | Chi phí phân tích |
+| `.spent-amount-text` | Glow amber pulse 1.4s | Số USDC đã chi |
+| `.done-amount-text` | Glow green pulse 2s | Số task hoàn thành |
+| `.total-price-purple/green` | Glow pulse theo trạng thái | Tổng giá |
+| `.dot-amber` / `.dot-purple` | Pulsing 5px circle | Paying / Processing badge |
+| `.badge-pop` | Scale pop animation | Badge container |
+| `.task-result-text` | Slide in từ trái + blur out | Kết quả mỗi task |
+
+**Files thay đổi:**
+- `app/globals.css` — thêm 12 `@keyframes` + CSS classes
+- `app/dashboard/analysis/page.tsx` — apply classes vào đúng elements
+
+### Vision Agent — Fix Hallucination
+
+**Vấn đề:** Server phân tích sai — Cái Lân cooking oil trên kệ snack; phân phối 25%/25%/25%/25% đều nhau; toàn bộ confidence 95%.
+
+**Fix 2 lớp:**
+
+**1. `lib/vision-agent/prompt.ts`:**
+- Đổi vai từ "Vietnamese FMCG analyst" → "unbiased global FMCG analyst"
+- Thêm 5 HALLUCINATION PREVENTION mandatory checks:
+  1. Text-first rule: đọc logo/signage trước, không đoán
+  2. Equal distribution warning: 25%/25% = đang bịa — STOP và đếm lại
+  3. Identical confidence warning: tất cả 95% = fabricated
+  4. Category consistency: snack shelf → only snack brands
+  5. Signage rule: brand banner trên kệ = dùng thông tin đó
+- Brand list chuyển thành "USE ONLY IF VISUALLY CONFIRMED"
+- Thêm global brands: Cheetos/Doritos/Lay's, Skittles/M&Ms, Oreo, etc.
+- Thay example JSON Pepsi/Coca-Cola → Cheetos/Lay's với distribution **bất đối xứng** (78%/21%) và confidence **khác nhau** (97%/93%/88%)
+- Thêm LANGUAGE RULE: tất cả `action`, `reason`, `summary`, `note` phải dùng **tiếng Anh**
+
+**2. `lib/vision-agent/agent.ts`:**
+- Rewrite system message thành 11 điều kiện rõ ràng (CRITICAL FAILURE CONDITIONS + CORRECT BEHAVIOR)
+- Safety net trong step3_skus: nếu `confidence < 50` mà brand cụ thể → downgrade `"Unidentified (BrandName?)"`
+
+### 1-Email-1-Wallet Enforcement
+
+**Yêu cầu:** Mỗi Gmail chỉ được tạo đúng 1 ví; userId phải là email hợp lệ.
+
+**Fix 3 lớp:**
+
+| Lớp | File | Thay đổi |
+|---|---|---|
+| Client UI | `app/login/page.tsx` | `isValidEmail()` regex, inline feedback "✓ Valid email" / "Invalid format", button disabled khi sai format |
+| Server validation | `app/api/circle/wallet/route.ts` | `isValidEmail()` server-side, trả 400 với message hướng dẫn |
+| Circle API | `app/api/circle/wallet/route.ts` | `listWallets()` check `refId === normalizedEmail` → trả ví cũ nếu đã có |
+
+**UX thêm:**
+- `type="email"` trên GlowInput
+- Normalize: `userId.trim().toLowerCase()` nhất quán
+- Badge "1 email = 1 wallet" info box
+- Welcome-back message: "Welcome back! Wallet found for X" vs "Wallet created for X"
+- `reused: true` khi trả ví cũ
+
+### ProfileModal — View/Edit Mode Separation
+
+**Vấn đề:** Modal "Account Profile" luôn hiện form edit → bắt user save mỗi lần mở.
+
+**Fix: tách 3 component:**
+
+```
+ProfileModal (orchestrator)
+├── ProfileView (default khi profile đã có)
+│   ├── Avatar + first letter
+│   ├── Email (Verified badge), Username, Password ••••••••, Wallet Address, Member since
+│   ├── X button → đóng ngay, KHÔNG save
+│   └── Edit button → setEditing(true)
+└── ProfileEdit (khi isNew hoặc editing)
+    ├── isNew=true → auto-save countdown 3s + redirect sau 1200ms
+    ├── isNew=false → Cancel → về View mode, không đóng modal
+    └── Save → về View mode tự động
+```
+
+**State logic:**
+- `editing = false` khi mount nếu profile đã có (View mặc định)
+- `editing = true` khi mount nếu chưa có profile (Edit cho user mới)
+
+### WalletButton — Bỏ Verify Ownership
+
+**Vấn đề:** Mỗi lần connect wallet đều phải ký message → phiền.
+
+**Fix:** Xóa hoàn toàn bước verify:
+- Bỏ `VerifyModal` component (−200 lines)
+- Bỏ `useSignMessage`, `verified` state, `buildSignMessage`, `randomNonce`
+- Connect → dùng ngay
+- `useBalance` không còn phụ thuộc `verified`
+
+### Commits — 2026-05-21
+
+| Commit | Nội dung |
+|---|---|
+| `fcc7090` | fix(ProfileModal): separate View/Edit modes — no forced save on open |
+| `da4eca8` | feat(WalletButton): remove wallet ownership verification step |
+
+**Đã push lên:** `origin` (storescope-ai-Shelby/ARC) + `storescope-ai` (Vercel)
+
+### Quyết định kỹ thuật — 2026-05-21
+
+| Quyết định | Lý do |
+|---|---|
+| ProfileModal View/Edit tách biệt | Existing user không cần save khi chỉ xem thông tin |
+| Auto-save 3s countdown chỉ cho `isNew` | Mới tạo tài khoản thì cần save + redirect; đang edit thì tự quyết |
+| Cancel → View mode (không close modal) | User có thể xem lại info sau khi hủy edit |
+| Bỏ SIWE verify wallet | Hackathon demo: UX quan trọng hơn security formality |
+| Vision Agent → "unbiased global analyst" | Remove bias sang VN market; image quyết định brand, không phải prompt |
+| LANGUAGE RULE cho action/reason/summary | Sản phẩm B2B global — output phải là tiếng Anh |
+
+### Việc cần làm tiếp (cập nhật 2026-05-21)
+
+**Ưu tiên cao:**
+1. **Test flow đầy đủ:** login email → tạo ví mới → Complete Profile auto-save → redirect analysis
+2. **Test returning user flow:** login lại → Account Profile hiện View mode (không save)
+3. **Test Vision Agent** trên Vercel với ảnh kệ hàng thật (snack, candy, beverage)
+4. **Deploy lên Vercel** để Circle webhook hoạt động (webhook đã đăng ký ở `storescope-ai.vercel.app`)
+
+**Ưu tiên vừa:**
+5. **Tích hợp RetailLayoutNFT vào `/forum`**
+6. **Test Telegram Bot** — tạo bot qua @BotFather, set webhook
+7. **Verify contracts trên ArcScan**
+8. **Thêm Coca-Cola brand formation** vào Vision Agent catalog
