@@ -196,7 +196,7 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
         {step === "paid" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 26, color: "#4ade80" }}>✓</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#4ade80" }}>{t("pay.paid")}</h3>
+            <h3 className="done-amount-text" style={{ margin: "0 0 8px", fontSize: 18 }}>{t("pay.paid")}</h3>
             <p style={{ color: "#888", fontSize: 17, lineHeight: 1.6, margin: "0 0 4px" }}>
               <strong style={{ color: "#f0f0f0" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong> {t("pay.paidSub")}{" "}
               <span style={{ color: payMethod === "circle" ? "#818cf8" : "#f0f0f0" }}>
@@ -264,8 +264,8 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
           /* ── Confirm ── */
           <>
             <div style={{ marginBottom: 22 }}>
-              <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>ARC Network · USDC</div>
-              <h3 style={{ margin: "0 0 6px", fontSize: 18 }}>{t("pay.title")}</h3>
+              <div className="analysis-page-tag" style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>ARC Network · USDC</div>
+              <h3 className="analysis-page-title" style={{ margin: "0 0 6px", fontSize: 18 }}>{t("pay.title")}</h3>
               <p style={{ color: "#555", fontSize: 13, margin: 0, lineHeight: 1.6 }}>
                 {t("pay.subtitle").replace("$PRICE", TOTAL_ANALYSIS_PRICE.toFixed(3))}
               </p>
@@ -285,7 +285,7 @@ function PaymentGateModal({ onPaid, onClose, circleSession, onCirclePaid }: {
               ))}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 70px", gap: 8, padding: "12px 16px", borderTop: "1px solid #2a2a2a", background: "rgba(124,58,237,0.06)" }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>{t("pay.totalRow")}</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: "#a78bfa", textAlign: "right" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)}</span>
+                <span className="analysis-cost-text" style={{ fontSize: 16, fontWeight: 800, textAlign: "right" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)}</span>
               </div>
             </div>
 
@@ -928,8 +928,8 @@ export default function AnalysisPage() {
         {/* Header */}
         <header style={{ borderBottom: "1px solid #1f1f1f", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>{t("analysis.pageTag")}</div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>{t("analysis.pageTitle")}</h2>
+            <div className="analysis-page-tag" style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>{t("analysis.pageTag")}</div>
+            <h2 className="analysis-page-title" style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>{t("analysis.pageTitle")}</h2>
             {onChainTx && (
               <a
                 href={`https://testnet.arcscan.app/tx/${onChainTx}`}
@@ -980,18 +980,18 @@ export default function AnalysisPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{t("analysis.cost")}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</div>
+                      <div className="analysis-cost-text" style={{ fontSize: 20, fontWeight: 800 }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</div>
                     </div>
                     {running && (
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{t("analysis.spent")}</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: "#fbbf24" }}>${spentTotal.toFixed(3)}</div>
+                        <div className="spent-amount-text" style={{ fontSize: 18, fontWeight: 700 }}>${spentTotal.toFixed(3)}</div>
                       </div>
                     )}
                     {done && (
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 10, color: "#4ade80", marginBottom: 2 }}>{t("analysis.paidOk")}</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: "#4ade80" }}>${spentTotal.toFixed(3)}</div>
+                        <div className="done-amount-text" style={{ fontSize: 18, fontWeight: 700 }}>${spentTotal.toFixed(3)}</div>
                       </div>
                     )}
                   </div>
@@ -1072,7 +1072,7 @@ export default function AnalysisPage() {
             {/* Right: task list */}
             <div style={{ ...card, overflow: "hidden" }}>
               <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{t("analysis.tasksHeader")}</div>
+                <div className="tasks-header-text" style={{ fontSize: 13, fontWeight: 600 }}>{t("analysis.tasksHeader")}</div>
                 <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.tasksSub")}</div>
               </div>
 
@@ -1111,12 +1111,23 @@ export default function AnalysisPage() {
                       {/* Task info */}
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: ts.status === "done" ? "#f0f0f0" : isActive ? "#a78bfa" : "#888" }}>{TASK_I18N[task.id]?.label ?? task.label}</span>
-                          {ts.status === "paying" && <span style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)", padding: "1px 8px", borderRadius: 999 }}>Paying…</span>}
-                          {ts.status === "processing" && <span style={{ fontSize: 10, color: "#7c3aed", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", padding: "1px 8px", borderRadius: 999 }}>Processing…</span>}
+                          <span
+                            className={isActive ? "task-label-active" : ""}
+                            style={{ fontSize: 13, fontWeight: 600, color: ts.status === "done" ? "#f0f0f0" : isActive ? "#a78bfa" : "#888", transition: "color 0.3s ease" }}
+                          >{TASK_I18N[task.id]?.label ?? task.label}</span>
+                          {ts.status === "paying" && (
+                            <span className="badge-pop" style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", padding: "1px 8px", borderRadius: 999, display: "inline-flex", alignItems: "center" }}>
+                              <span className="dot-amber" />{t("task.paying") || "Paying…"}
+                            </span>
+                          )}
+                          {ts.status === "processing" && (
+                            <span className="badge-pop" style={{ fontSize: 10, color: "#a78bfa", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", padding: "1px 8px", borderRadius: 999, display: "inline-flex", alignItems: "center" }}>
+                              <span className="dot-purple" />{t("task.processing") || "Processing…"}
+                            </span>
+                          )}
                         </div>
-                        <div style={{ fontSize: 11, color: "#555" }}>{TASK_I18N[task.id]?.desc ?? task.desc}</div>
-                        {ts.result && <div style={{ fontSize: 11, color: "#4ade80", marginTop: 4 }}>{ts.result}</div>}
+                        <div style={{ fontSize: 11, color: "#555", transition: "color 0.3s" }}>{TASK_I18N[task.id]?.desc ?? task.desc}</div>
+                        {ts.result && <div key={ts.result} className="task-result-text" style={{ fontSize: 11, color: "#4ade80", marginTop: 4 }}>{ts.result}</div>}
                         {ts.status === "done" && (
                           ts.txHash
                             ? <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
@@ -1158,7 +1169,7 @@ export default function AnalysisPage() {
                 <span style={{ fontSize: 12, color: "#555" }}>{completedTasks} / {ANALYSIS_TASKS.length} {t("analysis.tasksOf")}</span>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                   <span style={{ fontSize: 12, color: "#555" }}>{t("analysis.total")}:</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: done ? "#4ade80" : "#a78bfa" }}>
+                  <span className={done ? "total-price-green" : "total-price-purple"} style={{ fontSize: 18, fontWeight: 800, color: done ? "#4ade80" : "#a78bfa" }}>
                     ${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC
                   </span>
                 </div>
@@ -1231,7 +1242,7 @@ export default function AnalysisPage() {
                     {/* Brands detected */}
                     {report.skus.length > 0 && (
                       <div style={{ padding: "16px 18px", background: "#0a0a0a", borderRadius: 12 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 12 }}>Brands Detected</div>
+                        <div className="tasks-header-text" style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Brands Detected</div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {report.skus.map((s, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: "#111", borderRadius: 8 }}>
@@ -1251,7 +1262,7 @@ export default function AnalysisPage() {
                     {/* Shelf share */}
                     {report.shelfShare.length > 0 && (
                       <div style={{ padding: "16px 18px", background: "#0a0a0a", borderRadius: 12 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 12 }}>Shelf Share</div>
+                        <div className="tasks-header-text" style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Shelf Share</div>
                         {report.shelfShare.map(s => (
                           <div key={s.brand} style={{ marginBottom: 10 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
@@ -1268,7 +1279,7 @@ export default function AnalysisPage() {
 
                     {/* Recommendations */}
                     <div style={{ padding: "16px 18px", background: "#0a0a0a", borderRadius: 12 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 10 }}>AI Recommendations</div>
+                      <div className="tasks-header-text" style={{ fontSize: 12, fontWeight: 600, marginBottom: 10 }}>AI Recommendations</div>
                       {report.recommendations.map((r, i) => (
                         <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < report.recommendations.length - 1 ? 8 : 0, fontSize: 13, color: "#ccc", lineHeight: 1.5 }}>
                           <span style={{ color: "#7c3aed", flexShrink: 0 }}>→</span>
@@ -1333,10 +1344,10 @@ export default function AnalysisPage() {
           {!imageUrl && (
             <div style={{ ...card, padding: 48, textAlign: "center" }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2a2a2a" strokeWidth="1.5" style={{ margin: "0 auto 16px", display: "block" }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
-              <div style={{ fontSize: 14, color: "#555", marginBottom: 8 }}>{t("analysis.noImage")}</div>
-              <div style={{ fontSize: 12, color: "#333", lineHeight: 1.6 }}>
+              <div style={{ fontSize: 14, color: "#555", marginBottom: 8, animation: "fade-up 0.5s ease 0.1s both" }}>{t("analysis.noImage")}</div>
+              <div style={{ fontSize: 12, color: "#333", lineHeight: 1.6, animation: "fade-up 0.5s ease 0.2s both" }}>
                 {t("analysis.noImageSub")}<br/>
-                {t("analysis.total")}: <strong style={{ color: "#a78bfa" }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong>
+                {t("analysis.total")}: <strong className="analysis-cost-text">${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong>
               </div>
             </div>
           )}

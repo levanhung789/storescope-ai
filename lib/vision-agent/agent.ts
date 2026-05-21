@@ -31,7 +31,24 @@ export async function analyzeImage(
     messages: [
       {
         role: "system",
-        content: "You are a meticulous FMCG shelf analyst. When analyzing shelf images, you MUST enumerate EVERY distinct SKU visible — scan tier by tier, left to right. Never summarize or truncate the SKU list. A complete analysis of a typical supermarket shelf should have 8-20+ SKU entries.",
+        content: [
+          "You are a precise, unbiased global FMCG shelf analyst. Your ONLY job is to report what is physically visible in the image.",
+          "",
+          "CRITICAL FAILURE CONDITIONS — any of these means your analysis is wrong:",
+          "1. You report a brand that is NOT visually present in the image (hallucination).",
+          "2. All your shelf share percentages are equal (e.g., 25%/25%/25%/25%) — real shelves are never perfectly equal.",
+          "3. All your confidence scores are the same number — real per-SKU confidence always varies.",
+          "4. You report products from the wrong category (e.g., cooking oil on a candy shelf).",
+          "5. You fail to read clearly visible brand logos or promotional signage in the image.",
+          "",
+          "CORRECT BEHAVIOR:",
+          "- First: READ all visible text in the image (logos, banners, price signs). This is your ground truth.",
+          "- A dedicated brand display (e.g., a Cheetos stand with Cheetos branding) = all products are that brand.",
+          "- If you cannot read a brand name clearly → 'Unidentified [description]', confidence 40-60%. Never guess.",
+          "- Confidence must vary realistically per SKU: clear readable label=90-98%, partial=70-85%, unclear=50-65%.",
+          "- Shelf shares must be unequal and add up to exactly 100%. Real data is never perfectly symmetric.",
+          "- Scan EVERY tier left to right. Complete analysis = 6-20 SKU entries depending on shelf size.",
+        ].join("\n"),
       },
       {
         role: "user",
@@ -85,14 +102,23 @@ export async function analyzeImage(
       note:           String(p.step2_count?.note ?? ""),
     },
 
-    step3_skus: (p.step3_skus ?? []).map((s: Record<string, unknown>) => ({
-      brand:      String(s.brand ?? "Unknown"),
-      company:    String(s.company ?? "Unknown"),
-      sku:        String(s.sku ?? s.brand ?? "Unknown"),
-      sector:     String(s.sector ?? "FMCG"),
-      confidence: Number(s.confidence ?? 75),
-      price_vnd:  s.price_vnd ? Number(s.price_vnd) : null,
-    })),
+    step3_skus: (p.step3_skus ?? []).map((s: Record<string, unknown>) => {
+      const conf = Number(s.confidence ?? 75);
+      const brand = String(s.brand ?? "Unknown");
+      // Safety net: if confidence is very low but brand is a specific Vietnamese brand,
+      // something likely went wrong — downgrade to "Unidentified"
+      const safeBrand = conf < 50 && brand !== "Unknown"
+        ? `Unidentified (${brand}?)`
+        : brand;
+      return {
+        brand:      safeBrand,
+        company:    String(s.company ?? "Unknown"),
+        sku:        String(s.sku ?? s.brand ?? "Unknown"),
+        sector:     String(s.sector ?? "FMCG"),
+        confidence: conf,
+        price_vnd:  s.price_vnd ? Number(s.price_vnd) : null,
+      };
+    }),
 
     step4_facings: (p.step4_facings ?? []).map((f: Record<string, unknown>) => ({
       brand:           String(f.brand ?? ""),

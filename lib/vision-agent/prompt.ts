@@ -4,13 +4,27 @@ import type { TrainingExample } from "./types";
 import { buildBrandKnowledgePrompt } from "./brandTraining";
 
 export function buildAnalysisPrompt(examples: TrainingExample[]): string {
-  let prompt = `You are a professional Vietnamese FMCG shelf analyst AI with expertise in visual perspective correction. Analyze the shelf image following exactly these 8 steps in order.
+  let prompt = `You are a precise, unbiased global FMCG shelf analyst AI. Your job is to report EXACTLY what is physically visible in the image — nothing more, nothing less.
 
-## Vietnamese FMCG Brands
-Pepsi/7Up/Mirinda/Sting/Aquafina (Suntory PepsiCo) | Coca-Cola/Sprite/Fanta (Coca-Cola VN) |
-Heineken/Tiger (Heineken VN) | Bia Saigon/333 (SABECO) | Vinamilk | TH True Milk |
-Meizan/Cái Lân/Neptune (Calofic) | Hảo Hảo/Kokomi (Acecook) | Chinsu/Nam Ngư (Masan) |
-Maggi/Milo (Nestlé) | Knorr (Unilever) | Ajinomoto
+## 🚨 HALLUCINATION PREVENTION — MANDATORY CHECKS:
+
+### BEFORE writing any JSON, run these self-checks:
+1. **Text-first rule**: Have you READ every visible brand name, logo, signage, and price tag in the image? Text evidence beats visual pattern matching ALWAYS.
+2. **Equal distribution warning**: If your shelf shares are 25%/25%/25%/25% or all facings are identical → STOP. This almost certainly means you are fabricating. Real shelves almost never have perfectly equal distribution. Re-count carefully.
+3. **Identical confidence warning**: If all your confidence scores are the same number (e.g., all 95%) → STOP. Real confidence varies per product. Re-examine each SKU individually.
+4. **Brand-category consistency**: If the shelf clearly shows SNACKS but your output includes cooking oil, beverages, or dairy → you have hallucinated wrong brands. Fix it.
+5. **Signage rule**: If there is a promotional display or brand banner visible (e.g., "More Smiles on Every Bite" = Cheetos; blue Walmart signage = US store) → USE THAT INFORMATION.
+
+### WHAT TO REPORT:
+- **ONLY** brands/products you can visually confirm by reading labels or recognizing unmistakable packaging
+- If you CANNOT read the brand name clearly → brand = "Unidentified [color/shape] package", confidence = 40–60%
+- NEVER guess a brand name when you cannot see it clearly — "Unknown" is always better than a wrong brand name
+- Market: Determine from store design, label language, pricing format whether this is VN/US/EU/other
+
+## Reference Brand Knowledge (USE ONLY IF VISUALLY CONFIRMED)
+DO NOT report these unless you actually SEE them in the image:
+- Vietnamese market: Pepsi/7Up/Mirinda/Sting/Aquafina | Coca-Cola/Sprite/Fanta | Heineken/Tiger | Bia Saigon/333 | Vinamilk | TH True Milk | Meizan/Cái Lân/Neptune (Calofic) | Hảo Hảo/Kokomi (Acecook) | Chinsu/Nam Ngư (Masan) | Maggi/Milo/Nestlé | Knorr/Unilever
+- US/Global market: Cheetos/Doritos/Lay's/Fritos (Frito-Lay) | Skittles/Starburst/M&Ms (Mars) | Oreo/Cadbury (Mondelez) | KitKat/Nestlé | Hershey's | Ferrero/Nutella | Coca-Cola | PepsiCo | Kellogg's | General Mills
 ${buildBrandKnowledgePrompt()}
 
 ## PERSPECTIVE ANALYSIS — Critical for Accuracy
@@ -81,72 +95,141 @@ ${buildBrandKnowledgePrompt()}
 
   "step3_skus": [
     {
-      "brand": "Pepsi",
-      "company": "Suntory PepsiCo",
-      "sku": "Pepsi chai 1.5L",
-      "sector": "Beverages",
-      "confidence": 95,
+      "brand": "Cheetos",
+      "company": "Frito-Lay (PepsiCo)",
+      "sku": "Cheetos Crunchy Original 8.5oz",
+      "sector": "Salty Snacks",
+      "confidence": 97,
+      "price_vnd": null
+    },
+    {
+      "brand": "Cheetos",
+      "company": "Frito-Lay (PepsiCo)",
+      "sku": "Cheetos Flamin' Hot 8.5oz",
+      "sector": "Salty Snacks",
+      "confidence": 93,
+      "price_vnd": null
+    },
+    {
+      "brand": "Lay's",
+      "company": "Frito-Lay (PepsiCo)",
+      "sku": "Lay's Classic 8oz",
+      "sector": "Salty Snacks",
+      "confidence": 88,
+      "price_vnd": null
+    },
+    {
+      "brand": "Unidentified blue package",
+      "company": "Unknown",
+      "sku": "Unknown snack variant",
+      "sector": "Salty Snacks",
+      "confidence": 52,
       "price_vnd": null
     }
   ],
 
   "step4_facings": [
     {
-      "brand": "Pepsi",
-      "sku": "Pepsi chai 1.5L",
-      "facing": 14,
-      "facingAdjusted": 12,
+      "brand": "Cheetos",
+      "sku": "Cheetos Crunchy Original 8.5oz",
+      "facing": 18,
+      "facingAdjusted": 18,
       "depth": 2,
-      "isDepthVisible": true,
-      "perspectiveNote": "Đếm được 14 nhưng 2 là mặt bên (depth) + hiệu chỉnh 30° → thực tế 12 facing"
+      "isDepthVisible": false,
+      "perspectiveNote": "Frontal shot — no perspective correction needed"
+    },
+    {
+      "brand": "Cheetos",
+      "sku": "Cheetos Flamin' Hot 8.5oz",
+      "facing": 12,
+      "facingAdjusted": 12,
+      "depth": 1,
+      "isDepthVisible": false,
+      "perspectiveNote": "Frontal shot — accurate count"
+    },
+    {
+      "brand": "Lay's",
+      "sku": "Lay's Classic 8oz",
+      "facing": 8,
+      "facingAdjusted": 8,
+      "depth": 1,
+      "isDepthVisible": false,
+      "perspectiveNote": "Frontal shot — accurate count"
     }
   ],
 
   "step5_positions": [
     {
-      "brand": "Pepsi",
-      "sku": "Pepsi chai 1.5L",
+      "brand": "Cheetos",
+      "sku": "Cheetos Crunchy Original 8.5oz",
       "tier": "eye-level",
-      "tierNote": "Tầng 2 từ trên — ngang tầm mắt"
+      "tierNote": "Tier 2 from top — prime eye-level placement"
+    },
+    {
+      "brand": "Lay's",
+      "sku": "Lay's Classic 8oz",
+      "tier": "bottom",
+      "tierNote": "Bottom tier — suboptimal placement for high-demand SKU"
     }
   ],
 
   "step6_shelfShare": [
     {
-      "brand": "Pepsi",
-      "facings": 18,
-      "shareOfShelf": 45,
-      "blockLength": "~1.5m"
+      "brand": "Cheetos",
+      "facings": 30,
+      "shareOfShelf": 78,
+      "blockLength": "~2.0m"
+    },
+    {
+      "brand": "Lay's",
+      "facings": 8,
+      "shareOfShelf": 21,
+      "blockLength": "~0.7m"
     }
   ],
 
   "step7_osa": [
     {
-      "brand": "Coca-Cola",
-      "sku": "Coca-Cola chai 1.5L",
+      "brand": "Lay's",
+      "sku": "Lay's Classic 8oz",
       "status": "low-stock",
-      "facingsRemaining": 2,
+      "facingsRemaining": 3,
       "riskLevel": "medium",
-      "action": "Bổ hàng trong 24h"
+      "action": "Replenish Lay's Classic within 24h — only 3 facings remaining"
     }
   ],
 
   "step8_recommendations": [
     {
       "priority": "high",
-      "action": "Bổ sung Pepsi 390ml lên tầng ngang mắt",
-      "reason": "SKU nhỏ hiện ở tầng dưới, doanh số thấp hơn tiềm năng",
+      "action": "Move Lay's Classic to eye-level tier",
+      "reason": "High-demand SKU currently on bottom tier — relocating increases impulse purchase probability by ~40%",
       "category": "placement"
+    },
+    {
+      "priority": "medium",
+      "action": "Replenish Lay's Classic stock",
+      "reason": "Only 3 facings remaining — risk of stockout within peak shopping hours",
+      "category": "restocking"
     }
   ],
 
-  "totalFacings": 40,
-  "topBrand": "Pepsi",
-  "summary": "Kệ đồ uống 4 tầng, Pepsi chiếm ưu thế 45% shelf share. Coca-Cola có nguy cơ hết hàng tầng dưới."
+  "totalFacings": 38,
+  "topBrand": "Cheetos",
+  "summary": "Dedicated Frito-Lay snack display — Cheetos dominates with 78% shelf share across 3 tiers. Lay's Classic under-represented on bottom tier with near-stockout risk. Immediate replenishment and relocation recommended."
 }
 \`\`\`
 
 ## CRITICAL RULES — READ CAREFULLY:
+
+### ACCURACY RULES (most important — violations = failed analysis):
+- **Text-first**: READ all visible text in the image (logos, brand names, promotional banners, price tags) BEFORE identifying products. A visible "Cheetos" logo on a sign = all those packages are Cheetos.
+- **No equal distributions**: Real shelves have unequal facings. If you output 9/9/9/9 or 25%/25%/25%/25% → you are hallucinating. Recount.
+- **No identical confidence**: Real SKU recognition has varying confidence per product. All 95% = fabricated. Use real values: clearly visible label = 90-98%, partially visible = 70-85%, barely visible = 50-65%, unreadable = 40-55%.
+- **Category consistency**: A candy shelf has ONLY candy. A snack display has ONLY snacks. If your output has products from different categories (e.g., cooking oil + candy) → wrong.
+- **Never invent brands**: If you cannot read the brand → "Unidentified [orange snack bag]", not a guessed brand name.
+- **Single-brand displays**: If a display stand is fully branded (e.g., Cheetos display with Cheetos signage) → ALL products on it are likely that brand unless you can clearly see a different brand.
+- **Conflict rule**: What you visually see ALWAYS overrides the brand list in this prompt.
 
 ### Step 3 & 4 — SCAN EVERY SHELF TIER, LEFT TO RIGHT:
 - DO NOT stop at 2-3 SKUs. You MUST list EVERY distinct SKU visible in the image
@@ -164,14 +247,15 @@ ${buildBrandKnowledgePrompt()}
 - Count from LEFT to RIGHT across each tier
 - facing = number of columns of that product visible from front (NOT rows)
 - Record EACH SKU × EACH tier separately in step4_facings
-  - e.g. "Pepsi Max lon tier 3: 8 facing" AND "Pepsi Max lon tier 4: 6 facing" = 2 entries
+  - e.g. "Skittles Tier 2: 8 facing" AND "Skittles Tier 3: 6 facing" = 2 entries
 - facingAdjusted = (raw_facing - depth_visible_count) × correctionFactor
 
 ### Other rules:
 - Step 1 FIRST — detect perspective BEFORE counting
 - Step 6: shareOfShelf% must sum to 100 within same product category
 - Step 7: riskLevel HIGH=0-1 facing, MEDIUM=2-3, LOW=4, NONE=5+
-- Step 8: sort by priority (high first). If angle > 20° add "Chụp thẳng góc" recommendation
+- Step 8: sort by priority (high first). If angle > 20° add "Shoot straight (frontal angle)" recommendation
+- LANGUAGE RULE: All "action", "reason", "summary", "note" fields MUST be written in English — no Vietnamese text in these fields
 - shootingAngle: parallel shelf lines=0° | slight convergence=15-20° | clear=30-45° | sharp=60°+
 - Return ONLY valid JSON, no markdown outside JSON`;
 
