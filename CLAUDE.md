@@ -1073,3 +1073,164 @@ ProfileModal (orchestrator)
 6. **Test Telegram Bot** — tạo bot qua @BotFather, set webhook
 7. **Verify contracts trên ArcScan**
 8. **Thêm Coca-Cola brand formation** vào Vision Agent catalog
+
+---
+
+## Nhật ký làm việc — 2026-05-26
+
+### Personal Data Vault — Trang quản lý dữ liệu cá nhân
+
+#### Vault Data Model (`app/_lib/vault.ts` — file mới)
+
+```typescript
+VaultFolder   { id, name, parentId, createdAt, icon, isDefault }
+VaultItem     { id, type, name, folderId, createdAt, updatedAt, tags, starred,
+                forSale, price?, listingId?, reportId?, topBrand?, skuCount?,
+                totalPaid?, imageHash?, summary?, tokenId?, content? }
+ForumListing  { id, sellerWallet, sellerEmail?, itemId, itemType, title,
+                description, price, createdAt, sold, buyerWallet?, previewData? }
+VaultItemType = "analysis" | "layout" | "note" | "image"
+```
+
+**4 default folders:**
+- `f-analysis` — Analysis History (📊)
+- `f-layouts` — Store Layouts (🏪)
+- `f-favorites` — Favorites (⭐)
+- `f-forsale` — For Sale (🏷️)
+
+**localStorage keys:**
+- `vault_folders_${walletId}` — folders per wallet
+- `vault_items_${walletId}` — items per wallet
+- `forum_listings_v2` — listings shared với Forum marketplace
+
+**Functions:** `loadFolders`, `saveFolders`, `createFolder`, `deleteFolder`, `renameFolder`, `loadItems`, `saveItems`, `addItem`, `updateItem`, `deleteItem`, `moveItem`, `importAnalysisReports`, `loadListings`, `saveListings`, `createListing`, `removeListing`
+
+#### Vault Page ban đầu (`app/dashboard/vault/page.tsx`)
+
+3-panel layout: Sidebar folder tree | Main item grid | Detail panel
+
+**Components chính:**
+- `NoBgImage` — Canvas API loại bỏ nền trắng (threshold=236, 22px anti-alias)
+- `FolderIcon` — kiểm tra ICON_IMAGE_MAP → vault-folder.svg → emoji fallback
+- `CreateFolderModal`, `MoveModal`, `ListForSaleModal`, `AddNoteModal`
+- `DetailPanel` — star/move/delete/list-for-sale
+- Import analysis từ `reports_${address}` localStorage
+- Toast notifications
+
+#### Folder Icon — SVG trong suốt (`public/vault-folder.svg`)
+
+Vấn đề: ảnh PNG gốc (vault-folder.png) có nền trắng, không hài hòa với dark theme.
+
+**Giải pháp:** Tạo lại SVG thuần vector, trong suốt hoàn toàn:
+- Gradient: deep purple (#6d28d9) → magenta (#9333ea) → pink (#db2777) → rose (#f43f5e)
+- Tab trên trái: gradient tím đậm
+- Glass shine: ellipse xoay 22° với diagonal gradient opacity
+- Edge glow bên trái, top highlight, bottom reflection
+- `filter id="shadow"` drop shadow tím
+
+**Quyết định:** SVG thay PNG vì không có pixel data → không bao giờ có nền trắng.
+
+#### Store Layout Icon — Canvas bg removal (`public/store-layout-icon.png`)
+
+Ảnh upload (`845bc44b-58f8-4118-91e3-84b1126c2087`) có nền trắng.
+
+**Giải pháp:** `NoBgImage` component dùng Canvas API:
+```javascript
+// Mỗi pixel: nếu R,G,B > 236 → alpha = 0
+// 22px anti-alias edge zone: alpha = lerp(0, 255, distFromEdge/22)
+ctx.getImageData / putImageData với willReadFrequently: true
+```
+
+**`ICON_IMAGE_MAP`:** `{ "🏪": "/store-layout-icon.png" }` — FolderIcon tra map trước khi dùng emoji.
+
+#### Forum Data Marketplace Tab (`app/forum/ForumClient.tsx`)
+
+- Thêm `"data"` vào `Tab` type
+- Tab bar: **Layout Marketplace** | **Data Marketplace (N)** | **Discussion**
+- Load `vault_listings_v2` từ localStorage khi switch sang tab `"data"`
+- Render listing cards với buy button
+- "List your data" → `/dashboard/profile`
+
+#### Profile Page — OpenSea-style (`app/dashboard/profile/page.tsx` — file mới)
+
+Đổi tên vault → Profile, rebuild theo style OpenSea.
+
+**Layout:**
+```
+┌─────────────────────────────────────────┐
+│  Banner (200px gradient tím, glow orbs) │
+│  Avatar (100px tròn, đè banner -40px)   │
+│  Username | Badges | Stats bar          │
+│  Tab bar: Items|Analysis|Layouts|...    │
+├──────────┬──────────────────────────────┤
+│ Sidebar  │  Search + View toggle        │
+│ Filters  │  Item Grid (ItemCard)        │
+│          │                              │
+└──────────┴──────────────────────────────┘
+│  Bottom Action Bar (fixed, khi select) │
+└─────────────────────────────────────────┘
+```
+
+**Banner:** `linear-gradient(135deg, #0f0520, #2d1b69, #4c1d95, #6d28d9, #1a0533)` + 3 animated glow orbs (keyframes `glow-pulse`)
+
+**Stats bar:** USDC SPENT (green) / ANALYSES (purple) / LAYOUTS (teal) / FOR SALE (amber)
+
+**Tab bar:** Items | Analysis | Layouts | Listings | Favorites | Activity (với count badges)
+
+**Sidebar:** Collapsible, Status filter (All/Listed/Not Listed/Starred), Type filter, Wallets section
+
+**ItemCard:** checkbox, star/sale badges, NoBgImage preview (cho layouts), name, timeAgo, topBrand tags
+
+**SaleModal:** title + description + quick-select price buttons ($0.1 / $0.5 / $1 / $2 / $5)
+
+**Bottom action bar (fixed):** hiện khi có items selected — "List Items" / "Star" / "Delete" / "✕ Close"
+
+**Activity tab:** chronological list các item updates gần đây
+
+### Nav link update — vault → profile
+
+Tất cả nav links trong app đổi từ `/dashboard/vault` → `/dashboard/profile`:
+
+| File | Thay đổi |
+|---|---|
+| `app/dashboard/page.tsx` | `nav.vault` → `/dashboard/profile` |
+| `app/dashboard/reports/page.tsx` | "My Vault" → "My Profile" → `/dashboard/profile` |
+| `app/forum/ForumClient.tsx` | 2 link "List your data" + "Go to My Vault" → Profile |
+
+### Commits — 2026-05-26
+
+| Commit | Nội dung |
+|---|---|
+| `1dfdef2` | feat(vault): vault.ts data model + vault page skeleton |
+| `e0fed2e` | feat(vault): NoBgImage Canvas bg removal + folder SVG |
+| `4b8ebe1` | feat(vault): store layout icon + FolderIcon component |
+| `47b4248` | feat(forum): Data Marketplace tab with vault listings |
+| `36198be` | docs: update CLAUDE.md with 2026-05-21 work log |
+| `4e256ac` | feat: add Profile page (OpenSea-style), update all nav links vault→profile |
+
+**Đã push lên:** `origin` (storescope-ai-Shelby)
+
+### Quyết định kỹ thuật — 2026-05-26
+
+| Quyết định | Lý do |
+|---|---|
+| Vault data lưu localStorage (không backend) | Consistent với pattern reports/anonymous — không cần DB |
+| `forum_listings_v2` key dùng chung | Forum và Profile cùng đọc/ghi một key → data nhất quán |
+| SVG thay PNG cho folder icon | SVG không bao giờ có nền trắng — không cần Canvas hack |
+| Canvas bg removal cho store-layout-icon | Ảnh PNG thật từ upload — chỉ cần loại nền trắng, giữ nội dung |
+| Đổi tên vault → profile | User data = "profile" tự nhiên hơn "vault"; align với OpenSea mental model |
+| NoBgImage threshold=236 (không phải 255) | Loại bỏ cả nền trắng gần trắng (jpeg artifacts); 22px anti-alias tránh răng cưa |
+| Bottom action bar fixed position | Không cuộn trang khi nhiều item — luôn accessible |
+| SaleModal quick-select price buttons | UX nhanh hơn typing; $0.1→$5 phù hợp data marketplace giá thấp |
+
+### Việc cần làm tiếp (cập nhật 2026-05-26)
+
+**Ưu tiên cao:**
+1. **Test Profile page** tại `http://localhost:3000/dashboard/profile` — import analysis, tạo folder, list for sale
+2. **Deploy lên Vercel** — push lên `vercel-repo` để production cập nhật
+3. **Test Data Marketplace** trên Forum — list item từ Profile → xuất hiện trên Forum tab
+
+**Ưu tiên vừa:**
+4. **Tích hợp RetailLayoutNFT vào `/forum`** — mint NFT khi save layout
+5. **Test Vision Agent** với ảnh kệ hàng thật
+6. **Verify contracts trên ArcScan**
