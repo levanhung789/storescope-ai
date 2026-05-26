@@ -128,7 +128,7 @@ const NAV_ITEMS = [
   { key: "nav.visionAgent",href: "/dashboard/vision-agent", active: false },
   { key: "nav.agent",      href: "/dashboard/agent",        active: false },
   { key: "nav.reports",    href: "/dashboard/reports",      active: false },
-  { key: "nav.vault",      href: "/dashboard/vault",        active: false },
+  { key: "nav.vault",      href: "/dashboard/profile",      active: false },
   { key: "nav.layout",     href: "/layout-editor",          active: false },
   { key: "nav.forum",      href: "/forum",                  active: false },
 ];

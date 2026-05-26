@@ -329,7 +329,7 @@ export default function ForumClient() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
               <p style={{ color: "#555", fontSize: 13, margin: 0 }}>Analysis reports &amp; datasets listed by community members</p>
-              <a href="/dashboard/vault" style={{ display: "flex", alignItems: "center", gap: 6, background: "#7c3aed", color: "#fff", textDecoration: "none", padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600 }}>
+              <a href="/dashboard/profile" style={{ display: "flex", alignItems: "center", gap: 6, background: "#7c3aed", color: "#fff", textDecoration: "none", padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600 }}>
                 <Plus size={13} /> List your data
               </a>
             </div>
@@ -338,8 +338,8 @@ export default function ForumClient() {
               <div style={{ textAlign: "center", padding: "60px 0", background: "#111", borderRadius: 20, border: "1px dashed #2a2a2a" }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
                 <p style={{ color: "#555", fontSize: 14, margin: "0 0 16px" }}>No data listed yet. Be the first seller!</p>
-                <a href="/dashboard/vault" style={{ background: "#7c3aed", color: "#fff", textDecoration: "none", padding: "10px 24px", borderRadius: 999, fontSize: 13, fontWeight: 600 }}>
-                  Go to My Vault →
+                <a href="/dashboard/profile" style={{ background: "#7c3aed", color: "#fff", textDecoration: "none", padding: "10px 24px", borderRadius: 999, fontSize: 13, fontWeight: 600 }}>
+                  Go to My Profile →
                 </a>
               </div>
             ) : (
