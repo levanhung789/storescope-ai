@@ -26,16 +26,17 @@ const CircleWalletButton  = dynamic(() => import("../../_components/CircleWallet
 
 const FOLDER_EMOJIS = ["📁", "📂", "🗂️"];
 
-/** Renders vault-folder.png for folder-type emojis, otherwise the emoji */
+/** Renders vault-folder.svg (transparent bg) for folder-type emojis, otherwise the emoji */
 function FolderIcon({ icon, size = 20 }: { icon: string; size?: number }) {
   if (FOLDER_EMOJIS.includes(icon)) {
     return (
       <Image
-        src="/vault-folder.png"
+        src="/vault-folder.svg"
         alt="folder"
         width={size}
         height={size}
         style={{ objectFit: "contain", display: "inline-block", verticalAlign: "middle" }}
+        unoptimized
       />
     );
   }
@@ -688,7 +689,7 @@ export default function VaultPage() {
                   {activeFolder === "f-analysis" ? <span style={{ fontSize: 48 }}>📊</span>
                    : activeFolder === "f-favorites" ? <span style={{ fontSize: 48 }}>⭐</span>
                    : activeFolder === "f-forsale" ? <span style={{ fontSize: 48 }}>🏷️</span>
-                   : <Image src="/vault-folder.png" alt="folder" width={72} height={72} style={{ objectFit: "contain" }} />}
+                   : <Image src="/vault-folder.svg" alt="folder" width={72} height={72} style={{ objectFit: "contain" }} unoptimized />}
                 </div>
                 <p style={{ color: "#444", fontSize: 14, margin: "0 0 20px" }}>
                   {activeFolder === "f-analysis"
