@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -22,12 +22,65 @@ import { loadCircleSession } from "../../_lib/circle";
 const WalletButton        = dynamic(() => import("../../_components/WalletButton"),        { ssr: false });
 const CircleWalletButton  = dynamic(() => import("../../_components/CircleWalletButton"),   { ssr: false });
 
-// ── Folder image icon ─────────────────────────────────────────────────────
+// ── Icon helpers ──────────────────────────────────────────────────────────
 
 const FOLDER_EMOJIS = ["📁", "📂", "🗂️"];
 
-/** Renders vault-folder.svg (transparent bg) for folder-type emojis, otherwise the emoji */
+/** Canvas-based image renderer — removes white/near-white background pixels */
+function NoBgImage({ src, size, threshold = 236 }: { src: string; size: number; threshold?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    const img = new window.Image();
+    img.onload = () => {
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+
+      const d  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const px = d.data;
+      const edge = threshold - 22; // smooth edge zone
+
+      for (let i = 0; i < px.length; i += 4) {
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+        if (r > threshold && g > threshold && b > threshold) {
+          px[i + 3] = 0; // fully transparent
+        } else if (r > edge && g > edge && b > edge) {
+          // soft anti-alias transition
+          const brightness = (r + g + b) / 3;
+          px[i + 3] = Math.round(255 * (1 - (brightness - edge) / (threshold - edge)));
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    };
+    img.src = src;
+  }, [src, threshold]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ width: size, height: size, display: "inline-block", objectFit: "contain", verticalAlign: "middle" }}
+    />
+  );
+}
+
+/** Map specific emoji → custom PNG icon (white bg removed via canvas) */
+const ICON_IMAGE_MAP: Record<string, string> = {
+  "🏪": "/store-layout-icon.png",
+};
+
+/** Renders correct icon: SVG for folders, PNG (no-bg) for mapped icons, emoji otherwise */
 function FolderIcon({ icon, size = 20 }: { icon: string; size?: number }) {
+  const mapped = ICON_IMAGE_MAP[icon];
+  if (mapped) {
+    return <NoBgImage src={mapped} size={size} />;
+  }
   if (FOLDER_EMOJIS.includes(icon)) {
     return (
       <Image
@@ -55,7 +108,7 @@ function timeAgo(ts: number) {
 
 function itemIcon(type: VaultItem["type"]) {
   if (type === "analysis") return <BarChart2 size={16} color="#a78bfa" />;
-  if (type === "layout")   return <LayoutGrid size={16} color="#6ee7b7" />;
+  if (type === "layout")   return <NoBgImage src="/store-layout-icon.png" size={18} />;
   if (type === "note")     return <FileText size={16} color="#fbbf24" />;
   return <Upload size={16} color="#94a3b8" />;
 }
@@ -254,9 +307,9 @@ function DetailPanel({ item, folder, listings, onClose, onStar, onMove, onDelete
         {/* Icon + Name */}
         <div style={{ textAlign: "center" }}>
           <div style={{ width: 64, height: 64, borderRadius: 16, background: "#111", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-            <span style={{ fontSize: 32 }}>
-              {item.type === "analysis" ? "📊" : item.type === "layout" ? "🏪" : item.type === "note" ? "📝" : "🖼️"}
-            </span>
+            {item.type === "layout"
+              ? <NoBgImage src="/store-layout-icon.png" size={44} />
+              : <span style={{ fontSize: 32 }}>{item.type === "analysis" ? "📊" : item.type === "note" ? "📝" : "🖼️"}</span>}
           </div>
           <div style={{ fontSize: 15, fontWeight: 600, color: "#f0f0f0", marginBottom: 4, wordBreak: "break-word" }}>{item.name}</div>
           <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em" }}>{item.type}</div>
@@ -727,9 +780,9 @@ export default function VaultPage() {
 
                       {/* Icon area */}
                       <div style={{ height: 80, background: "#0a0a0a", borderRadius: 10, border: "1px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                        <span style={{ fontSize: 32 }}>
-                          {item.type === "analysis" ? "📊" : item.type === "layout" ? "🏪" : item.type === "note" ? "📝" : "🖼️"}
-                        </span>
+                        {item.type === "layout"
+                          ? <NoBgImage src="/store-layout-icon.png" size={52} />
+                          : <span style={{ fontSize: 32 }}>{item.type === "analysis" ? "📊" : item.type === "note" ? "📝" : "🖼️"}</span>}
                       </div>
 
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
