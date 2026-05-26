@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">
+  <defs>
+    <!-- Main folder gradient: purple → pink -->
+    <linearGradient id="folderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#7c3aed"/>
+      <stop offset="50%"  stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <!-- Tab gradient -->
+    <linearGradient id="tabGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+    <!-- Glass shine overlay -->
+    <linearGradient id="shineGrad" x1="0%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.28"/>
+      <stop offset="50%"  stop-color="white" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Drop shadow filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Tab (back) -->
+  <path d="M8 32 Q8 28 12 28 L38 28 Q42 28 44 32 L44 38 L8 38 Z"
+        fill="url(#tabGrad)" filter="url(#shadow)"/>
+
+  <!-- Main folder body -->
+  <rect x="8" y="36" width="84" height="54" rx="8" ry="8"
+        fill="url(#folderGrad)" filter="url(#shadow)"/>
+
+  <!-- Top edge highlight line -->
+  <rect x="8" y="36" width="84" height="2" rx="1"
+        fill="white" opacity="0.25"/>
+
+  <!-- Glass shine (diagonal) -->
+  <path d="M8 36 Q8 36 8 40 L50 36 Z"
+        fill="white" opacity="0.15"/>
+  <ellipse cx="34" cy="55" rx="26" ry="16"
+        fill="url(#shineGrad)" opacity="0.9"
+        transform="rotate(-20 34 55)"/>
+</svg>

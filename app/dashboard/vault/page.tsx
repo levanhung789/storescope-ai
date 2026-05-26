@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  FolderPlus, Folder, FolderOpen, Star, Tag, Trash2,
+  FolderPlus, Star, Tag, Trash2,
   MoveRight, Pencil, ShoppingBag, BarChart2, LayoutGrid,
   FileText, RefreshCw, Search, Grid, List, X, Check,
   ChevronRight, Upload, TrendingUp,
@@ -20,6 +21,26 @@ import { loadCircleSession } from "../../_lib/circle";
 
 const WalletButton        = dynamic(() => import("../../_components/WalletButton"),        { ssr: false });
 const CircleWalletButton  = dynamic(() => import("../../_components/CircleWalletButton"),   { ssr: false });
+
+// ── Folder image icon ─────────────────────────────────────────────────────
+
+const FOLDER_EMOJIS = ["📁", "📂", "🗂️"];
+
+/** Renders vault-folder.png for folder-type emojis, otherwise the emoji */
+function FolderIcon({ icon, size = 20 }: { icon: string; size?: number }) {
+  if (FOLDER_EMOJIS.includes(icon)) {
+    return (
+      <Image
+        src="/vault-folder.png"
+        alt="folder"
+        width={size}
+        height={size}
+        style={{ objectFit: "contain", display: "inline-block", verticalAlign: "middle" }}
+      />
+    );
+  }
+  return <span style={{ fontSize: size - 2 }}>{icon}</span>;
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -62,8 +83,8 @@ function CreateFolderModal({ onSave, onClose }: { onSave: (name: string, icon: s
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {icons.map(i => (
           <button key={i} onClick={() => setIcon(i)}
-            style={{ width: 36, height: 36, fontSize: 18, borderRadius: 8, border: `2px solid ${i === icon ? "#7c3aed" : "#2a2a2a"}`, background: i === icon ? "rgba(124,58,237,0.15)" : "#0a0a0a", cursor: "pointer" }}>
-            {i}
+            style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `2px solid ${i === icon ? "#7c3aed" : "#2a2a2a"}`, background: i === icon ? "rgba(124,58,237,0.15)" : "#0a0a0a", cursor: "pointer" }}>
+            <FolderIcon icon={i} size={22} />
           </button>
         ))}
       </div>
@@ -289,7 +310,7 @@ function DetailPanel({ item, folder, listings, onClose, onStar, onMove, onDelete
         <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span style={{ color: "#444" }}>Folder</span>
-            <span style={{ color: "#666" }}>{folder?.icon} {folder?.name}</span>
+            <span style={{ color: "#666", display: "inline-flex", alignItems: "center", gap: 4 }}><FolderIcon icon={folder?.icon ?? "📁"} size={13} />{folder?.name}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span style={{ color: "#444" }}>Created</span>
@@ -409,7 +430,7 @@ export default function VaultPage() {
     createFolder(walletId, name, null, icon);
     setShowCreateFolder(false);
     reload();
-    showToast(`📁 Folder "${name}" created`);
+    showToast(`Folder "${name}" created`);
   };
 
   const handleDeleteFolder = (id: string) => {
@@ -570,7 +591,7 @@ export default function VaultPage() {
                     <>
                       <button onClick={() => setActiveFolder(f.id)}
                         style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "none", border: "none", color: isActive ? "#a78bfa" : "#666", cursor: "pointer", fontSize: 13, fontWeight: isActive ? 600 : 400, textAlign: "left" }}>
-                        <span style={{ fontSize: 15 }}>{f.icon}</span>
+                        <FolderIcon icon={f.icon} size={18} />
                         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
                         {count > 0 && <span style={{ fontSize: 10, background: isActive ? "rgba(124,58,237,0.2)" : "#1a1a1a", color: isActive ? "#a78bfa" : "#444", borderRadius: 999, padding: "1px 6px" }}>{count}</span>}
                       </button>
@@ -621,7 +642,7 @@ export default function VaultPage() {
           {/* Toolbar */}
           <div style={{ padding: "14px 24px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>{currentFolder?.icon ?? "📁"}</span>
+              <FolderIcon icon={currentFolder?.icon ?? "📁"} size={24} />
               <div>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em" }}>{currentFolder?.name ?? "All Items"}</h2>
                 <div style={{ fontSize: 11, color: "#444", marginTop: 1 }}>{displayItems.length} item{displayItems.length !== 1 ? "s" : ""}</div>
@@ -663,8 +684,11 @@ export default function VaultPage() {
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
             {displayItems.length === 0 ? (
               <div style={{ textAlign: "center", padding: "80px 0" }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>
-                  {activeFolder === "f-analysis" ? "📊" : activeFolder === "f-favorites" ? "⭐" : activeFolder === "f-forsale" ? "🏷️" : "📁"}
+                <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+                  {activeFolder === "f-analysis" ? <span style={{ fontSize: 48 }}>📊</span>
+                   : activeFolder === "f-favorites" ? <span style={{ fontSize: 48 }}>⭐</span>
+                   : activeFolder === "f-forsale" ? <span style={{ fontSize: 48 }}>🏷️</span>
+                   : <Image src="/vault-folder.png" alt="folder" width={72} height={72} style={{ objectFit: "contain" }} />}
                 </div>
                 <p style={{ color: "#444", fontSize: 14, margin: "0 0 20px" }}>
                   {activeFolder === "f-analysis"
@@ -755,7 +779,7 @@ export default function VaultPage() {
                         <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                         {item.topBrand && <div style={{ fontSize: 11, color: "#555" }}>{item.topBrand}</div>}
                       </div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{folder?.icon} {folder?.name}</div>
+                      <div style={{ fontSize: 11, color: "#555", display: "flex", alignItems: "center", gap: 4 }}><FolderIcon icon={folder?.icon ?? "📁"} size={13} />{folder?.name}</div>
                       <div><span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: "#1a1a1a", color: "#666" }}>{item.type}</span></div>
                       <div style={{ textAlign: "right", fontSize: 12, color: hasListing ? "#a78bfa" : "#333", fontWeight: hasListing ? 700 : 400 }}>
                         {hasListing ? `$${item.price}` : "—"}
