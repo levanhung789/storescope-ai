@@ -50,6 +50,7 @@ export default function ReportsPage() {
             { label: "Vision Agent", href: "/dashboard/vision-agent", active: false },
             { label: "AI Agent",     href: "/dashboard/agent",        active: false },
             { label: "My Reports",   href: "/dashboard/reports",      active: true  },
+            { label: "My Vault",     href: "/dashboard/vault",        active: false },
             { label: "Store Layout", href: "/layout-editor",          active: false },
             { label: "Forum",        href: "/forum",                  active: false },
           ].map(item => (

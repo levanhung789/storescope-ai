@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { RefreshCw, ExternalLink, ShoppingCart, Plus } from "lucide-react";
+import { RefreshCw, ExternalLink, ShoppingCart, Plus, Database, BarChart2, FileText } from "lucide-react";
 import { PRICING } from "../_lib/arc";
 import { loadCircleSession, type CircleSession } from "../_lib/circle";
+import { loadListings, type ForumListing } from "../_lib/vault";
 import type { LayoutListing } from "../api/contracts/layouts/route";
 
 const WalletButton       = dynamic(() => import("../_components/WalletButton"),       { ssr: false });
@@ -17,7 +18,7 @@ const MOCK_POSTS = [
   { id: "p2", author: "0x5e6f...7a8b", title: "Double-sided gondola vs wall shelf — insights from AI data", body: "Using StoreScope AI to analyze 200 shelf images across 5 stores, double-sided gondolas placed mid-floor outperformed wall shelving by 18%...", likes: 41, replies: 15, timestamp: "2026-05-09", tags: ["shelving", "analytics", "AI"] },
 ];
 
-type Tab    = "layouts" | "discussion";
+type Tab    = "layouts" | "data" | "discussion";
 type BuyStep = "confirm" | "paying" | "done" | "error";
 
 // ── Purchase Modal ───────────────────────────────────────────────────────────
@@ -157,8 +158,13 @@ export default function ForumClient() {
   const [totalMinted, setTotal]      = useState(0);
   const [loadingLayouts, setLoading] = useState(true);
   const [circleSession, setCircle]   = useState<CircleSession | null>(null);
+  const [vaultListings, setVaultListings] = useState<ForumListing[]>([]);
 
   useEffect(() => { setCircle(loadCircleSession()); }, []);
+  useEffect(() => {
+    const all = loadListings().filter(l => !l.sold);
+    setVaultListings(all);
+  }, [tab]);
 
   const fetchLayouts = useCallback(async () => {
     setLoading(true);
@@ -225,7 +231,11 @@ export default function ForumClient() {
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 4, marginBottom: 32, background: "#111", border: "1px solid #1f1f1f", borderRadius: 12, padding: 4, width: "fit-content" }}>
-          {([["layouts", "Layout Marketplace"], ["discussion", "Discussion"]] as [Tab, string][]).map(([t, label]) => (
+          {([
+            ["layouts",    "Layout Marketplace"],
+            ["data",       `Data Marketplace${vaultListings.length > 0 ? ` (${vaultListings.length})` : ""}`],
+            ["discussion", "Discussion"],
+          ] as [Tab, string][]).map(([t, label]) => (
             <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: tab === t ? "#7c3aed" : "transparent", color: tab === t ? "#fff" : "#888", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
@@ -305,6 +315,82 @@ export default function ForumClient() {
                             <ShoppingCart size={12} /> Buy
                           </button>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Data Marketplace tab */}
+        {tab === "data" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <p style={{ color: "#555", fontSize: 13, margin: 0 }}>Analysis reports &amp; datasets listed by community members</p>
+              <a href="/dashboard/vault" style={{ display: "flex", alignItems: "center", gap: 6, background: "#7c3aed", color: "#fff", textDecoration: "none", padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600 }}>
+                <Plus size={13} /> List your data
+              </a>
+            </div>
+
+            {vaultListings.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 0", background: "#111", borderRadius: 20, border: "1px dashed #2a2a2a" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+                <p style={{ color: "#555", fontSize: 14, margin: "0 0 16px" }}>No data listed yet. Be the first seller!</p>
+                <a href="/dashboard/vault" style={{ background: "#7c3aed", color: "#fff", textDecoration: "none", padding: "10px 24px", borderRadius: 999, fontSize: 13, fontWeight: 600 }}>
+                  Go to My Vault →
+                </a>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
+                {vaultListings.map(listing => (
+                  <div key={listing.id} style={{ background: "#111", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 20, padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+                    {/* Type badge */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 22 }}>{listing.itemType === "analysis" ? "📊" : listing.itemType === "layout" ? "🏪" : listing.itemType === "note" ? "📝" : "🖼️"}</span>
+                      <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "rgba(124,58,237,0.1)", color: "#a78bfa", textTransform: "uppercase", letterSpacing: "0.08em" }}>{listing.itemType}</span>
+                    </div>
+
+                    {/* Title & desc */}
+                    <div>
+                      <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 600, lineHeight: 1.4 }}>{listing.title}</h3>
+                      {listing.description && (
+                        <p style={{ margin: 0, fontSize: 12, color: "#888", lineHeight: 1.6 }}>{listing.description}</p>
+                      )}
+                    </div>
+
+                    {/* Preview data */}
+                    {listing.previewData && (!!listing.previewData.topBrand || !!listing.previewData.skuCount) && (
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        {!!listing.previewData.topBrand && (
+                          <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 999, background: "#1a1a1a", color: "#666" }}>
+                            🏆 {String(listing.previewData.topBrand)}
+                          </span>
+                        )}
+                        {!!listing.previewData.skuCount && (
+                          <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 999, background: "#1a1a1a", color: "#666" }}>
+                            📦 {Number(listing.previewData.skuCount)} SKUs
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #1f1f1f", paddingTop: 14 }}>
+                      <div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: "#a78bfa" }}>${listing.price} USDC</div>
+                        <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>
+                          {listing.sellerEmail ?? `${listing.sellerWallet.slice(0, 10)}...`}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span style={{ fontSize: 11, color: "#444" }}>{new Date(listing.createdAt).toLocaleDateString()}</span>
+                        <button
+                          disabled={!canBuy}
+                          style={{ display: "flex", alignItems: "center", gap: 5, background: canBuy ? "#7c3aed" : "#1f1f1f", color: canBuy ? "#fff" : "#555", border: "none", borderRadius: 999, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: canBuy ? "pointer" : "not-allowed" }}>
+                          <ShoppingCart size={12} /> Buy
+                        </button>
                       </div>
                     </div>
                   </div>
