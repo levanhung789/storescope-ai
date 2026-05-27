@@ -393,38 +393,8 @@ export default function ProfilePage() {
         </label>
       </div>
 
-      {/* ── 3-column layout ─────────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-start" }}>
-
-        {/* ── Left aside: Twitter/X-style sticky nav ───────────────────── */}
-        <aside style={{ width: 258, flexShrink: 0, padding: "8px 12px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-          {[
-            { icon: <Search size={24} />,         label: "Image Analysis",    href: "/dashboard/analysis"     },
-            { icon: <Bot size={24} />,             label: "AI Agent",          href: "/dashboard/agent"        },
-            { icon: <User size={24} />,            label: "My Profile",        href: "/dashboard/profile", active: true },
-            { icon: <LayoutGrid size={24} />,      label: "Layout Editor",     href: "/layout-editor"          },
-            { icon: <MessageCircle size={24} />,   label: "Forum & Marketplace", href: "/forum"                },
-          ].map((item, i) => (
-            <Link key={i} href={item.href}
-              style={{ display: "flex", alignItems: "center", gap: 18, padding: "10px 14px", borderRadius: 999, textDecoration: "none", color: item.active ? "#ffffff" : "#e8e8e8", fontSize: 19, fontWeight: item.active ? 800 : 400, letterSpacing: item.active ? "-0.015em" : "normal", transition: "background 0.15s", position: "relative", marginBottom: 1 }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-              <span style={{ flexShrink: 0, lineHeight: 0 }}>{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-
-          {/* ── "Phân tích mới" — Twitter-style Post button ─────────────── */}
-          <div style={{ padding: "20px 14px 0" }}>
-            <Link href="/dashboard/analysis"
-              style={{ display: "block", textAlign: "center", padding: "14px 0", background: "#ffffff", color: "#000000", borderRadius: 999, fontSize: 16, fontWeight: 800, textDecoration: "none", letterSpacing: "-0.01em" }}>
-              Phân tích mới
-            </Link>
-          </div>
-        </aside>
-
-        {/* ── Center content (original, unchanged) ─────────────────────── */}
-        <div style={{ flex: 1, minWidth: 0, padding: "0 20px" }}>
+      {/* ── Profile header — full width above 3 columns ─────────────────── */}
+      <div style={{ padding: "0 24px" }}>
 
         {/* ── Header row: [Avatar] [Name+Bio] [Buttons] ─────────────────── */}
         {/* Avatar uses marginTop:-65 to pull up 65px into the banner */}
@@ -574,6 +544,39 @@ export default function ProfilePage() {
             </button>
           ))}
         </div>
+
+      </div>{/* end full-width header */}
+
+      {/* ── 3-column layout: content area only ──────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-start" }}>
+
+        {/* ── Left aside ───────────────────────────────────────────────── */}
+        <aside style={{ width: 258, flexShrink: 0, padding: "8px 12px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+          {[
+            { icon: <Search size={24} />,         label: "Image Analysis",      href: "/dashboard/analysis"     },
+            { icon: <Bot size={24} />,             label: "AI Agent",            href: "/dashboard/agent"        },
+            { icon: <User size={24} />,            label: "My Profile",          href: "/dashboard/profile", active: true },
+            { icon: <LayoutGrid size={24} />,      label: "Layout Editor",       href: "/layout-editor"          },
+            { icon: <MessageCircle size={24} />,   label: "Forum & Marketplace", href: "/forum"                  },
+          ].map((item, i) => (
+            <Link key={i} href={item.href}
+              style={{ display: "flex", alignItems: "center", gap: 18, padding: "10px 14px", borderRadius: 999, textDecoration: "none", color: item.active ? "#ffffff" : "#e8e8e8", fontSize: 19, fontWeight: item.active ? 800 : 400, letterSpacing: item.active ? "-0.015em" : "normal", transition: "background 0.15s", position: "relative", marginBottom: 1 }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <span style={{ flexShrink: 0, lineHeight: 0 }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+          <div style={{ padding: "20px 14px 0" }}>
+            <Link href="/dashboard/analysis"
+              style={{ display: "block", textAlign: "center", padding: "14px 0", background: "#ffffff", color: "#000000", borderRadius: 999, fontSize: 16, fontWeight: 800, textDecoration: "none", letterSpacing: "-0.01em" }}>
+              Phân tích mới
+            </Link>
+          </div>
+        </aside>
+
+        {/* ── Center: content area ─────────────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0, padding: "0 20px" }}>
 
         {/* ── Content area ─────────────────────────────────────────────── */}
         <div style={{ display: "flex", gap: 0, minHeight: 600 }}>
