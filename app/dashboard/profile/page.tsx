@@ -9,7 +9,6 @@ import {
   Search, Grid3x3, List, Star, Tag, Trash2,
   ShoppingBag, RefreshCw, Plus,
   ChevronDown, ChevronUp, Filter, X, Check,
-  MessageCircle, Bot, LayoutGrid, User,
 } from "lucide-react";
 import {
   loadItems, loadFolders,
@@ -551,20 +550,19 @@ export default function ProfilePage() {
       <div style={{ display: "flex", alignItems: "flex-start" }}>
 
         {/* ── Left aside ───────────────────────────────────────────────── */}
-        <aside style={{ width: 258, flexShrink: 0, padding: "8px 12px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <aside style={{ width: 242, flexShrink: 0, padding: "10px 8px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
           {[
-            { icon: <User size={24} />,            label: "My Profile",          href: "/dashboard/profile", active: true },
-            { icon: <Search size={24} />,          label: "Image Analysis",      href: "/dashboard/analysis"     },
-            { icon: <Bot size={24} />,             label: "AI Agent",            href: "/dashboard/agent"        },
-            { icon: <LayoutGrid size={24} />,      label: "Layout Editor",       href: "/layout-editor"          },
-            { icon: <MessageCircle size={24} />,   label: "Forum & Mkt",         href: "/forum"                  },
+            { img: "/nav-my-profile.png",        href: "/dashboard/profile", active: true },
+            { img: "/nav-image-analysis.png",    href: "/dashboard/analysis"              },
+            { img: "/nav-ai-agent.png",          href: "/dashboard/agent"                 },
+            { img: "/nav-layout-editor.png",     href: "/layout-editor"                   },
+            { img: "/nav-forum-marketplace.png", href: "/forum"                           },
           ].map((item, i) => (
             <Link key={i} href={item.href}
-              style={{ display: "flex", alignItems: "center", gap: 18, padding: "10px 14px", borderRadius: 999, textDecoration: "none", color: item.active ? "#ffffff" : "#e8e8e8", fontSize: 19, fontWeight: item.active ? 800 : 400, letterSpacing: item.active ? "-0.015em" : "normal", transition: "background 0.15s", position: "relative", marginBottom: 1 }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-              <span style={{ flexShrink: 0, lineHeight: 0 }}>{item.icon}</span>
-              <span>{item.label}</span>
+              style={{ display: "block", borderRadius: 18, overflow: "hidden", flexShrink: 0, textDecoration: "none", border: `2.5px solid ${item.active ? "#7c3aed" : "transparent"}`, boxShadow: item.active ? "0 0 0 1px rgba(124,58,237,0.25), 0 6px 20px rgba(124,58,237,0.18)" : "0 2px 10px rgba(0,0,0,0.45)", transition: "transform 0.15s, box-shadow 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.025)"; if (!item.active) e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.5)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = item.active ? "0 0 0 1px rgba(124,58,237,0.25), 0 6px 20px rgba(124,58,237,0.18)" : "0 2px 10px rgba(0,0,0,0.45)"; }}>
+              <img src={item.img} alt="" style={{ width: "100%", height: "auto", display: "block" }} />
             </Link>
           ))}
         </aside>
