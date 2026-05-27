@@ -396,20 +396,20 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Avatar — overlapping banner ──────────────────────────────── */}
-        {/* position: absolute; bottom: -50 → avatar straddles banner bottom 50/50 */}
-        <div style={{ position: "absolute", bottom: -50, left: 24, zIndex: 20 }}>
-          <div style={{ position: "relative", width: 108, height: 108 }}>
-            {/* Avatar circle */}
-            <div style={{ width: 100, height: 100, borderRadius: "50%", border: "4px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 8px 32px rgba(124,58,237,0.45)", flexShrink: 0 }}>
+        {/* bottom: -65 → avatar (130px) straddles banner: 65px inside, 65px below */}
+        <div style={{ position: "absolute", bottom: -65, left: 24, zIndex: 20 }}>
+          <div style={{ position: "relative", width: 140, height: 140 }}>
+            {/* Avatar circle — 130px (30% bigger than original 100px) */}
+            <div style={{ width: 130, height: 130, borderRadius: "50%", border: "5px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 10px 40px rgba(124,58,237,0.5)", flexShrink: 0 }}>
               {profileData.avatarImage
                 ? <img src={profileData.avatarImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="avatar" />
                 : avatarChar}
             </div>
             {/* Camera overlay button on avatar */}
-            <label style={{ position: "absolute", bottom: 4, right: 4, width: 28, height: 28, borderRadius: "50%", background: "#7c3aed", border: "3px solid #080808", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 21, transition: "transform 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1)")}
+            <label style={{ position: "absolute", bottom: 6, right: 6, width: 34, height: 34, borderRadius: "50%", background: "#7c3aed", border: "3px solid #080808", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 21, transition: "transform 0.15s" }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.12)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-              <Camera size={11} color="#fff" />
+              <Camera size={13} color="#fff" />
               <input ref={avatarFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
             </label>
           </div>
@@ -420,23 +420,12 @@ export default function ProfilePage() {
       {/* ── Profile content ─────────────────────────────────────────────── */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
 
-        {/* Row: action buttons (right side, aligned with avatar space) */}
-        <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 10, paddingBottom: 10, minHeight: 60 }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 16px", background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, textDecoration: "none" }}>
-              ← Dashboard
-            </Link>
-            <button onClick={handleImport} style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", background: "#111", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>
-              <RefreshCw size={11} /> Sync
-            </button>
-            <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", background: "#7c3aed", border: "none", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
-              <Plus size={11} /> New Analysis
-            </Link>
-          </div>
-        </div>
+        {/* Header row: avatar space (left) + action buttons (right) */}
+        {/* paddingTop: 76 = 65px avatar protrusion + 11px gap → name starts just below avatar */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 76, marginBottom: 14 }}>
 
-        {/* Name + bio section (starts below avatar's 50px protrusion) */}
-        <div style={{ paddingTop: 10, marginBottom: 16 }}>
+          {/* Name + bio (left) */}
+          <div style={{ paddingLeft: 0 }}>
 
           {/* Name row */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -518,7 +507,23 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-        </div>
+          {/* end left column */}
+          </div>
+
+          {/* Action buttons — right column */}
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexShrink: 0, paddingTop: 4 }}>
+            <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 16px", background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, textDecoration: "none" }}>
+              ← Dashboard
+            </Link>
+            <button onClick={handleImport} style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", background: "#111", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>
+              <RefreshCw size={11} /> Sync
+            </button>
+            <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", background: "#7c3aed", border: "none", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
+              <Plus size={11} /> New Analysis
+            </Link>
+          </div>
+
+        </div>{/* end header row */}
 
         {/* Stats bar */}
         <div style={{ display: "flex", gap: 0, marginBottom: 24, background: "#0d0d0d", border: "1px solid #1f1f1f", borderRadius: 14, overflow: "hidden" }}>
