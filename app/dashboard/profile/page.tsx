@@ -552,11 +552,11 @@ export default function ProfilePage() {
         {/* ── Left aside ───────────────────────────────────────────────── */}
         <aside style={{ width: 242, flexShrink: 0, padding: "10px 8px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
           {[
-            { img: "/nav-my-profile.png",        href: "/dashboard/profile", active: true },
-            { img: "/nav-image-analysis.png",    href: "/dashboard/analysis"              },
-            { img: "/nav-ai-agent.png",          href: "/dashboard/agent"                 },
-            { img: "/nav-layout-editor.png",     href: "/layout-editor"                   },
-            { img: "/nav-forum-marketplace.png", href: "/forum"                           },
+            { img: "/icon/My profile.png",           href: "/dashboard/profile", active: true },
+            { img: "/icon/Image Analysis.png",   href: "/dashboard/analysis"              },
+            { img: "/icon/AI Agent.png",         href: "/dashboard/agent"                 },
+            { img: "/icon/layout-editor.png",    href: "/layout-editor"                   },
+            { img: "/icon/Forum & Marketplace.png", href: "/forum"                        },
           ].map((item, i) => (
             <Link key={i} href={item.href}
               style={{ display: "block", borderRadius: 18, overflow: "hidden", flexShrink: 0, textDecoration: "none", border: `2.5px solid ${item.active ? "#7c3aed" : "transparent"}`, boxShadow: item.active ? "0 0 0 1px rgba(124,58,237,0.25), 0 6px 20px rgba(124,58,237,0.18)" : "0 2px 10px rgba(0,0,0,0.45)", transition: "transform 0.15s, box-shadow 0.15s" }}
