@@ -365,153 +365,144 @@ export default function ProfilePage() {
       )}
 
       {/* ── Banner ─────────────────────────────────────────────────────────── */}
-      <div style={{ position: "relative" }}>
+      <div style={{ height: 200, background: bannerBg, position: "relative", overflow: "hidden" }}>
+        {/* Glow orbs (only on gradient banner) */}
+        {!profileData.bannerImage && <>
+          <div style={{ position: "absolute", top: "-30%", left: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%)", filter: "blur(40px)" }} />
+          <div style={{ position: "absolute", top: "10%", right: "15%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(236,72,153,0.2) 0%,transparent 70%)", filter: "blur(30px)" }} />
+        </>}
 
-        {/* Banner background */}
-        <div style={{ height: 200, background: bannerBg, position: "relative", overflow: "hidden" }}>
-          {/* Glow orbs (only on gradient banner) */}
-          {!profileData.bannerImage && <>
-            <div style={{ position: "absolute", top: "-30%", left: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%)", filter: "blur(40px)" }} />
-            <div style={{ position: "absolute", top: "10%", right: "15%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(236,72,153,0.2) 0%,transparent 70%)", filter: "blur(30px)" }} />
-          </>}
-
-          {/* Top nav */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <a href="/" style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", textDecoration: "none", letterSpacing: "-0.03em" }}>
-              storescope<span style={{ color: "#a78bfa" }}>.ai</span>
-            </a>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <CircleWalletButton onDisconnect={() => setCircle(null)} />
-              <WalletButton />
-            </div>
+        {/* Top nav */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="/" style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", textDecoration: "none", letterSpacing: "-0.03em" }}>
+            storescope<span style={{ color: "#a78bfa" }}>.ai</span>
+          </a>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <CircleWalletButton onDisconnect={() => setCircle(null)} />
+            <WalletButton />
           </div>
-
-          {/* Edit cover button — bottom right */}
-          <label style={{ position: "absolute", bottom: 12, right: 16, display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 8, color: "#f0f0f0", fontSize: 12, cursor: "pointer", transition: "background 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.55)")}>
-            <Camera size={12} /> Edit cover
-            <input ref={bannerFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
-          </label>
         </div>
 
-        {/* ── Avatar — overlapping banner ──────────────────────────────── */}
-        {/* bottom: -65 → avatar (130px) straddles banner: 65px inside, 65px below */}
-        <div style={{ position: "absolute", bottom: -65, left: 24, zIndex: 20 }}>
-          <div style={{ position: "relative", width: 140, height: 140 }}>
-            {/* Avatar circle — 130px (30% bigger than original 100px) */}
-            <div style={{ width: 130, height: 130, borderRadius: "50%", border: "5px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 10px 40px rgba(124,58,237,0.5)", flexShrink: 0 }}>
+        {/* Edit cover button — bottom right */}
+        <label style={{ position: "absolute", bottom: 12, right: 16, display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 8, color: "#f0f0f0", fontSize: 12, cursor: "pointer", transition: "background 0.15s" }}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.55)")}>
+          <Camera size={12} /> Edit cover
+          <input ref={bannerFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
+        </label>
+      </div>
+
+      {/* ── Profile content ─────────────────────────────────────────────── */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+
+        {/* ── Header row: [Avatar] [Name+Bio] [Buttons] ─────────────────── */}
+        {/* Avatar uses marginTop:-65 to pull up 65px into the banner */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+
+          {/* ── Avatar (left column) ────────────────────────────────────── */}
+          <div style={{ position: "relative", flexShrink: 0, marginTop: -65, zIndex: 10 }}>
+            <div style={{ width: 130, height: 130, borderRadius: "50%", border: "5px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 10px 40px rgba(124,58,237,0.5)" }}>
               {profileData.avatarImage
                 ? <img src={profileData.avatarImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="avatar" />
                 : avatarChar}
             </div>
-            {/* Camera overlay button on avatar */}
-            <label style={{ position: "absolute", bottom: 6, right: 6, width: 34, height: 34, borderRadius: "50%", background: "#7c3aed", border: "3px solid #080808", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 21, transition: "transform 0.15s" }}
+            {/* Camera button */}
+            <label style={{ position: "absolute", bottom: 6, right: 6, width: 34, height: 34, borderRadius: "50%", background: "#7c3aed", border: "3px solid #080808", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 11, transition: "transform 0.15s" }}
               onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.12)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
               <Camera size={13} color="#fff" />
               <input ref={avatarFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
             </label>
           </div>
-        </div>
-      </div>
-      {/* End banner wrapper */}
 
-      {/* ── Profile content ─────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+          {/* ── Name + Bio + Badges (center column) ─────────────────────── */}
+          {/* paddingTop: 16 = small gap from banner bottom */}
+          <div style={{ flex: 1, paddingTop: 16 }}>
 
-        {/* Header row: avatar space (left) + action buttons (right) */}
-        {/* paddingTop: 76 = 65px avatar protrusion + 11px gap → name starts just below avatar */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 76, marginBottom: 14 }}>
+            {/* Name row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              {editingName ? (
+                <>
+                  <input
+                    value={nameInput}
+                    onChange={e => setNameInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
+                    autoFocus
+                    placeholder="Enter display name..."
+                    style={{ fontSize: 24, fontWeight: 800, background: "transparent", border: "none", borderBottom: "2px solid #7c3aed", color: "#f0f0f0", outline: "none", letterSpacing: "-0.03em", padding: "2px 4px", minWidth: 220 }}
+                  />
+                  <button onClick={saveName} style={{ padding: "5px 12px", background: "#7c3aed", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
+                  <button onClick={() => setEditingName(false)} style={{ padding: "5px 10px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 8, color: "#555", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", color: "#f0f0f0" }}>{displayName}</h1>
+                  <button onClick={() => { setNameInput(profileData.name ?? ""); setEditingName(true); }}
+                    style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 3, borderRadius: 6, transition: "color 0.1s" }}
+                    title="Edit name"
+                    onMouseEnter={e => (e.currentTarget.style.color = "#a78bfa")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#555")}>
+                    <Pencil size={14} />
+                  </button>
+                  <button style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 3 }}>
+                    <MoreHorizontal size={16} />
+                  </button>
+                </>
+              )}
+            </div>
 
-          {/* Name + bio (left) */}
-          <div style={{ paddingLeft: 0 }}>
+            {/* Bio row */}
+            <div style={{ marginBottom: 12 }}>
+              {editingBio ? (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <textarea
+                    value={bioInput}
+                    onChange={e => setBioInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Escape") setEditingBio(false); }}
+                    autoFocus
+                    rows={2}
+                    placeholder="Write a short bio about yourself..."
+                    style={{ minWidth: 340, maxWidth: 520, padding: "8px 12px", background: "#0f0f0f", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 10, color: "#e0e0e0", fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
+                  />
+                  <button onClick={saveBio} style={{ padding: "8px 14px", background: "#7c3aed", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>Save bio</button>
+                  <button onClick={() => setEditingBio(false)} style={{ padding: "8px 10px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 8, color: "#555", fontSize: 12, cursor: "pointer" }}>✕</button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <p style={{ margin: 0, fontSize: 13, color: profileData.bio ? "#999" : "#333", fontStyle: profileData.bio ? "normal" : "italic", lineHeight: 1.6, maxWidth: 520 }}>
+                    {profileData.bio || "Add a bio to tell people more about yourself..."}
+                  </p>
+                  <button onClick={() => { setBioInput(profileData.bio ?? ""); setEditingBio(true); }}
+                    style={{ background: "none", border: "none", color: "#444", cursor: "pointer", padding: 3, borderRadius: 6, flexShrink: 0, transition: "color 0.1s" }}
+                    title="Edit bio"
+                    onMouseEnter={e => (e.currentTarget.style.color = "#a78bfa")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#444")}>
+                    <Pencil size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
 
-          {/* Name row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            {editingName ? (
-              <>
-                <input
-                  value={nameInput}
-                  onChange={e => setNameInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
-                  autoFocus
-                  placeholder="Enter display name..."
-                  style={{ fontSize: 24, fontWeight: 800, background: "transparent", border: "none", borderBottom: "2px solid #7c3aed", color: "#f0f0f0", outline: "none", letterSpacing: "-0.03em", padding: "2px 4px", minWidth: 220 }}
-                />
-                <button onClick={saveName} style={{ padding: "5px 12px", background: "#7c3aed", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
-                <button onClick={() => setEditingName(false)} style={{ padding: "5px 10px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 8, color: "#555", fontSize: 12, cursor: "pointer" }}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", color: "#f0f0f0" }}>{displayName}</h1>
-                <button onClick={() => { setNameInput(profileData.name ?? ""); setEditingName(true); }}
-                  style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 3, borderRadius: 6, transition: "color 0.1s" }}
-                  title="Edit name"
-                  onMouseEnter={e => (e.currentTarget.style.color = "#a78bfa")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "#555")}>
-                  <Pencil size={14} />
-                </button>
-                <button style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 3 }}>
-                  <MoreHorizontal size={16} />
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Bio row */}
-          <div style={{ marginBottom: 12 }}>
-            {editingBio ? (
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                <textarea
-                  value={bioInput}
-                  onChange={e => setBioInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Escape") setEditingBio(false); }}
-                  autoFocus
-                  rows={2}
-                  placeholder="Write a short bio about yourself..."
-                  style={{ minWidth: 340, maxWidth: 560, padding: "8px 12px", background: "#0f0f0f", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 10, color: "#e0e0e0", fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
-                />
-                <button onClick={saveBio} style={{ padding: "8px 14px", background: "#7c3aed", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>Save bio</button>
-                <button onClick={() => setEditingBio(false)} style={{ padding: "8px 10px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 8, color: "#555", fontSize: 12, cursor: "pointer" }}>✕</button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <p style={{ margin: 0, fontSize: 13, color: profileData.bio ? "#999" : "#333", fontStyle: profileData.bio ? "normal" : "italic", lineHeight: 1.6, maxWidth: 560 }}>
-                  {profileData.bio || "Add a bio to tell people more about yourself..."}
-                </p>
-                <button onClick={() => { setBioInput(profileData.bio ?? ""); setEditingBio(true); }}
-                  style={{ background: "none", border: "none", color: "#444", cursor: "pointer", padding: 3, borderRadius: 6, flexShrink: 0, transition: "color 0.1s" }}
-                  title="Edit bio"
-                  onMouseEnter={e => (e.currentTarget.style.color = "#a78bfa")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "#444")}>
-                  <Pencil size={12} />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Meta badges */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            {items.length > 0 && (
-              <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#666", letterSpacing: "0.05em" }}>
-                JOINED {joinDate}
+            {/* Meta badges */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {items.length > 0 && (
+                <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#666", letterSpacing: "0.05em" }}>
+                  JOINED {joinDate}
+                </span>
+              )}
+              <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa" }}>
+                {isConnected && address ? "METAMASK" : circleSession ? "CIRCLE WALLET" : "WALLET"}
               </span>
-            )}
-            <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa" }}>
-              {isConnected && address ? "METAMASK" : circleSession ? "CIRCLE WALLET" : "WALLET"}
-            </span>
-            {walletId && (
-              <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#555", fontFamily: "monospace" }}>
-                {shortAddr(walletId)}
-              </span>
-            )}
-          </div>
-          {/* end left column */}
-          </div>
+              {walletId && (
+                <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#555", fontFamily: "monospace" }}>
+                  {shortAddr(walletId)}
+                </span>
+              )}
+            </div>
+          </div>{/* end center column */}
 
-          {/* Action buttons — right column */}
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexShrink: 0, paddingTop: 4 }}>
+          {/* ── Action buttons (right column) ────────────────────────────── */}
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexShrink: 0, paddingTop: 16 }}>
             <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 16px", background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, textDecoration: "none" }}>
               ← Dashboard
             </Link>
