@@ -550,19 +550,19 @@ export default function ProfilePage() {
       <div style={{ display: "flex", alignItems: "flex-start" }}>
 
         {/* ── Left aside ───────────────────────────────────────────────── */}
-        <aside style={{ width: 242, flexShrink: 0, padding: "10px 8px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+        <aside style={{ width: 196, flexShrink: 0, padding: "10px 8px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           {[
-            { img: "/icon/My profile.png",           href: "/dashboard/profile", active: true },
-            { img: "/icon/Image Analysis.png",   href: "/dashboard/analysis"              },
-            { img: "/icon/AI Agent.png",         href: "/dashboard/agent"                 },
-            { img: "/icon/layout-editor.png",    href: "/layout-editor"                   },
-            { img: "/icon/Forum & Marketplace.png", href: "/forum"                        },
+            { img: "/icon/My profile.png",          href: "/dashboard/profile", active: true },
+            { img: "/icon/Image Analysis.png",      href: "/dashboard/analysis"              },
+            { img: "/icon/AI Agent.png",            href: "/dashboard/agent"                 },
+            { img: "/icon/layout-editor.png",       href: "/layout-editor"                   },
+            { img: "/icon/Forum & Marketplace.png", href: "/forum"                           },
           ].map((item, i) => (
             <Link key={i} href={item.href}
-              style={{ display: "block", borderRadius: 18, overflow: "hidden", flexShrink: 0, textDecoration: "none", border: `2.5px solid ${item.active ? "#7c3aed" : "transparent"}`, boxShadow: item.active ? "0 0 0 1px rgba(124,58,237,0.25), 0 6px 20px rgba(124,58,237,0.18)" : "0 2px 10px rgba(0,0,0,0.45)", transition: "transform 0.15s, box-shadow 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.025)"; if (!item.active) e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.5)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = item.active ? "0 0 0 1px rgba(124,58,237,0.25), 0 6px 20px rgba(124,58,237,0.18)" : "0 2px 10px rgba(0,0,0,0.45)"; }}>
-              <img src={item.img} alt="" style={{ width: "100%", height: "auto", display: "block" }} />
+              style={{ display: "inline-block", textDecoration: "none", padding: 6, borderRadius: 14, border: `2px solid ${item.active ? "rgba(124,58,237,0.55)" : "transparent"}`, background: item.active ? "rgba(124,58,237,0.07)" : "transparent", transition: "all 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; if (!item.active) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; if (!item.active) e.currentTarget.style.background = "transparent"; }}>
+              <NoBgImage src={item.img} size={158} threshold={240} />
             </Link>
           ))}
         </aside>
