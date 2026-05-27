@@ -31,22 +31,24 @@ function NoBgImage({ src, size, threshold = 236 }: { src: string; size: number; 
     img.onload = () => {
       c.width = img.naturalWidth; c.height = img.naturalHeight;
       ctx.clearRect(0, 0, c.width, c.height);
+      ctx.globalCompositeOperation = "source-over";
       ctx.drawImage(img, 0, 0);
       const d = ctx.getImageData(0, 0, c.width, c.height); const px = d.data;
-      const edge = threshold - 22;
+      const edge = threshold - 30;
       for (let i = 0; i < px.length; i += 4) {
         const r = px[i], g = px[i + 1], b = px[i + 2];
-        if (r > threshold && g > threshold && b > threshold) { px[i + 3] = 0; }
-        else if (r > edge && g > edge && b > edge) {
+        if (r >= threshold && g >= threshold && b >= threshold) {
+          px[i + 3] = 0;
+        } else if (r > edge && g > edge && b > edge) {
           const br = (r + g + b) / 3;
           px[i + 3] = Math.round(255 * (1 - (br - edge) / (threshold - edge)));
         }
       }
       ctx.putImageData(d, 0, 0);
     };
-    img.src = src;
+    img.src = encodeURI(src);
   }, [src, threshold]);
-  return <canvas ref={ref} style={{ width: size, height: size, display: "inline-block", objectFit: "contain", verticalAlign: "middle" }} />;
+  return <canvas ref={ref} style={{ width: size, height: size, display: "inline-block", verticalAlign: "middle", background: "transparent" }} />;
 }
 
 // ── Profile data ──────────────────────────────────────────────────────────
@@ -552,11 +554,11 @@ export default function ProfilePage() {
         {/* ── Left aside ───────────────────────────────────────────────── */}
         <aside style={{ width: 196, flexShrink: 0, padding: "10px 8px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           {[
-            { img: "/icon/My profile.png",          href: "/dashboard/profile", active: true },
-            { img: "/icon/Image Analysis.png",      href: "/dashboard/analysis"              },
-            { img: "/icon/AI Agent.png",            href: "/dashboard/agent"                 },
-            { img: "/icon/layout-editor.png",       href: "/layout-editor"                   },
-            { img: "/icon/Forum & Marketplace.png", href: "/forum"                           },
+            { img: "/icon/my-profile.png",        href: "/dashboard/profile", active: true },
+            { img: "/icon/image-analysis.png",    href: "/dashboard/analysis"              },
+            { img: "/icon/ai-agent.png",          href: "/dashboard/agent"                 },
+            { img: "/icon/layout-editor.png",     href: "/layout-editor"                   },
+            { img: "/icon/forum-marketplace.png", href: "/forum"                           },
           ].map((item, i) => (
             <Link key={i} href={item.href}
               style={{ display: "inline-block", textDecoration: "none", padding: 6, borderRadius: 14, border: `2px solid ${item.active ? "rgba(124,58,237,0.55)" : "transparent"}`, background: item.active ? "rgba(124,58,237,0.07)" : "transparent", transition: "all 0.15s" }}
