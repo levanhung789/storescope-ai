@@ -365,7 +365,7 @@ export default function ProfilePage() {
       )}
 
       {/* ── Banner ─────────────────────────────────────────────────────────── */}
-      <div style={{ height: 200, background: bannerBg, position: "relative", overflow: "hidden" }}>
+      <div style={{ height: 240, background: bannerBg, position: "relative", overflow: "hidden" }}>
         {/* Glow orbs (only on gradient banner) */}
         {!profileData.bannerImage && <>
           <div style={{ position: "absolute", top: "-30%", left: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%)", filter: "blur(40px)" }} />
