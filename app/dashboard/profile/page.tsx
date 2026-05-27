@@ -9,6 +9,7 @@ import {
   Search, Grid3x3, List, Star, Tag, Trash2,
   ShoppingBag, RefreshCw, Plus,
   ChevronDown, ChevronUp, Filter, X, Check,
+  MessageCircle, Bot, LayoutGrid, User,
 } from "lucide-react";
 import {
   loadItems, loadFolders,
@@ -395,33 +396,31 @@ export default function ProfilePage() {
       {/* ── 3-column layout ─────────────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "flex-start" }}>
 
-        {/* ── Left aside: profile nav + app shortcuts ───────────────────── */}
-        <aside style={{ width: 196, flexShrink: 0, padding: "20px 14px 40px 18px", position: "sticky", top: 0, maxHeight: "100vh", overflowY: "auto", borderRight: "1px solid #111" }}>
-          <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>PROFILE</div>
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => { setTab(t.key); setSelectedIds(new Set()); }}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 10px", borderRadius: 8, background: tab === t.key ? "rgba(124,58,237,0.1)" : "transparent", border: tab === t.key ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent", color: tab === t.key ? "#a78bfa" : "#555", fontSize: 12, cursor: "pointer", textAlign: "left", marginBottom: 2, fontWeight: tab === t.key ? 600 : 400, fontFamily: "inherit" }}>
-              <span>{t.label}</span>
-              {t.count !== undefined && t.count > 0 && <span style={{ fontSize: 10, color: tab === t.key ? "#7c3aed" : "#2a2a2a" }}>{t.count}</span>}
-            </button>
-          ))}
-          <div style={{ height: 1, background: "#1a1a1a", margin: "14px 0" }} />
-          <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>TOOLS</div>
+        {/* ── Left aside: Twitter/X-style sticky nav ───────────────────── */}
+        <aside style={{ width: 258, flexShrink: 0, padding: "8px 12px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
           {[
-            { label: "Dashboard",    href: "/dashboard",              icon: "🏠" },
-            { label: "AI Analysis",  href: "/dashboard/analysis",     icon: "📊" },
-            { label: "Vision Agent", href: "/dashboard/vision-agent", icon: "👁️" },
-            { label: "AI Agent",     href: "/dashboard/agent",        icon: "🤖" },
-            { label: "My Reports",   href: "/dashboard/reports",      icon: "📋" },
-            { label: "Store Layout", href: "/layout-editor",          icon: "🏪" },
-            { label: "Forum",        href: "/forum",                  icon: "💬" },
-          ].map(item => (
-            <Link key={item.href} href={item.href}
-              style={{ display: "flex", alignItems: "center", gap: 7, padding: "7px 10px", borderRadius: 8, color: "#555", fontSize: 12, textDecoration: "none", marginBottom: 2, transition: "color 0.12s" }}>
-              <span style={{ fontSize: 13 }}>{item.icon}</span>
+            { icon: <Search size={24} />,         label: "Image Analysis",    href: "/dashboard/analysis"     },
+            { icon: <Bot size={24} />,             label: "AI Agent",          href: "/dashboard/agent"        },
+            { icon: <User size={24} />,            label: "My Profile",        href: "/dashboard/profile", active: true },
+            { icon: <LayoutGrid size={24} />,      label: "Layout Editor",     href: "/layout-editor"          },
+            { icon: <MessageCircle size={24} />,   label: "Forum & Marketplace", href: "/forum"                },
+          ].map((item, i) => (
+            <Link key={i} href={item.href}
+              style={{ display: "flex", alignItems: "center", gap: 18, padding: "10px 14px", borderRadius: 999, textDecoration: "none", color: item.active ? "#ffffff" : "#e8e8e8", fontSize: 19, fontWeight: item.active ? 800 : 400, letterSpacing: item.active ? "-0.015em" : "normal", transition: "background 0.15s", position: "relative", marginBottom: 1 }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <span style={{ flexShrink: 0, lineHeight: 0 }}>{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           ))}
+
+          {/* ── "Phân tích mới" — Twitter-style Post button ─────────────── */}
+          <div style={{ padding: "20px 14px 0" }}>
+            <Link href="/dashboard/analysis"
+              style={{ display: "block", textAlign: "center", padding: "14px 0", background: "#ffffff", color: "#000000", borderRadius: 999, fontSize: 16, fontWeight: 800, textDecoration: "none", letterSpacing: "-0.01em" }}>
+              Phân tích mới
+            </Link>
+          </div>
         </aside>
 
         {/* ── Center content (original, unchanged) ─────────────────────── */}
