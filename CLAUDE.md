@@ -1234,3 +1234,79 @@ Tất cả nav links trong app đổi từ `/dashboard/vault` → `/dashboard/pr
 4. **Tích hợp RetailLayoutNFT vào `/forum`** — mint NFT khi save layout
 5. **Test Vision Agent** với ảnh kệ hàng thật
 6. **Verify contracts trên ArcScan**
+
+---
+
+## Nhật ký làm việc — 2026-05-27
+
+### Công việc đã hoàn thành
+
+#### 1. Profile page — 3-column layout (Twitter/X style)
+- **Banner** full-width (height 240px) phía trên
+- **Full-width header section**: Avatar + Tên/Bio + Stats bar + Tabs (Items/Analysis/Layouts/Listings/Favorites/Activity)
+- **3-column layout** bắt đầu ngay tại dòng Tabs:
+  - **Left aside** (196px sticky): 5 icon nav cards
+  - **Center** (flex:1): filter sidebar + items grid
+  - **Right aside** (290px sticky): 4 Twitter-style cards
+
+#### 2. Right aside — Twitter/X sidebar cards
+4 card style (background #111, borderRadius 16, không border):
+- **Card 1**: Upgrade to StoreScope Pro + gradient button
+- **Card 2**: Đang hoạt động — 3 hàng activity với overlapping avatar clusters + count badge
+- **Card 3**: Tin tức hôm nay — dismissable, 3 tin với double-avatar thumbnail
+- **Card 4**: Ví của tôi — wallet address, USDC spent, 2×2 stats grid, action buttons
+
+#### 3. Left aside — 5 nav items (Twitter/X nav style)
+Thứ tự: My Profile (active/bold) → Image Analysis → AI Agent → Layout Editor → Forum & Mkt
+
+Sau đó chuyển sang dùng **PNG icon cards** thay lucide icons:
+- Files lưu tại `public/icon/` (đã rename bỏ dấu cách):
+  - `my-profile.png`, `image-analysis.png`, `ai-agent.png`
+  - `layout-editor.png`, `forum-marketplace.png`
+- Dùng `NoBgImage` (canvas) để xóa nền trắng → icon trong suốt trên nền tối
+- Size: 158px (nhỏ hơn 30% so với full-width)
+- Active: viền tím + nền tím mờ; Hover: scale(1.04)
+
+#### 4. Fix NoBgImage transparent bg
+- Thêm `encodeURI(src)` khi load ảnh vào canvas
+- `background: transparent` explicit trên canvas element
+- Tăng `edge = threshold - 30` (từ -22) để xóa anti-alias tốt hơn
+- `>= threshold` (từ `>`) để xóa pixel đúng ngưỡng
+
+#### 5. Alignment fix
+- Left/right asides bắt đầu ngang hàng với tab **Items** (không phải từ banner)
+- Giải pháp: tách header+stats+tabs ra khỏi 3-col wrapper thành full-width section riêng
+
+### Commits 2026-05-27
+
+| Commit | Mô tả |
+|---|---|
+| `84f4523` | feat(profile): 3-column layout — left nav + right wallet/stats/marketplace |
+| `6006df8` | feat(profile): redesign right aside to Twitter/X sidebar card style |
+| `cb731b7` | feat(profile): simplify left nav to 5 core items |
+| `4439f16` | fix(profile): align left/right asides with Items tab row |
+| `f7adee2` | fix(profile): reorder left nav + remove Phân tích mới button |
+| `074cc5a` | feat(profile): replace left nav icons with custom PNG images |
+| `079f7cb` | fix(profile): update nav image paths to /icon/ subfolder |
+| `1094d82` | fix(profile): nav icons transparent bg + 30% smaller (158px, NoBgImage) |
+| `1df7940` | fix(profile): transparent icon bg — rename files + fix NoBgImage |
+
+**Đã push lên:** `origin` (storescope-ai-Shelby)
+
+### Quyết định kỹ thuật — 2026-05-27
+
+| Quyết định | Lý do |
+|---|---|
+| Full-width header + 3-col content | Left/right asides căn thẳng hàng với Items tab |
+| `NoBgImage` canvas cho PNG icons | Xóa nền trắng PNG trên dark page; CSS blend modes không hoạt động tốt trên dark bg |
+| `encodeURI(src)` trong NoBgImage | Tên file có dấu cách làm canvas fail getImageData |
+| Rename icon files (bỏ spaces) | `/icon/My profile.png` → `/icon/my-profile.png` để URL sạch |
+| Twitter/X card style cho right aside | UX quen thuộc; cards tự chứa info, sticky theo scroll |
+| PNG icon cards thay lucide icons | Icons đẹp, branded, mang bản sắc riêng của dự án |
+
+### Việc cần làm tiếp (cập nhật 2026-05-27)
+
+1. Kiểm tra transparent bg của icon cards trên browser thật
+2. Deploy lên Vercel — push lên `vercel-repo`
+3. Tích hợp RetailLayoutNFT vào `/forum`
+4. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan TX
