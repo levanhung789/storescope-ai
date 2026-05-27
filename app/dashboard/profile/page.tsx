@@ -749,86 +749,126 @@ export default function ProfilePage() {
         </div>
         </div>{/* end center content */}
 
-        {/* ── Right aside: wallet + stats + marketplace ─────────────────── */}
-        <aside style={{ width: 220, flexShrink: 0, padding: "20px 18px 40px 14px", position: "sticky", top: 0, maxHeight: "100vh", overflowY: "auto", borderLeft: "1px solid #111" }}>
+        {/* ── Right aside: Twitter/X-style sticky cards ────────────────── */}
+        <aside style={{ width: 290, flexShrink: 0, padding: "16px 16px 40px 12px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto" }}>
 
-          {/* Wallet card */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1f1f1f", borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block", flexShrink: 0 }} />
-              <span style={{ fontSize: 10, color: "#555", letterSpacing: "0.08em", fontWeight: 600 }}>
-                {isConnected && address ? "METAMASK" : "CIRCLE WALLET"}
-              </span>
+          {/* ── Card 1: Upgrade to Pro ──────────────────────────────────── */}
+          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden", marginBottom: 12 }}>
+            <div style={{ padding: "16px 16px 4px" }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#f0f0f0", marginBottom: 6, letterSpacing: "-0.02em" }}>Upgrade to StoreScope Pro</div>
+              <div style={{ fontSize: 13, color: "#666", lineHeight: 1.55, marginBottom: 14 }}>
+                Phân tích không giới hạn, AI ưu tiên cao và dữ liệu thị trường nâng cao.
+              </div>
+              <button style={{ width: "100%", padding: "10px 0", background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", borderRadius: 999, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 14, letterSpacing: "-0.01em" }}>
+                Upgrade to Pro
+              </button>
             </div>
-            <div style={{ fontFamily: "monospace", fontSize: 11, color: "#777", wordBreak: "break-all", marginBottom: 8 }}>
-              {walletId ? shortAddr(walletId) : "—"}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#4ade80", letterSpacing: "-0.02em" }}>
-              ${usdcSpent.toFixed(2)}
-            </div>
-            <div style={{ fontSize: 10, color: "#333", marginTop: 1 }}>USDC SPENT</div>
           </div>
 
-          {/* Quick actions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-            <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "#7c3aed", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
-              <Plus size={12} /> New Analysis
-            </Link>
-            <button onClick={handleImport} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "#111", border: "1px solid #1f1f1f", color: "#666", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
-              <RefreshCw size={11} /> Sync Reports
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>STATS</div>
+          {/* ── Card 2: Đang hoạt động (Live) ──────────────────────────── */}
+          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden", marginBottom: 12 }}>
+            <div style={{ padding: "14px 16px 6px" }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", marginBottom: 12, letterSpacing: "-0.02em" }}>Đang hoạt động</div>
+            </div>
             {[
-              { label: "Analyses", value: analyses.length,                          color: "#a78bfa" },
-              { label: "Layouts",  value: layouts.length,                           color: "#6ee7b7" },
-              { label: "For Sale", value: forSaleN,                                 color: "#f59e0b" },
-              { label: "Starred",  value: items.filter(i => i.starred).length,      color: "#fbbf24" },
-            ].map(s => (
-              <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #0d0d0d" }}>
-                <span style={{ fontSize: 12, color: "#555" }}>{s.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{s.value}</span>
+              { icon: "📊", sector: "FMCG", label: "Phân tích vừa hoàn thành", colors: ["#7c3aed","#ec4899","#06b6d4"], count: "+207" },
+              { icon: "📊", sector: "Điện tử", label: "Báo cáo thị trường mới", colors: ["#10b981","#f59e0b","#8b5cf6"], count: "+88" },
+              { icon: "🏪", sector: "Bán lẻ", label: "Layout đang được xem", colors: ["#f43f5e","#a78bfa","#34d399"], count: "+50" },
+            ].map((row, i) => (
+              <div key={i} style={{ padding: "10px 16px", borderTop: i > 0 ? "1px solid #1a1a1a" : "none", cursor: "pointer", transition: "background 0.1s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#161616")}
+                onMouseLeave={e => (e.currentTarget.style.background = "")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>{row.icon}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>{row.sector}</div>
+                      <div style={{ fontSize: 12, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.label}</div>
+                    </div>
+                  </div>
+                  {/* Avatar cluster + count */}
+                  <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+                    <div style={{ display: "flex" }}>
+                      {row.colors.map((c, ci) => (
+                        <div key={ci} style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: "2px solid #111", marginLeft: ci > 0 ? -7 : 0, position: "relative", zIndex: 3 - ci }} />
+                      ))}
+                    </div>
+                    <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: "#888", background: "#1a1a1a", padding: "2px 7px", borderRadius: 999 }}>{row.count}</span>
+                  </div>
+                </div>
               </div>
             ))}
+            <div style={{ padding: "10px 16px 14px" }}>
+              <Link href="/dashboard/analysis" style={{ fontSize: 13, color: "#7c3aed", textDecoration: "none", fontWeight: 500 }}>Xem tất cả →</Link>
+            </div>
           </div>
 
-          {/* My listings */}
-          {listings.filter(l => !l.sold).length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>MY LISTINGS</div>
-              {listings.filter(l => !l.sold).slice(0, 4).map(l => (
-                <div key={l.id} style={{ padding: "7px 0", borderBottom: "1px solid #0d0d0d" }}>
-                  <div style={{ fontSize: 12, color: "#e0e0e0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                    <span style={{ fontSize: 10, color: "#444" }}>{timeAgo(l.createdAt)}</span>
-                    <span style={{ fontSize: 11, color: "#a78bfa", fontWeight: 700 }}>${l.price}</span>
-                  </div>
-                </div>
-              ))}
-              <Link href="/forum" style={{ display: "block", textAlign: "center", marginTop: 10, fontSize: 11, color: "#7c3aed", textDecoration: "none" }}>
-                View marketplace →
-              </Link>
+          {/* ── Card 3: Tin tức & Insights (dismissable) ───────────────── */}
+          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden", marginBottom: 12 }}>
+            <div style={{ padding: "14px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.02em" }}>Tin tức hôm nay</div>
+              <button style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 4, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, lineHeight: 1 }}>✕</button>
             </div>
-          )}
-
-          {/* Recent items */}
-          {items.length > 0 && (
-            <div>
-              <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>RECENT</div>
-              {items.slice(0, 4).map(item => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #0d0d0d" }}>
-                  <span style={{ fontSize: 16, flexShrink: 0 }}>{item.type === "analysis" ? "📊" : item.type === "layout" ? "🏪" : "📝"}</span>
+            {[
+              { avatarColor: "#7c3aed", avatarColor2: "#ec4899", title: "Arc Welcomes Goldsky with Builders Fund Backing for Blockchain Data Tools", time: "10 giờ trước", cat: "Tin tức", count: "199 bài" },
+              { avatarColor: "#06b6d4", avatarColor2: "#10b981", title: "Arc Blockchain Community Hits 1,900 Architects Ahead of Office Hours", time: "22 giờ trước", cat: "Khác", count: "594 bài" },
+              { avatarColor: "#f59e0b", avatarColor2: "#f43f5e", title: "Tokenized Real-World Assets Hit $34 Billion Milestone", time: "5 giờ trước", cat: "Tin tức", count: "282 bài" },
+            ].map((n, i) => (
+              <div key={i} style={{ padding: "12px 16px", borderTop: "1px solid #1a1a1a", cursor: "pointer", transition: "background 0.1s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#161616")}
+                onMouseLeave={e => (e.currentTarget.style.background = "")}>
+                <div style={{ display: "flex", gap: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
-                    <div style={{ fontSize: 10, color: "#444" }}>{timeAgo(item.updatedAt)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0", lineHeight: 1.45, marginBottom: 4 }}>{n.title}</div>
+                    <div style={{ fontSize: 11, color: "#555" }}>{n.time} · {n.cat} · {n.count}</div>
+                  </div>
+                  {/* Double avatar */}
+                  <div style={{ position: "relative", flexShrink: 0, width: 40, height: 40 }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, width: 28, height: 28, borderRadius: "50%", background: n.avatarColor, border: "2px solid #111" }} />
+                    <div style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, borderRadius: "50%", background: n.avatarColor2, border: "2px solid #111" }} />
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
+            <div style={{ padding: "10px 16px 14px" }}>
+              <Link href="/forum" style={{ fontSize: 13, color: "#7c3aed", textDecoration: "none", fontWeight: 500 }}>Xem thêm →</Link>
             </div>
-          )}
+          </div>
+
+          {/* ── Card 4: Wallet / Quick actions ─────────────────────────── */}
+          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ padding: "14px 16px 4px" }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", marginBottom: 12, letterSpacing: "-0.02em" }}>Ví của tôi</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+                <span style={{ fontFamily: "monospace", fontSize: 12, color: "#888" }}>{walletId ? shortAddr(walletId) : "—"}</span>
+                <span style={{ marginLeft: "auto", fontSize: 18, fontWeight: 800, color: "#4ade80", letterSpacing: "-0.02em" }}>${usdcSpent.toFixed(2)}</span>
+              </div>
+              {/* Stats row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
+                {[
+                  { label: "Phân tích", value: analyses.length,  color: "#a78bfa" },
+                  { label: "Layout",    value: layouts.length,   color: "#6ee7b7" },
+                  { label: "Đang bán",  value: forSaleN,          color: "#f59e0b" },
+                  { label: "Yêu thích", value: items.filter(i => i.starred).length, color: "#fbbf24" },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "#0a0a0a", borderRadius: 10, padding: "8px 10px" }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.value}</div>
+                    <div style={{ fontSize: 10, color: "#444", marginTop: 1 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Action buttons */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", borderRadius: 999, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+                  <Plus size={13} /> Phân tích mới
+                </Link>
+                <button onClick={handleImport} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", background: "transparent", border: "1px solid #2a2a2a", color: "#666", borderRadius: 999, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  <RefreshCw size={12} /> Đồng bộ
+                </button>
+              </div>
+            </div>
+          </div>
 
         </aside>
 
