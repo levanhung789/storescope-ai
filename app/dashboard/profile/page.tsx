@@ -392,8 +392,40 @@ export default function ProfilePage() {
         </label>
       </div>
 
-      {/* ── Profile content ─────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+      {/* ── 3-column layout ─────────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-start" }}>
+
+        {/* ── Left aside: profile nav + app shortcuts ───────────────────── */}
+        <aside style={{ width: 196, flexShrink: 0, padding: "20px 14px 40px 18px", position: "sticky", top: 0, maxHeight: "100vh", overflowY: "auto", borderRight: "1px solid #111" }}>
+          <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>PROFILE</div>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => { setTab(t.key); setSelectedIds(new Set()); }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 10px", borderRadius: 8, background: tab === t.key ? "rgba(124,58,237,0.1)" : "transparent", border: tab === t.key ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent", color: tab === t.key ? "#a78bfa" : "#555", fontSize: 12, cursor: "pointer", textAlign: "left", marginBottom: 2, fontWeight: tab === t.key ? 600 : 400, fontFamily: "inherit" }}>
+              <span>{t.label}</span>
+              {t.count !== undefined && t.count > 0 && <span style={{ fontSize: 10, color: tab === t.key ? "#7c3aed" : "#2a2a2a" }}>{t.count}</span>}
+            </button>
+          ))}
+          <div style={{ height: 1, background: "#1a1a1a", margin: "14px 0" }} />
+          <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>TOOLS</div>
+          {[
+            { label: "Dashboard",    href: "/dashboard",              icon: "🏠" },
+            { label: "AI Analysis",  href: "/dashboard/analysis",     icon: "📊" },
+            { label: "Vision Agent", href: "/dashboard/vision-agent", icon: "👁️" },
+            { label: "AI Agent",     href: "/dashboard/agent",        icon: "🤖" },
+            { label: "My Reports",   href: "/dashboard/reports",      icon: "📋" },
+            { label: "Store Layout", href: "/layout-editor",          icon: "🏪" },
+            { label: "Forum",        href: "/forum",                  icon: "💬" },
+          ].map(item => (
+            <Link key={item.href} href={item.href}
+              style={{ display: "flex", alignItems: "center", gap: 7, padding: "7px 10px", borderRadius: 8, color: "#555", fontSize: 12, textDecoration: "none", marginBottom: 2, transition: "color 0.12s" }}>
+              <span style={{ fontSize: 13 }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </aside>
+
+        {/* ── Center content (original, unchanged) ─────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0, padding: "0 20px" }}>
 
         {/* ── Header row: [Avatar] [Name+Bio] [Buttons] ─────────────────── */}
         {/* Avatar uses marginTop:-65 to pull up 65px into the banner */}
@@ -715,8 +747,92 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-      </div>
-      {/* End profile content */}
+        </div>{/* end center content */}
+
+        {/* ── Right aside: wallet + stats + marketplace ─────────────────── */}
+        <aside style={{ width: 220, flexShrink: 0, padding: "20px 18px 40px 14px", position: "sticky", top: 0, maxHeight: "100vh", overflowY: "auto", borderLeft: "1px solid #111" }}>
+
+          {/* Wallet card */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1f1f1f", borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block", flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: "#555", letterSpacing: "0.08em", fontWeight: 600 }}>
+                {isConnected && address ? "METAMASK" : "CIRCLE WALLET"}
+              </span>
+            </div>
+            <div style={{ fontFamily: "monospace", fontSize: 11, color: "#777", wordBreak: "break-all", marginBottom: 8 }}>
+              {walletId ? shortAddr(walletId) : "—"}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#4ade80", letterSpacing: "-0.02em" }}>
+              ${usdcSpent.toFixed(2)}
+            </div>
+            <div style={{ fontSize: 10, color: "#333", marginTop: 1 }}>USDC SPENT</div>
+          </div>
+
+          {/* Quick actions */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+            <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "#7c3aed", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
+              <Plus size={12} /> New Analysis
+            </Link>
+            <button onClick={handleImport} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "#111", border: "1px solid #1f1f1f", color: "#666", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+              <RefreshCw size={11} /> Sync Reports
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>STATS</div>
+            {[
+              { label: "Analyses", value: analyses.length,                          color: "#a78bfa" },
+              { label: "Layouts",  value: layouts.length,                           color: "#6ee7b7" },
+              { label: "For Sale", value: forSaleN,                                 color: "#f59e0b" },
+              { label: "Starred",  value: items.filter(i => i.starred).length,      color: "#fbbf24" },
+            ].map(s => (
+              <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #0d0d0d" }}>
+                <span style={{ fontSize: 12, color: "#555" }}>{s.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{s.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* My listings */}
+          {listings.filter(l => !l.sold).length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>MY LISTINGS</div>
+              {listings.filter(l => !l.sold).slice(0, 4).map(l => (
+                <div key={l.id} style={{ padding: "7px 0", borderBottom: "1px solid #0d0d0d" }}>
+                  <div style={{ fontSize: 12, color: "#e0e0e0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                    <span style={{ fontSize: 10, color: "#444" }}>{timeAgo(l.createdAt)}</span>
+                    <span style={{ fontSize: 11, color: "#a78bfa", fontWeight: 700 }}>${l.price}</span>
+                  </div>
+                </div>
+              ))}
+              <Link href="/forum" style={{ display: "block", textAlign: "center", marginTop: 10, fontSize: 11, color: "#7c3aed", textDecoration: "none" }}>
+                View marketplace →
+              </Link>
+            </div>
+          )}
+
+          {/* Recent items */}
+          {items.length > 0 && (
+            <div>
+              <div style={{ fontSize: 10, color: "#333", letterSpacing: "0.12em", marginBottom: 8, fontWeight: 600 }}>RECENT</div>
+              {items.slice(0, 4).map(item => (
+                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #0d0d0d" }}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>{item.type === "analysis" ? "📊" : item.type === "layout" ? "🏪" : "📝"}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                    <div style={{ fontSize: 10, color: "#444" }}>{timeAgo(item.updatedAt)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </aside>
+
+      </div>{/* end 3-col layout */}
 
       {/* ── Bottom action bar ───────────────────────────────────────────── */}
       {selectedIds.size > 0 && (
