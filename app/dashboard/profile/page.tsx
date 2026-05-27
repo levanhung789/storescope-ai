@@ -400,8 +400,8 @@ export default function ProfilePage() {
         <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
 
           {/* ── Avatar (left column) ────────────────────────────────────── */}
-          <div style={{ position: "relative", flexShrink: 0, marginTop: -65, zIndex: 10 }}>
-            <div style={{ width: 130, height: 130, borderRadius: "50%", border: "5px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 10px 40px rgba(124,58,237,0.5)" }}>
+          <div style={{ position: "relative", flexShrink: 0, marginTop: -78, zIndex: 10 }}>
+            <div style={{ width: 156, height: 156, borderRadius: "50%", border: "5px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 62, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 10px 40px rgba(124,58,237,0.5)" }}>
               {profileData.avatarImage
                 ? <img src={profileData.avatarImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="avatar" />
                 : avatarChar}
