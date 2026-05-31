@@ -9,7 +9,7 @@ import { privateKeyToAccount } from "viem/accounts";
 export const arcTestnet = {
   id:       5042002,
   name:     "Arc Testnet",
-  rpcUrls:  { default: { http: ["https://rpc.testnet.arc.network"] } },
+  rpcUrls:  { default: { http: [process.env.ARC_RPC_URL ?? "https://rpc.testnet.arc.network"] } },
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
 } as const;
 
@@ -167,7 +167,7 @@ export const ANALYSIS_REGISTRY_ABI = [
 // ── viem clients (server-side) ────────────────────────────────────────────
 export const publicClient = createPublicClient({
   chain:     arcTestnet,
-  transport: http("https://rpc.testnet.arc.network"),
+  transport: http(process.env.ARC_RPC_URL ?? "https://rpc.testnet.arc.network"),
 });
 
 export function getDeployerWallet() {
@@ -177,7 +177,7 @@ export function getDeployerWallet() {
   return createWalletClient({
     account,
     chain:     arcTestnet,
-    transport: http("https://rpc.testnet.arc.network"),
+    transport: http(process.env.ARC_RPC_URL ?? "https://rpc.testnet.arc.network"),
   });
 }
 

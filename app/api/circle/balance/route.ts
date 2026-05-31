@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
 
-const ARC_RPC      = "https://rpc.testnet.arc.network";
+const ARC_RPC      = process.env.ARC_RPC_URL ?? "https://rpc.testnet.arc.network";
 const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 // balanceOf(address) selector = 0x70a08231
 const BALANCE_OF   = "0x70a08231";
