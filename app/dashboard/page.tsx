@@ -190,13 +190,37 @@ export default function DashboardPage() {
     ));
   }, [search]);
 
-  const card: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 16 };
+  // ── ui-ux-pro-max: glassmorphism cards for contrast ≥4.5:1 over bg image ──
+  const card: React.CSSProperties = {
+    background: "rgba(13,13,13,0.82)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 16,
+  };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", background: "#080808", color: "#f0f0f0", fontFamily: "inherit" }}>
+    <div style={{ minHeight: "100vh", display: "flex", color: "#f0f0f0", fontFamily: "inherit", position: "relative" }}>
 
-      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside style={{ width: 220, flexShrink: 0, background: "#0a0a0a", borderRight: "1px solid #1f1f1f", display: "flex", flexDirection: "column" }}>
+      {/* ── z:0 Background image ─────────────────────────────────────────── */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0,
+        backgroundImage: "url(/dashboard-bg.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        opacity: 0.18,
+        pointerEvents: "none",
+      }} />
+      {/* ── z:1 Dark overlay — ensures text contrast ≥4.5:1 (ui-ux-pro-max §6) */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 1,
+        background: "linear-gradient(135deg, rgba(8,8,8,0.96) 0%, rgba(8,8,8,0.88) 50%, rgba(8,8,8,0.94) 100%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* ── Sidebar — z:2 ────────────────────────────────────────────────── */}
+      <aside style={{ width: 220, flexShrink: 0, background: "rgba(8,8,8,0.9)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
         <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid #1f1f1f" }}>
           <a href="/" style={{ textDecoration: "none" }}>
             <span style={{ fontSize: 18, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.04em" }}>storescope</span>
@@ -236,8 +260,8 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      {/* ── Main ────────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
+      {/* ── Main — z:2 ──────────────────────────────────────────────────── */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto", position: "relative", zIndex: 2 }}>
 
         {/* Header */}
         <header style={{ borderBottom: "1px solid #1f1f1f", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
