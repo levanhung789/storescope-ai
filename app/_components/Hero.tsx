@@ -7,10 +7,30 @@ const ParticleSphere = dynamic(() => import("./ParticleSphere"), { ssr: false })
 
 export default function Hero() {
   return (
-    <section style={{ background: "#080808", overflow: "hidden" }}>
+    <section style={{
+      background: "#080808",
+      overflow: "hidden",
+      position: "relative",
+    }}>
+      {/* ── Background image ──────────────────────────────────────────── */}
+      <div style={{
+        position: "absolute", inset: 0,
+        backgroundImage: "url(/hero-bg.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center 30%",
+        backgroundRepeat: "no-repeat",
+        opacity: 0.35,
+        zIndex: 0,
+      }} />
+      {/* Dark overlay for text readability */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(90deg, rgba(8,8,8,0.92) 40%, rgba(8,8,8,0.5) 70%, rgba(8,8,8,0.2) 100%)",
+        zIndex: 1,
+      }} />
 
       {/* ── Hero split ──────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1152, margin: "0 auto", padding: "80px 24px 72px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }} className="hero-grid">
+      <div style={{ maxWidth: 1152, margin: "0 auto", padding: "80px 24px 72px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center", position: "relative", zIndex: 2 }} className="hero-grid">
 
         {/* Left: text */}
         <div className="animate-fade-up" style={{ opacity: 0 }}>
