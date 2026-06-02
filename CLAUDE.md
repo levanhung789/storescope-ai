@@ -1310,3 +1310,109 @@ Sau đó chuyển sang dùng **PNG icon cards** thay lucide icons:
 2. Deploy lên Vercel — push lên `vercel-repo`
 3. Tích hợp RetailLayoutNFT vào `/forum`
 4. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan TX
+
+---
+
+## Nhật ký làm việc — 2026-06-03
+
+### Công việc đã hoàn thành
+
+#### 1. ARC v0.7.1 hard fork — cập nhật RPC
+- Kiểm tra: RPC `https://rpc.testnet.arc.network` hoạt động, block #44,875,348
+- Tìm thấy Circle personal RPC URL qua `arc-canteen rpc-url`
+- Cập nhật `.env.local`: `ARC_RPC_URL` + `NEXT_PUBLIC_ARC_RPC_URL` dùng Circle token URL
+- `contracts.ts`, `arc.ts`, `balance/route.ts` đều đọc từ env (không hardcode)
+- Verified: chain ID 5,042,002 ✅, contracts còn nguyên sau hard fork ✅
+
+#### 2. Arc Open Source Showcase — submission
+- Tạo repo `storescope-arc-primitives` trên GitHub với 13 files:
+  - `contracts/`: AnalysisRegistry.sol, PaymentVerifier.sol, RetailLayoutNFT.sol, TaskVerifiers.sol
+  - `hooks/`: useArcPayment.ts, useCircleWallet.ts
+  - `lib/`: arc.ts, contracts.ts, circle.ts
+  - `examples/`: record-analysis.ts, circle-transfer.ts
+  - `README.md` — docs đầy đủ với code examples và deployment addresses
+- Submit via `arc-canteen update product` với prefix `ArcOSS:`
+
+#### 3. Skills cài đặt
+- `frontend-design` (từ anthropics/skills) → `~/.claude/skills/frontend-design/`
+- `ui-ux-pro-max` v2.5.0 (từ nextlevelbuilder) → `~/.claude/skills/ui-ux-pro-max/`
+
+#### 4. Homepage (`/`) — redesign theo MHM + FMCG Dashboard references
+Các components mới/cập nhật:
+- `AnnouncementBar.tsx` — gradient tím, dismissible, ARC v0.7.1 update
+- `Hero.tsx` — MHM split layout: headline+CTAs trái / ParticleSphere+stats phải
+- `PartnerLogos.tsx` — ARC/Circle/OpenAI/Roboflow/wagmi/MetaMask strip
+- `FeaturesGrid.tsx` — category filter tabs + 3-col card grid với SVG icons
+- `FAQ.tsx` — numbered accordion (01-06), sticky left column
+- `CtaBanner.tsx` — email capture form + brand mark với glow
+- `page.tsx` — Services/UseCases thay bằng FeaturesGrid/FAQ
+
+#### 5. Hero background image
+- Ảnh: holographic retail shelves (`hero-bg.png`) → `public/hero-bg.png`
+- opacity: 0.35, gradient overlay 90deg cho text readability trái
+
+#### 6. Dashboard background image
+- Ảnh: holographic data streams tím/teal (`dashboard-bg.png`) → `public/dashboard-bg.png`
+- Z-index stack: bg(z0) → overlay(z1) → content(z2)
+- Cards: glassmorphism `rgba(13,13,13,0.82)` + `backdrop-filter: blur(12px)`
+
+#### 7. Dashboard redesign — 3 references + ui-ux-pro-max skill
+References: Coursue Dashboard + Finance Dashboard (Alice Smith) + Paytop (Aida Mokhtari)
+
+**Sidebar (Paytop/Finance style):**
+- Deep purple gradient `linear-gradient(160deg, #0d0221, #1a0840, #0a0118)`
+- User avatar block với role label
+- White pill active nav (§9 nav-state-active)
+- Section labels OVERVIEW / SECTORS
+- Glow "New Analysis" CTA button ở bottom
+
+**Header (Paytop style):**
+- Search bar + Live badge (pulse xanh) + Bell + Avatar + @handle
+
+**Main content:**
+- Greeting "Hey [Name]! 👋" với sector subtitle
+- Stats cards: icon square màu + số lớn + % badge (§6 weight-hierarchy)
+- SVG area chart: 2 đường smooth (This Year vs Last Year) + gradient fill + legend
+- App launcher: compact icon grid
+- 4 panels: SVG icons (§4 no-emoji), left border accent
+
+#### 8. Profile page — LinkedIn redesign
+- Profile Card: avatar overlapping banner (128px), inline stats (Analyses/Items/Listings/USDC)
+- Analytics Card: 3 metrics (Profile views / Data impressions / Search appearances) + "Private to you"
+- Right sidebar: Upgrade CTA + People you may know + Who viewed your data
+- Removed old Twitter-style cards và left nav icon aside
+
+### Commits 2026-06-03
+
+| Commit | Mô tả |
+|---|---|
+| `07632f8` | fix: ARC RPC v0.7.1 — env vars + Circle personal RPC |
+| `1166aff` | docs: CLAUDE.md update 2026-05-27 |
+| `06b418d` | feat(homepage): redesign per MHM + FMCG Dashboard |
+| `1334340` | feat(hero): holographic retail bg image |
+| `7356dd4` | feat(dashboard): holographic data streams bg |
+| `a72d09f` | feat(profile): LinkedIn-style redesign |
+| `fc7b1f7` | feat(dashboard): redesign 3 references + ui-ux-pro-max skill |
+
+**Đã push lên:** `origin` (storescope-ai-Shelby) + `storescope-arc-primitives` (repo riêng)
+
+### Quyết định kỹ thuật — 2026-06-03
+
+| Quyết định | Lý do |
+|---|---|
+| Circle personal RPC thay vì public RPC | Track on-chain activity → tăng điểm submission Agora |
+| Tạo repo primitives riêng | Arc OSS Showcase yêu cầu standalone, forkable repo |
+| ui-ux-pro-max skill áp dụng trực tiếp | Python script bị auto-mode chặn; dùng skill knowledge trực tiếp vẫn hiệu quả |
+| SVG area chart thuần (không recharts) | Tránh cài thêm dependency; chart đủ đẹp cho dashboard |
+| Deep purple gradient sidebar | Finance/Paytop reference — professional SaaS look |
+| White pill active nav | Paytop reference — clear active state, contrast ≥4.5:1 (§9) |
+| Glassmorphism cards trên bg image | §4 blur-purpose: blur indicates layering; §6 contrast ≥4.5:1 |
+
+### Việc cần làm tiếp (cập nhật 2026-06-03)
+
+1. Test dashboard trên browser — kiểm tra SVG chart render + glassmorphism
+2. Submit Google Form Arc OSS Showcase: `forms.gle/ok3Gr9zhmHnApvK48`
+3. Deploy lên Vercel — push lên `vercel-repo`
+4. Pitch StoreScope cho Circle grants qua Canteen channel
+5. Tích hợp RetailLayoutNFT vào `/forum` — mint NFT khi save layout
+6. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan TX
