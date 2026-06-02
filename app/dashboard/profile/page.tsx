@@ -367,7 +367,7 @@ export default function ProfilePage() {
       )}
 
       {/* ── Banner ─────────────────────────────────────────────────────────── */}
-      <div style={{ height: 240, background: bannerBg, position: "relative", overflow: "hidden" }}>
+      <div style={{ height: 200, background: bannerBg, position: "relative", overflow: "hidden" }}>
         {/* Glow orbs (only on gradient banner) */}
         {!profileData.bannerImage && <>
           <div style={{ position: "absolute", top: "-30%", left: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%)", filter: "blur(40px)" }} />
@@ -394,35 +394,56 @@ export default function ProfilePage() {
         </label>
       </div>
 
-      {/* ── Profile header — full width above 3 columns ─────────────────── */}
-      <div style={{ padding: "0 24px" }}>
+      {/* ── Main layout below banner ─────────────────────────────────────── */}
+      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "0 16px 60px", display: "flex", gap: 14, alignItems: "flex-start" }}>
 
-        {/* ── Header row: [Avatar] [Name+Bio] [Buttons] ─────────────────── */}
-        {/* Avatar uses marginTop:-65 to pull up 65px into the banner */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+        {/* ── Main column ── */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
 
-          {/* ── Avatar (left column) ────────────────────────────────────── */}
-          <div style={{ position: "relative", flexShrink: 0, marginTop: -78, zIndex: 10 }}>
-            <div style={{ width: 156, height: 156, borderRadius: "50%", border: "5px solid #080808", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 62, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 10px 40px rgba(124,58,237,0.5)" }}>
+        {/* ── Profile Card (LinkedIn style) ──────────────────────────────── */}
+        <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: "0 22px 22px", overflow: "visible" }}>
+
+          {/* Avatar + action buttons */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+
+          {/* ── Avatar ─────────────────────────────────────────────────────── */}
+          <div style={{ position: "relative", flexShrink: 0, marginTop: -64, zIndex: 10 }}>
+            <div style={{ width: 128, height: 128, borderRadius: "50%", border: "4px solid #111", background: profileData.avatarImage ? "transparent" : "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 50, fontWeight: 700, color: "#fff", overflow: "hidden", boxShadow: "0 8px 32px rgba(124,58,237,0.4)" }}>
               {profileData.avatarImage
                 ? <img src={profileData.avatarImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="avatar" />
                 : avatarChar}
             </div>
             {/* Camera button */}
-            <label style={{ position: "absolute", bottom: 6, right: 6, width: 34, height: 34, borderRadius: "50%", background: "#7c3aed", border: "3px solid #080808", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 11, transition: "transform 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.12)")}
+            <label style={{ position: "absolute", bottom: 4, right: 4, width: 30, height: 30, borderRadius: "50%", background: "#7c3aed", border: "2px solid #111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 11 }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-              <Camera size={13} color="#fff" />
+              <Camera size={12} color="#fff" />
               <input ref={avatarFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
             </label>
           </div>
 
-          {/* ── Name + Bio + Badges (center column) ─────────────────────── */}
-          {/* paddingTop: 16 = small gap from banner bottom */}
-          <div style={{ flex: 1, paddingTop: 16 }}>
+          {/* ── Action buttons (top right) ──────────────────────────────── */}
+          <div style={{ display: "flex", gap: 8, paddingTop: 14, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <button style={{ padding: "7px 18px", background: "#7c3aed", border: "none", color: "#fff", borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "inherit" }}>
+              <Plus size={12} /> Open to
+            </button>
+            <button onClick={handleImport} style={{ padding: "7px 16px", background: "transparent", border: "1px solid #3a3a3a", color: "#aaa", borderRadius: 999, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
+              <RefreshCw size={11} /> Sync
+            </button>
+            <Link href="/dashboard/analysis" style={{ padding: "7px 16px", background: "transparent", border: "1px solid #3a3a3a", color: "#aaa", borderRadius: 999, fontSize: 13, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+              <Search size={11} /> Analysis
+            </Link>
+            <button style={{ width: 34, height: 34, background: "transparent", border: "1px solid #3a3a3a", color: "#aaa", borderRadius: 999, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>
+              <MoreHorizontal size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Name + Bio + Location ───────────────────────────────────────── */}
+        <div style={{ marginTop: 14 }}>
 
             {/* Name row */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               {editingName ? (
                 <>
                   <input
@@ -485,53 +506,64 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Meta badges */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              {items.length > 0 && (
-                <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#666", letterSpacing: "0.05em" }}>
-                  JOINED {joinDate}
-                </span>
-              )}
-              <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa" }}>
-                {isConnected && address ? "METAMASK" : circleSession ? "CIRCLE WALLET" : "WALLET"}
-              </span>
-              {walletId && (
-                <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#555", fontFamily: "monospace" }}>
-                  {shortAddr(walletId)}
-                </span>
-              )}
+            {/* Location + wallet */}
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
+              <span style={{ fontSize: 13, color: "#555" }}>📍 Vietnam</span>
+              {walletId && <span style={{ fontSize: 13, color: "#555", fontFamily: "monospace" }}>💳 {shortAddr(walletId)}</span>}
+              {items.length > 0 && <span style={{ fontSize: 13, color: "#555" }}>🗓 Joined {joinDate}</span>}
+              <span style={{ fontSize: 13, color: "#7c3aed", cursor: "pointer" }}>Contact info</span>
             </div>
-          </div>{/* end center column */}
-
-          {/* ── Action buttons (right column) ────────────────────────────── */}
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexShrink: 0, paddingTop: 16 }}>
-            <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 16px", background: "transparent", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, textDecoration: "none" }}>
-              ← Dashboard
-            </Link>
-            <button onClick={handleImport} style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", background: "#111", border: "1px solid #2a2a2a", color: "#888", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>
-              <RefreshCw size={11} /> Sync
-            </button>
-            <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", background: "#7c3aed", border: "none", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
-              <Plus size={11} /> New Analysis
-            </Link>
           </div>
 
-        </div>{/* end header row */}
+          {/* ── Stats row (LinkedIn inline stats) ──────────────────────────── */}
+          <div style={{ display: "flex", gap: 0, borderTop: "1px solid #1a1a1a", paddingTop: 14 }}>
+            {[
+              { label: "Analyses",   value: analyses.length,              color: "#a78bfa" },
+              { label: "Items",      value: items.length,                 color: "#f0f0f0" },
+              { label: "Listings",   value: forSaleN,                      color: "#f59e0b" },
+              { label: "USDC spent", value: `$${usdcSpent.toFixed(2)}`,   color: "#4ade80" },
+            ].map((s, i, arr) => (
+              <div key={s.label} style={{ flex: 1, textAlign: "center", borderRight: i < arr.length - 1 ? "1px solid #1a1a1a" : "none", padding: "6px 0", cursor: "pointer", borderRadius: 8, transition: "background 0.1s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#161616")}
+                onMouseLeave={e => (e.currentTarget.style.background = "")}>
+                <div style={{ fontSize: 21, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>{/* end profile card */}
 
-        {/* Stats bar */}
-        <div style={{ display: "flex", gap: 0, marginBottom: 24, background: "#0d0d0d", border: "1px solid #1f1f1f", borderRadius: 14, overflow: "hidden" }}>
-          {[
-            { label: "USDC SPENT", value: `$${usdcSpent.toFixed(2)}`, color: "#4ade80" },
-            { label: "ANALYSES",   value: String(analyses.length),    color: "#a78bfa" },
-            { label: "LAYOUTS",    value: String(layouts.length),     color: "#6ee7b7" },
-            { label: "FOR SALE",   value: String(forSaleN),           color: "#f59e0b" },
-          ].map((s, i, arr) => (
-            <div key={s.label} style={{ flex: 1, padding: "16px 20px", borderRight: i < arr.length - 1 ? "1px solid #1f1f1f" : "none", textAlign: "center" }}>
-              <div style={{ fontSize: 11, color: "#444", letterSpacing: "0.1em", marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.value}</div>
+        {/* ── Analytics Card ─────────────────────────────────────────────── */}
+        <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: "18px 22px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "#f0f0f0" }}>Analytics</span>
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: "#1a1a1a", color: "#555" }}>🔒 Private to you</span>
             </div>
-          ))}
-        </div>
+            <button style={{ fontSize: 13, color: "#7c3aed", background: "none", border: "none", cursor: "pointer", fontWeight: 600, fontFamily: "inherit" }}>Show all Analytics →</button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            {[
+              { icon: "👥", value: analyses.length * 12 + 45, label: "Profile views",     desc: "Discover who's viewed your profile" },
+              { icon: "📊", value: items.length * 35 + 128,   label: "Data impressions",  desc: "Engagement with your analyses (7d)" },
+              { icon: "🔍", value: analyses.length * 8 + 22,  label: "Search appearances",desc: "Times in marketplace search results" },
+            ].map(m => (
+              <div key={m.label} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 12px", borderRadius: 10, cursor: "pointer", transition: "background 0.1s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#161616")}
+                onMouseLeave={e => (e.currentTarget.style.background = "")}>
+                <span style={{ fontSize: 26, flexShrink: 0, lineHeight: 1 }}>{m.icon}</span>
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.02em" }}>{m.value.toLocaleString()}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 3 }}>{m.label}</div>
+                  <div style={{ fontSize: 11, color: "#555", lineHeight: 1.4 }}>{m.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>{/* end analytics card */}
+
+        {/* ── Tabs + Content Card ─────────────────────────────────────────── */}
+        <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, overflow: "hidden" }}>
 
         {/* ── Tabs ─────────────────────────────────────────────────────── */}
         <div style={{ borderBottom: "1px solid #1f1f1f", marginBottom: 0, display: "flex", gap: 0, overflowX: "auto" }}>
@@ -546,34 +578,8 @@ export default function ProfilePage() {
           ))}
         </div>
 
-      </div>{/* end full-width header */}
-
-      {/* ── 3-column layout: content area only ──────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-start" }}>
-
-        {/* ── Left aside ───────────────────────────────────────────────── */}
-        <aside style={{ width: 196, flexShrink: 0, padding: "10px 8px 24px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          {[
-            { img: "/icon/my-profile.png",        href: "/dashboard/profile", active: true },
-            { img: "/icon/image-analysis.png",    href: "/dashboard/analysis"              },
-            { img: "/icon/ai-agent.png",          href: "/dashboard/agent"                 },
-            { img: "/icon/layout-editor.png",     href: "/layout-editor"                   },
-            { img: "/icon/forum-marketplace.png", href: "/forum"                           },
-          ].map((item, i) => (
-            <Link key={i} href={item.href}
-              style={{ display: "inline-block", textDecoration: "none", padding: 6, borderRadius: 14, border: `2px solid ${item.active ? "rgba(124,58,237,0.55)" : "transparent"}`, background: item.active ? "rgba(124,58,237,0.07)" : "transparent", transition: "all 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; if (!item.active) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; if (!item.active) e.currentTarget.style.background = "transparent"; }}>
-              <NoBgImage src={item.img} size={158} threshold={240} />
-            </Link>
-          ))}
-        </aside>
-
-        {/* ── Center: content area ─────────────────────────────────────── */}
-        <div style={{ flex: 1, minWidth: 0, padding: "0 20px" }}>
-
-        {/* ── Content area ─────────────────────────────────────────────── */}
-        <div style={{ display: "flex", gap: 0, minHeight: 600 }}>
+        {/* ── Content area inside card ─────────────────────────────────── */}
+        <div style={{ display: "flex", gap: 0, minHeight: 400 }}>
 
           {/* Sidebar */}
           {sidebarOpen && tab !== "activity" && (
@@ -742,133 +748,76 @@ export default function ProfilePage() {
               )
             )}
           </div>
-        </div>
-        </div>{/* end center content */}
+        </div>{/* end content area */}
+        </div>{/* end tabs+content card */}
 
-        {/* ── Right aside: Twitter/X-style sticky cards ────────────────── */}
-        <aside style={{ width: 290, flexShrink: 0, padding: "16px 16px 40px 12px", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh", overflowY: "auto" }}>
+        </div>{/* end main column */}
 
-          {/* ── Card 1: Upgrade to Pro ──────────────────────────────────── */}
-          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden", marginBottom: 12 }}>
-            <div style={{ padding: "16px 16px 4px" }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#f0f0f0", marginBottom: 6, letterSpacing: "-0.02em" }}>Upgrade to StoreScope Pro</div>
-              <div style={{ fontSize: 13, color: "#666", lineHeight: 1.55, marginBottom: 14 }}>
-                Phân tích không giới hạn, AI ưu tiên cao và dữ liệu thị trường nâng cao.
-              </div>
-              <button style={{ width: "100%", padding: "10px 0", background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", borderRadius: 999, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 14, letterSpacing: "-0.01em" }}>
-                Upgrade to Pro
+        {/* ── Right sidebar (LinkedIn style) ───────────────────────────── */}
+        <aside style={{ width: 290, flexShrink: 0, position: "sticky", top: 16, alignSelf: "flex-start", display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* ── Upgrade CTA ─────────────────────────────────────────────── */}
+          <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", padding: "14px 16px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Upgrade to Pro: 50% Off</span>
+              <span style={{ fontSize: 18 }}>⭐</span>
+            </div>
+            <div style={{ padding: "14px 16px 16px" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666", lineHeight: 1.5 }}>Phân tích không giới hạn, AI ưu tiên cao và dữ liệu thị trường nâng cao.</p>
+              <button style={{ width: "100%", padding: "9px 0", background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                Reactivate Premium
               </button>
             </div>
           </div>
 
-          {/* ── Card 2: Đang hoạt động (Live) ──────────────────────────── */}
-          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden", marginBottom: 12 }}>
-            <div style={{ padding: "14px 16px 6px" }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", marginBottom: 12, letterSpacing: "-0.02em" }}>Đang hoạt động</div>
-            </div>
+          {/* ── People you may know ─────────────────────────────────────── */}
+          <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: "16px" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0", marginBottom: 4 }}>People you may know</div>
+            <div style={{ fontSize: 12, color: "#555", marginBottom: 14 }}>From your sector</div>
             {[
-              { icon: "📊", sector: "FMCG", label: "Phân tích vừa hoàn thành", colors: ["#7c3aed","#ec4899","#06b6d4"], count: "+207" },
-              { icon: "📊", sector: "Điện tử", label: "Báo cáo thị trường mới", colors: ["#10b981","#f59e0b","#8b5cf6"], count: "+88" },
-              { icon: "🏪", sector: "Bán lẻ", label: "Layout đang được xem", colors: ["#f43f5e","#a78bfa","#34d399"], count: "+50" },
-            ].map((row, i) => (
-              <div key={i} style={{ padding: "10px 16px", borderTop: i > 0 ? "1px solid #1a1a1a" : "none", cursor: "pointer", transition: "background 0.1s" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#161616")}
-                onMouseLeave={e => (e.currentTarget.style.background = "")}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 20, flexShrink: 0 }}>{row.icon}</span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>{row.sector}</div>
-                      <div style={{ fontSize: 12, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.label}</div>
-                    </div>
-                  </div>
-                  {/* Avatar cluster + count */}
-                  <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-                    <div style={{ display: "flex" }}>
-                      {row.colors.map((c, ci) => (
-                        <div key={ci} style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: "2px solid #111", marginLeft: ci > 0 ? -7 : 0, position: "relative", zIndex: 3 - ci }} />
-                      ))}
-                    </div>
-                    <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: "#888", background: "#1a1a1a", padding: "2px 7px", borderRadius: 999 }}>{row.count}</span>
-                  </div>
+              { name: "Nguyen Van A", title: "FMCG Analyst · BigC",        color: "#7c3aed", initial: "N" },
+              { name: "Tran Thi B",   title: "Retail Manager · Winmart",    color: "#10b981", initial: "T" },
+              { name: "Le Van C",     title: "Layout Designer · Co.opmart", color: "#3b82f6", initial: "L" },
+            ].map(u => (
+              <div key={u.name} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: u.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 16, flexShrink: 0 }}>{u.initial}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{u.name}</div>
+                  <div style={{ fontSize: 11, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.title}</div>
                 </div>
+                <button style={{ padding: "5px 14px", borderRadius: 999, border: "1px solid #3b82f6", background: "transparent", color: "#3b82f6", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, fontFamily: "inherit" }}>+ Connect</button>
               </div>
             ))}
-            <div style={{ padding: "10px 16px 14px" }}>
-              <Link href="/dashboard/analysis" style={{ fontSize: 13, color: "#7c3aed", textDecoration: "none", fontWeight: 500 }}>Xem tất cả →</Link>
-            </div>
           </div>
 
-          {/* ── Card 3: Tin tức & Insights (dismissable) ───────────────── */}
-          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden", marginBottom: 12 }}>
-            <div style={{ padding: "14px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", letterSpacing: "-0.02em" }}>Tin tức hôm nay</div>
-              <button style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 4, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, lineHeight: 1 }}>✕</button>
+          {/* ── Who viewed your data ─────────────────────────────────────── */}
+          <div style={{ background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0" }}>Who viewed your data</div>
+              <span style={{ fontSize: 11, color: "#555" }}>🔒 Private</span>
             </div>
+            <div style={{ fontSize: 12, color: "#555", marginBottom: 14 }}>Private to you</div>
             {[
-              { avatarColor: "#7c3aed", avatarColor2: "#ec4899", title: "Arc Welcomes Goldsky with Builders Fund Backing for Blockchain Data Tools", time: "10 giờ trước", cat: "Tin tức", count: "199 bài" },
-              { avatarColor: "#06b6d4", avatarColor2: "#10b981", title: "Arc Blockchain Community Hits 1,900 Architects Ahead of Office Hours", time: "22 giờ trước", cat: "Khác", count: "594 bài" },
-              { avatarColor: "#f59e0b", avatarColor2: "#f43f5e", title: "Tokenized Real-World Assets Hit $34 Billion Milestone", time: "5 giờ trước", cat: "Tin tức", count: "282 bài" },
-            ].map((n, i) => (
-              <div key={i} style={{ padding: "12px 16px", borderTop: "1px solid #1a1a1a", cursor: "pointer", transition: "background 0.1s" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#161616")}
-                onMouseLeave={e => (e.currentTarget.style.background = "")}>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0", lineHeight: 1.45, marginBottom: 4 }}>{n.title}</div>
-                    <div style={{ fontSize: 11, color: "#555" }}>{n.time} · {n.cat} · {n.count}</div>
-                  </div>
-                  {/* Double avatar */}
-                  <div style={{ position: "relative", flexShrink: 0, width: 40, height: 40 }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 28, height: 28, borderRadius: "50%", background: n.avatarColor, border: "2px solid #111" }} />
-                    <div style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, borderRadius: "50%", background: n.avatarColor2, border: "2px solid #111" }} />
-                  </div>
+              { name: "Pham Van D",  title: "Data Buyer · Co.opmart", color: "#f59e0b", initial: "P" },
+              { name: "Hoang Thi E", title: "AI Researcher · VinAI",  color: "#ec4899", initial: "H" },
+              { name: "Do Van F",    title: "Product Manager · Zalo", color: "#06b6d4", initial: "D" },
+              { name: "Bui Thi G",   title: "Retail Analytics Lead",  color: "#8b5cf6", initial: "B" },
+            ].map(u => (
+              <div key={u.name} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: u.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{u.initial}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0" }}>{u.name}</div>
+                  <div style={{ fontSize: 11, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.title}</div>
                 </div>
+                <button style={{ padding: "4px 12px", borderRadius: 999, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontSize: 12, cursor: "pointer", flexShrink: 0, fontFamily: "inherit" }}>View</button>
               </div>
             ))}
-            <div style={{ padding: "10px 16px 14px" }}>
-              <Link href="/forum" style={{ fontSize: 13, color: "#7c3aed", textDecoration: "none", fontWeight: 500 }}>Xem thêm →</Link>
-            </div>
           </div>
 
-          {/* ── Card 4: Wallet / Quick actions ─────────────────────────── */}
-          <div style={{ background: "#111", borderRadius: 16, overflow: "hidden" }}>
-            <div style={{ padding: "14px 16px 4px" }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#f0f0f0", marginBottom: 12, letterSpacing: "-0.02em" }}>Ví của tôi</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
-                <span style={{ fontFamily: "monospace", fontSize: 12, color: "#888" }}>{walletId ? shortAddr(walletId) : "—"}</span>
-                <span style={{ marginLeft: "auto", fontSize: 18, fontWeight: 800, color: "#4ade80", letterSpacing: "-0.02em" }}>${usdcSpent.toFixed(2)}</span>
-              </div>
-              {/* Stats row */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
-                {[
-                  { label: "Phân tích", value: analyses.length,  color: "#a78bfa" },
-                  { label: "Layout",    value: layouts.length,   color: "#6ee7b7" },
-                  { label: "Đang bán",  value: forSaleN,          color: "#f59e0b" },
-                  { label: "Yêu thích", value: items.filter(i => i.starred).length, color: "#fbbf24" },
-                ].map(s => (
-                  <div key={s.label} style={{ background: "#0a0a0a", borderRadius: 10, padding: "8px 10px" }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.value}</div>
-                    <div style={{ fontSize: 10, color: "#444", marginTop: 1 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              {/* Action buttons */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
-                <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", borderRadius: 999, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-                  <Plus size={13} /> Phân tích mới
-                </Link>
-                <button onClick={handleImport} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", background: "transparent", border: "1px solid #2a2a2a", color: "#666", borderRadius: 999, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-                  <RefreshCw size={12} /> Đồng bộ
-                </button>
-              </div>
-            </div>
-          </div>
 
         </aside>
 
-      </div>{/* end 3-col layout */}
+      </div>{/* end main layout (2-col) */}
 
       {/* ── Bottom action bar ───────────────────────────────────────────── */}
       {selectedIds.size > 0 && (
