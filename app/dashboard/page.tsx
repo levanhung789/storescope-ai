@@ -302,10 +302,11 @@ export default function DashboardPage() {
       </aside>
 
       {/* ── MAIN — z:2 ──────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto", position: "relative", zIndex: 2 }}>
+      {/* main: no overflow so dropdowns aren't clipped */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative", zIndex: 2 }}>
 
-        {/* ── Header — Paytop style: search + live + bell + avatar ─────── */}
-        <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 24px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0, background: "rgba(8,4,20,0.6)", backdropFilter: "blur(8px)" }}>
+        {/* ── Header — sticky top, zIndex:50 so dropdown renders above content */}
+        <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 24px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0, background: "rgba(8,4,20,0.95)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 50 }}>
           {/* Search bar */}
           <div style={{ flex: 1, maxWidth: 400, position: "relative" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
@@ -342,7 +343,9 @@ export default function DashboardPage() {
           {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
         </header>
 
-        <div style={{ flex: 1, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
+        {/* Scrollable content wrapper */}
+        <div style={{ flex: 1, overflow: "auto" }}>
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
 
           {/* ── Greeting — Paytop "Hey [Name]!" ──────────────────────── */}
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
@@ -598,6 +601,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        </div>{/* end scrollable wrapper */}
       </main>
       <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
