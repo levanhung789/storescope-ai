@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { loadAnonUser, type AnonUser } from "../_lib/anonymousAuth";
 import LanguageSwitcher from "../_components/LanguageSwitcher";
@@ -123,6 +123,116 @@ const NAV_ITEMS = [
   { key: "nav.layout",     href: "/layout-editor",          active: false },
   { key: "nav.forum",      href: "/forum",                  active: false },
 ];
+
+// ── PremiumAppCard — §7: transform/opacity only, spring-physics, stagger ─────
+type AppItem = { img: string; label: string; href: string; color: string };
+
+function PremiumAppCard({ app, index }: { app: AppItem; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const [tilt, setTilt]   = useState({ x: 0, y: 0 });
+  const [shimmer, setShimmer] = useState(false);
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width  - 0.5) * 16;
+    const y = ((e.clientY - r.top)  / r.height - 0.5) * -16;
+    setTilt({ x, y });
+  };
+
+  const onEnter = () => { setHovered(true); setShimmer(false); setTimeout(() => setShimmer(true), 10); };
+  const onLeave = () => { setHovered(false); setTilt({ x: 0, y: 0 }); setShimmer(false); };
+
+  // §7 spring-physics: cubic-bezier mimics spring overshoot
+  const springIn  = "transform 200ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 200ms ease-out, border-color 200ms ease-out";
+  const springOut = "transform 280ms cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 280ms ease-out, border-color 280ms ease-out";
+
+  const scale   = pressed ? 0.95 : hovered ? 1.05 : 1;
+  const tiltStr = hovered ? `perspective(520px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)` : "perspective(520px) rotateX(0) rotateY(0)";
+
+  return (
+    <Link href={app.href} style={{ textDecoration: "none", display: "block",
+      animation: `cardEntrance 420ms cubic-bezier(0.34,1.56,0.64,1) ${index * 55}ms both`,
+    }}>
+      <div ref={ref}
+        onMouseEnter={onEnter} onMouseLeave={onLeave} onMouseMove={onMouseMove}
+        onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)}
+        style={{
+          position: "relative", borderRadius: 14, overflow: "hidden",
+          background: "#06030f",
+          aspectRatio: "1/1", cursor: "pointer",
+          transform: `${tiltStr} scale(${scale})`,
+          transition: hovered ? springIn : springOut,
+          border: `1px solid ${hovered ? app.color + "70" : "rgba(255,255,255,0.07)"}`,
+          boxShadow: hovered
+            ? `0 0 0 1px ${app.color}30, 0 12px 40px ${app.color}35, 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)`
+            : "0 2px 10px rgba(0,0,0,0.35)",
+        }}>
+
+        {/* 3D image — zooms subtly on hover (§7 transform-performance) */}
+        <img src={app.img} alt={app.label} style={{
+          width: "100%", height: "100%", objectFit: "cover", display: "block",
+          transform: hovered ? "scale(1.08)" : "scale(1)",
+          transition: "transform 350ms cubic-bezier(0.25,0.46,0.45,0.94)",
+        }} />
+
+        {/* Shimmer sweep — translateX only (§7 transform-performance) */}
+        <div style={{
+          position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none",
+          borderRadius: 14,
+        }}>
+          <div style={{
+            position: "absolute", top: "-50%", width: "55%", height: "200%",
+            background: "linear-gradient(105deg, transparent, rgba(255,255,255,0.1) 50%, transparent)",
+            transform: "skewX(-18deg)",
+            animation: shimmer ? "shimmerSlide 550ms ease-out forwards" : "none",
+          }} />
+        </div>
+
+        {/* Bottom glow orb matching card color */}
+        <div style={{
+          position: "absolute", bottom: -16, left: "50%",
+          transform: "translateX(-50%)",
+          width: "85%", height: 36,
+          background: `radial-gradient(ellipse, ${app.color}45 0%, transparent 70%)`,
+          filter: "blur(10px)",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 250ms ease-out",
+          pointerEvents: "none",
+        }} />
+
+        {/* Top corner sparkle dot */}
+        <div style={{
+          position: "absolute", top: 8, right: 8,
+          width: 5, height: 5, borderRadius: "50%",
+          background: app.color,
+          boxShadow: `0 0 6px ${app.color}`,
+          opacity: hovered ? 1 : 0.3,
+          transform: hovered ? "scale(1.4)" : "scale(1)",
+          transition: "opacity 200ms, transform 200ms",
+        }} />
+
+        {/* Label overlay — slides up on hover */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          padding: "22px 10px 8px",
+          background: "linear-gradient(0deg, rgba(3,1,14,0.96) 0%, transparent 100%)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          transform: hovered ? "translateY(0)" : "translateY(3px)",
+          transition: "transform 200ms ease-out",
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>{app.label}</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2.5"
+            style={{ transform: hovered ? "translateX(2px)" : "translateX(0)", transition: "transform 200ms ease-out" }}>
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -552,23 +662,10 @@ export default function DashboardPage() {
                 <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(124,58,237,0.4) 0%, transparent 100%)" }} />
               </div>
 
-              {/* 2-col grid of app cards */}
+              {/* 2-col grid — PremiumAppCard with 3D tilt + shimmer + glow */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {APPS.map(app => (
-                  <Link key={app.label} href={app.href} style={{ textDecoration: "none", display: "block" }}>
-                    <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: "#080614", border: "1px solid rgba(255,255,255,0.07)", aspectRatio: "1/1", transition: "transform 0.2s, border-color 0.2s", cursor: "pointer" }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.borderColor = `${app.color}60`; e.currentTarget.style.boxShadow = `0 0 18px ${app.color}30`; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.boxShadow = "none"; }}>
-                      {/* 3D icon image fills the card */}
-                      <img src={app.img} alt={app.label}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                      {/* Bottom label overlay */}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 10px 8px", background: "linear-gradient(0deg, rgba(4,2,16,0.92) 0%, transparent 100%)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>{app.label}</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
-                      </div>
-                    </div>
-                  </Link>
+                {APPS.map((app, i) => (
+                  <PremiumAppCard key={app.label} app={app} index={i} />
                 ))}
               </div>
 
@@ -726,7 +823,26 @@ export default function DashboardPage() {
         </div>
         </div>{/* end scrollable wrapper */}
       </main>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* §7 stagger entrance — translateY + scale + opacity only */
+        @keyframes cardEntrance {
+          from { opacity:0; transform:perspective(520px) translateY(18px) scale(0.9); }
+          to   { opacity:1; transform:perspective(520px) translateY(0)     scale(1); }
+        }
+
+        /* §7 shimmer — translateX only (hardware accelerated) */
+        @keyframes shimmerSlide {
+          from { transform: skewX(-18deg) translateX(-50%);  }
+          to   { transform: skewX(-18deg) translateX(420%); }
+        }
+
+        /* §1 reduced-motion: disable all motion for a11y */
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+      `}</style>
     </div>
   );
 }
