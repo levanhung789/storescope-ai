@@ -327,11 +327,11 @@ export default function ReceptionistWidget() {
       {/* Bubble */}
       {!open && (
         <button onClick={() => setOpen(true)}
-          style={{ position:"fixed", bottom:28, right:28, zIndex:9000, width:58, height:58, borderRadius:"50%", border:"none", background:"linear-gradient(135deg,#7c3aed,#6366f1)", cursor:"pointer", boxShadow:"0 6px 24px rgba(124,58,237,0.55)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, transition:"transform 0.2s", animation: isLanding ? "receptBounce 2s ease-in-out infinite" : "none" }}
-          onMouseEnter={e=>(e.currentTarget.style.transform="scale(1.1)")}
-          onMouseLeave={e=>(e.currentTarget.style.transform="scale(1)")}
+          style={{ position:"fixed", bottom:28, right:28, zIndex:9000, width:64, height:64, borderRadius:"50%", border:"none", background:"linear-gradient(135deg,#4c1d95,#7c3aed)", cursor:"pointer", boxShadow:"0 6px 28px rgba(124,58,237,0.65)", display:"flex", alignItems:"center", justifyContent:"center", transition:"transform 0.2s, box-shadow 0.2s", animation: isLanding ? "receptBounce 2s ease-in-out infinite" : "none", overflow:"hidden", padding:0 }}
+          onMouseEnter={e=>{ e.currentTarget.style.transform="scale(1.12)"; e.currentTarget.style.boxShadow="0 8px 32px rgba(124,58,237,0.8)"; }}
+          onMouseLeave={e=>{ e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.boxShadow="0 6px 28px rgba(124,58,237,0.65)"; }}
         >
-          🤖
+          <img src="/guide-icon.png" alt="AI Assistant" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
           {unread > 0 && <span style={{ position:"absolute", top:-3, right:-3, background:"#ef4444", color:"#fff", width:20, height:20, borderRadius:"50%", fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", animation:"receptPulse 1.5s infinite" }}>{unread}</span>}
         </button>
       )}
@@ -342,7 +342,9 @@ export default function ReceptionistWidget() {
 
           {/* Header */}
           <div style={{ padding:"12px 14px", borderBottom:"1px solid #1f1f1f", display:"flex", alignItems:"center", gap:10, background:"linear-gradient(135deg,rgba(124,58,237,0.2),rgba(99,102,241,0.15))", flexShrink:0 }}>
-            <div style={{ width:34, height:34, borderRadius:"50%", background:"linear-gradient(135deg,#7c3aed,#6366f1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>🤖</div>
+            <div style={{ width:36, height:36, borderRadius:"50%", background:"linear-gradient(135deg,#4c1d95,#7c3aed)", flexShrink:0, overflow:"hidden" }}>
+              <img src="/guide-icon.png" alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            </div>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>{ui.subtitle}</div>
               <div style={{ fontSize:10, color:"#4ade80" }}>{ui.online}</div>
@@ -376,7 +378,7 @@ export default function ReceptionistWidget() {
           <div style={{ flex:1, overflow:"auto", padding:"12px 14px", display:"flex", flexDirection:"column", gap:10, minHeight:0 }}>
             {messages.map((m, i) => (
               <div key={i} style={{ display:"flex", justifyContent: m.role==="user" ? "flex-end" : "flex-start", alignItems:"flex-end", gap:6 }}>
-                {m.role === "agent" && <div style={{ width:26, height:26, borderRadius:"50%", background:"linear-gradient(135deg,#7c3aed,#6366f1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, flexShrink:0, marginBottom:2 }}>🤖</div>}
+                {m.role === "agent" && <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#4c1d95,#7c3aed)", flexShrink:0, marginBottom:2, overflow:"hidden" }}><img src="/guide-icon.png" alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} /></div>}
                 <div style={{ maxWidth:"80%", padding:"10px 13px", borderRadius: m.role==="user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.role==="user" ? "linear-gradient(135deg,#7c3aed,#6366f1)" : "#1a1a1a", border: m.role==="agent" ? "1px solid #2a2a2a" : "none", fontSize:12, color:"#e0e0e0", lineHeight:1.7, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
                   {renderText(m.content)}
                   <div style={{ fontSize:9, color: m.role==="user" ? "rgba(255,255,255,0.4)" : "#444", marginTop:4, textAlign:"right" }}>
@@ -387,7 +389,7 @@ export default function ReceptionistWidget() {
             ))}
             {loading && (
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <div style={{ width:26, height:26, borderRadius:"50%", background:"linear-gradient(135deg,#7c3aed,#6366f1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>🤖</div>
+                <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#4c1d95,#7c3aed)", overflow:"hidden" }}><img src="/guide-icon.png" alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} /></div>
                 <div style={{ padding:"10px 14px", background:"#1a1a1a", border:"1px solid #2a2a2a", borderRadius:"16px 16px 16px 4px", display:"flex", gap:4 }}>
                   {[0,1,2].map(d=><div key={d} style={{ width:6, height:6, borderRadius:"50%", background:"#7c3aed", animation:`receptPulse 1.2s ${d*.2}s infinite` }}/>)}
                 </div>
