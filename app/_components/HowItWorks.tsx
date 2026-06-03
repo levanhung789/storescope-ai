@@ -136,6 +136,10 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" style={{ padding: "120px 24px", overflow: "hidden" }}>
       <style>{`
+        @keyframes guideFloat {
+          0%,100%{transform:translateY(0) rotate(-2deg)}
+          50%{transform:translateY(-8px) rotate(2deg)}
+        }
         @keyframes flowDot {
           0%,100%{opacity:.2;transform:scale(1)}
           50%{opacity:1;transform:scale(1.4)}
@@ -178,8 +182,11 @@ export default function HowItWorks() {
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div style={{ textAlign: "center", marginBottom: 80 }}>
 
-          {/* Tag */}
-          <div ref={headerTag.ref} style={{ ...headerTag.style, marginBottom: 20 }}>
+          {/* Guide mascot icon */}
+          <div ref={headerTag.ref} style={{ ...headerTag.style, marginBottom: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <img src="/guide-icon.png" alt="AI Guide" style={{ width: 80, height: 80, objectFit: "contain", filter: "drop-shadow(0 0 20px rgba(124,58,237,0.6))", animation: "guideFloat 3s ease-in-out infinite" }} />
+            </div>
             <span style={{
               fontSize: 11, fontWeight: 700, letterSpacing: "0.2em",
               textTransform: "uppercase", color: "#7c3aed",
@@ -214,7 +221,7 @@ export default function HowItWorks() {
             </p>
             {/* Flow indicators */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, flexWrap: "wrap", rowGap: 8 }}>
-              {["📥 Ingest", "🔍 OCR", "👁️ Vision", "⚙️ Normalize", "🎯 Match", "💡 Insights"].map((s, i) => (
+              {["01 Ingest", "02 OCR", "03 Vision", "04 Normalize", "05 Match", "06 Insights"].map((s, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center" }}>
                   <span style={{
                     fontSize: 11, color: i === 5 ? "#a78bfa" : "#555",
@@ -291,16 +298,16 @@ export default function HowItWorks() {
                     </span>
                   </div>
 
-                  {/* Icon */}
+                  {/* Icon — guide robot */}
                   <div style={{
-                    width: 44, height: 44, borderRadius: 12, marginBottom: 16,
-                    background: `${step.color}15`, border: `1px solid ${step.color}30`,
+                    width: 52, height: 52, borderRadius: 14, marginBottom: 16,
+                    background: `${step.color}12`, border: `1px solid ${step.color}28`,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 20,
                     animation: "pulseRing 3s ease infinite",
                     animationDelay: `${i * 0.4}s`,
+                    overflow: "hidden",
                   }}>
-                    {step.icon}
+                    <img src="/guide-icon.png" alt="" style={{ width: 40, height: 40, objectFit: "contain", filter: `drop-shadow(0 0 6px ${step.color}90)` }} />
                   </div>
 
                   {/* Title */}
