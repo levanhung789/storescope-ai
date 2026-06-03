@@ -89,6 +89,18 @@ interface PromoProduct {
   sector: string; start: string; end: string; createdAt: number;
 }
 
+// ── Product image mapping ─────────────────────────────────────────────────────
+const PRODUCT_IMG: Record<string, string> = {
+  "pp1": "/products/PEPsi 1.5L.png",
+  "pp2": "/products/Lay's Classic 120g.png",
+  "pp3": "/products/Sting Dâu 330ml × 6.png",
+  "pp4": "/products/Vinamilk Sữa Tươi 1L.png",
+  "pp5": "/products/Cheetos Flamin Hot 85g.png",
+  "pp6": "/products/Aquafina 500ml × 24.png",
+  "pp7": "/products/Oreo Sandwich 432g.png",
+  "pp8": "/products/Hảo Hảo Tôm Chua Cay ×30.png",
+};
+
 const PROMO_PRODUCTS: PromoProduct[] = [
   { id:"pp1", name:"Pepsi Original 1.5L",      origPrice:25000, salePrice:18000, discount:28, seller:"BigC",       location:"Hà Nội",         sector:"beverage", start:"20/05", end:"05/06", createdAt:Date.now()-1800000 },
   { id:"pp2", name:"Lay's Classic 120g",        origPrice:18000, salePrice:14000, discount:22, seller:"Winmart",    location:"TP. Hồ Chí Minh",sector:"snack",    start:"22/05", end:"10/06", createdAt:Date.now()-3600000 },
@@ -794,8 +806,8 @@ export default function DashboardPage() {
                     const thumbColors: Record<string,string> = { beverage:"linear-gradient(135deg,#1e3a8a,#3b82f6)", snack:"linear-gradient(135deg,#78350f,#f59e0b)", dairy:"linear-gradient(135deg,#065f46,#10b981)", instant:"linear-gradient(135deg,#7c2d12,#ef4444)" };
                     return (
                       <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 8, background: thumbColors[p.sector] ?? "linear-gradient(135deg,#4c1d95,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                          {p.sector === "beverage" ? "🥤" : p.sector === "snack" ? "🍟" : p.sector === "dairy" ? "🥛" : "🍜"}
+                        <div style={{ width: 38, height: 38, borderRadius: 8, background: thumbColors[p.sector] ?? "#111", flexShrink: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                          {PRODUCT_IMG[p.id] ? <img src={PRODUCT_IMG[p.id]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", fontSize: 16 }}>{p.sector === "beverage" ? "🥤" : p.sector === "snack" ? "🍟" : p.sector === "dairy" ? "🥛" : "🍜"}</span>}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
@@ -854,8 +866,8 @@ export default function DashboardPage() {
                     const thumbColors: Record<string,string> = { beverage:"linear-gradient(135deg,#1e3a8a,#3b82f6)", snack:"linear-gradient(135deg,#78350f,#f59e0b)", dairy:"linear-gradient(135deg,#065f46,#10b981)", instant:"linear-gradient(135deg,#7c2d12,#ef4444)" };
                     return (
                       <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: thumbColors[p.sector] ?? "linear-gradient(135deg,#4c1d95,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                          {p.sector === "beverage" ? "🥤" : p.sector === "snack" ? "🍟" : p.sector === "dairy" ? "🥛" : "🍜"}
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: thumbColors[p.sector] ?? "#111", flexShrink: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                          {PRODUCT_IMG[p.id] ? <img src={PRODUCT_IMG[p.id]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", fontSize: 18 }}>{p.sector === "beverage" ? "🥤" : p.sector === "snack" ? "🍟" : p.sector === "dairy" ? "🥛" : "🍜"}</span>}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
