@@ -344,76 +344,144 @@ export default function DashboardPage() {
       {/* z:1 dark overlay — text contrast ≥4.5:1 (§6) */}
       <div style={{ position: "fixed", inset: 0, zIndex: 1, background: "rgba(6,4,12,0.93)", pointerEvents: "none" }} />
 
-      {/* ── SIDEBAR — Paytop/Finance deep-blue style (z:2) ───────────────── */}
+      {/* ── SIDEBAR — reference design ───────────────────────────────────── */}
       <aside style={{
-        width: 228, flexShrink: 0, zIndex: 2, position: "relative",
-        background: "linear-gradient(160deg, #0d0221 0%, #1a0840 40%, #120630 70%, #0a0118 100%)",
-        borderRight: "1px solid rgba(124,58,237,0.15)",
-        display: "flex", flexDirection: "column",
+        width: 242, flexShrink: 0, zIndex: 2, position: "relative",
+        background: "linear-gradient(175deg, #0d0221 0%, #130535 35%, #0c0228 65%, #080118 100%)",
+        borderRight: "1px solid rgba(124,58,237,0.12)",
+        display: "flex", flexDirection: "column", overflowY: "auto",
       }}>
 
-        {/* Logo */}
-        <div style={{ padding: "22px 20px 20px" }}>
-          <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1 }}>storescope<span style={{ color: "#a78bfa" }}>.ai</span></div>
-              <div style={{ fontSize: 9, color: "rgba(167,139,250,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 1 }}>Retail Intelligence</div>
-            </div>
-          </a>
+        {/* ── Logo — icon square + text ───────────────────────────────── */}
+        <div style={{ padding: "20px 18px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#5b21b6,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.55), inset 0 1px 0 rgba(255,255,255,0.15)", flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          </div>
+          <div>
+            <a href="/" style={{ textDecoration: "none" }}>
+              <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1 }}>storescope<span style={{ color: "#a78bfa" }}>.ai</span></div>
+            </a>
+            <div style={{ fontSize: 8, color: "rgba(167,139,250,0.45)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 2 }}>Retail Intelligence</div>
+          </div>
         </div>
 
-        {/* User info block — Finance sidebar style */}
-        <div style={{ margin: "0 12px 16px", padding: "12px 14px", background: "rgba(124,58,237,0.12)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.2)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-              {displayName[0]?.toUpperCase() ?? "U"}
+        {/* ── User card — glassmorphism + glow ring avatar ────────────── */}
+        <div style={{ margin: "0 12px 14px", padding: "14px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(10px)", borderRadius: 14, border: "1px solid rgba(124,58,237,0.22)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Avatar with glow ring */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#ec4899,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: "#fff", boxShadow: "0 0 0 2px rgba(124,58,237,0.4), 0 0 20px rgba(124,58,237,0.5)" }}>
+                {displayName[0]?.toUpperCase() ?? "U"}
+              </div>
+              {/* Online dot */}
+              <div style={{ position: "absolute", bottom: 2, right: 2, width: 9, height: 9, borderRadius: "50%", background: "#a855f7", border: "2px solid #130535", boxShadow: "0 0 6px #a855f7" }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
-              <div style={{ fontSize: 10, color: "#a78bfa" }}>Retail Analyst</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
+              <div style={{ fontSize: 10, color: "rgba(167,139,250,0.6)", marginTop: 1 }}>Retail Analyst</div>
             </div>
           </div>
         </div>
 
-        {/* Nav — white pill active (Paytop style, §9 nav-state-active) */}
-        <div style={{ fontSize: 9, color: "rgba(167,139,250,0.4)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "0 20px", marginBottom: 6 }}>OVERVIEW</div>
-        <nav style={{ flex: 1, padding: "0 10px", display: "flex", flexDirection: "column", gap: 2 }}>
-          <LanguageSwitcher variant="sidebar" />
-          {NAV.map(item => (
-            <Link key={item.label} href={item.href} style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, textDecoration: "none",
-              fontSize: 13, fontWeight: item.active ? 600 : 400,
-              background: item.active ? "rgba(255,255,255,0.14)" : "transparent",
-              color: item.active ? "#ffffff" : "rgba(167,139,250,0.55)",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={e => { if (!item.active) e.currentTarget.style.color = "rgba(167,139,250,0.85)"; }}
-            onMouseLeave={e => { if (!item.active) e.currentTarget.style.color = "rgba(167,139,250,0.55)"; }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-              {item.label}
-            </Link>
-          ))}
+        {/* ── OVERVIEW nav ────────────────────────────────────────────── */}
+        <nav style={{ flex: 1, padding: "0 10px", display: "flex", flexDirection: "column" }}>
 
-          <div style={{ fontSize: 9, color: "rgba(167,139,250,0.4)", letterSpacing: "0.14em", textTransform: "uppercase", padding: "12px 14px 6px" }}>SECTORS</div>
-          {sectors.map(s => (
-            <button key={s.sectorKey} onClick={() => setSelectedSectorKey(s.sectorKey)}
-              style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12, fontFamily: "inherit", transition: "all 0.15s",
-                background: selectedSectorKey === s.sectorKey ? "rgba(255,255,255,0.14)" : "transparent",
-                color: selectedSectorKey === s.sectorKey ? "#ffffff" : "rgba(167,139,250,0.5)" }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: selectedSectorKey === s.sectorKey ? "#a78bfa" : "rgba(124,58,237,0.4)", flexShrink: 0 }} />
-              {s.sectorLabel}
-            </button>
-          ))}
+          {/* Language switcher */}
+          <div style={{ marginBottom: 8 }}>
+            <LanguageSwitcher variant="sidebar" />
+          </div>
+
+          {/* Section label */}
+          <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(167,139,250,0.4)", letterSpacing: "0.18em", textTransform: "uppercase", padding: "4px 10px 8px" }}>OVERVIEW</div>
+
+          {/* Nav items — reference style */}
+          {NAV.map((item, i) => {
+            // Icon paths per nav item
+            const ICONS: Record<string, React.ReactNode> = {
+              "nav.dashboard":   <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
+              "nav.analysis":    <><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,
+              "nav.visionAgent": <><path d="M1 12s4-8 11-8 11 8-11 8-11-8"/><circle cx="12" cy="12" r="3"/></>,
+              "nav.agent":       <><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h4"/><circle cx="9" cy="9" r="0.5" fill="currentColor"/></>,
+              "nav.reports":     <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></>,
+              "nav.vault":       <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+              "nav.layout":      <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+              "nav.forum":       <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,
+            };
+            const icon = ICONS[item.key] ?? <circle cx="12" cy="12" r="4"/>;
+
+            return (
+              <Link key={item.key} href={item.href} style={{ textDecoration: "none", display: "block", marginBottom: 4 }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: item.active ? "11px 12px" : "9px 10px",
+                  borderRadius: 12,
+                  background: item.active
+                    ? "linear-gradient(135deg, rgba(100,40,200,0.85) 0%, rgba(140,60,230,0.7) 50%, rgba(80,20,160,0.85) 100%)"
+                    : "transparent",
+                  border: item.active ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
+                  boxShadow: item.active ? "0 4px 20px rgba(124,58,237,0.35), inset 0 1px 0 rgba(255,255,255,0.1)" : "none",
+                  transition: "all 0.2s ease",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={e => { if (!item.active) { e.currentTarget.style.background = "rgba(124,58,237,0.1)"; e.currentTarget.style.border = "1px solid rgba(124,58,237,0.2)"; }}}
+                onMouseLeave={e => { if (!item.active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.border = "1px solid transparent"; }}}>
+
+                  {/* Icon container */}
+                  {item.active ? (
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+                    </div>
+                  ) : (
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+                    </div>
+                  )}
+
+                  {/* Label */}
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: item.active ? 700 : 400, color: item.active ? "#fff" : "rgba(167,139,250,0.6)", letterSpacing: item.active ? "-0.01em" : "0" }}>
+                    {item.label}
+                  </span>
+
+                  {/* Chevron */}
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={item.active ? "rgba(255,255,255,0.7)" : "rgba(124,58,237,0.35)"} strokeWidth="2.5">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </div>
+              </Link>
+            );
+          })}
+
+          {/* ── SECTORS ─────────────────────────────────────────────── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 10px 8px" }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(167,139,250,0.4)", letterSpacing: "0.18em", textTransform: "uppercase" }}>SECTORS</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(124,58,237,0.3) 0%, transparent 100%)" }} />
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#7c3aed", boxShadow: "0 0 6px #7c3aed", display: "inline-block" }} />
+          </div>
+
+          {sectors.map(s => {
+            const isActive = selectedSectorKey === s.sectorKey;
+            return (
+              <button key={s.sectorKey} onClick={() => setSelectedSectorKey(s.sectorKey)}
+                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", borderRadius: 12, border: isActive ? "1px solid rgba(124,58,237,0.3)" : "1px solid transparent", cursor: "pointer", fontFamily: "inherit", marginBottom: 4, transition: "all 0.2s",
+                  background: isActive ? "linear-gradient(135deg, rgba(80,20,160,0.7) 0%, rgba(100,40,180,0.5) 100%)" : "transparent",
+                  boxShadow: isActive ? "0 4px 16px rgba(124,58,237,0.25)" : "none",
+                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(124,58,237,0.08)"; }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: isActive ? "#a78bfa" : "rgba(124,58,237,0.35)", boxShadow: isActive ? "0 0 6px #a78bfa" : "none", flexShrink: 0, transition: "all 0.2s" }} />
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.7)" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                </div>
+                <span style={{ flex: 1, fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? "#fff" : "rgba(167,139,250,0.55)", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.sectorLabel}</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={isActive ? "rgba(255,255,255,0.6)" : "rgba(124,58,237,0.3)"} strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Bottom actions */}
-        <div style={{ padding: "12px 10px", borderTop: "1px solid rgba(124,58,237,0.1)" }}>
-          <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 10, fontSize: 12, color: "#c4b5fd", textDecoration: "none", fontWeight: 600, marginBottom: 4 }}>
+        {/* ── Bottom actions ─────────────────────────────────────────── */}
+        <div style={{ padding: "12px 10px 16px", borderTop: "1px solid rgba(124,58,237,0.1)" }}>
+          <Link href="/dashboard/analysis" style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: "linear-gradient(135deg,rgba(100,30,200,0.4),rgba(140,60,230,0.3))", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 10, fontSize: 12, color: "#c4b5fd", textDecoration: "none", fontWeight: 600, marginBottom: 4, boxShadow: "0 0 12px rgba(124,58,237,0.15)" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             New Analysis
           </Link>
