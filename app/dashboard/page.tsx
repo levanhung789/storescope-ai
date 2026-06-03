@@ -19,14 +19,14 @@ interface Sector   { sectorKey: string; sectorLabel: string; sectorFolder: strin
 // ── App launcher data ─────────────────────────────────────────────────────────
 
 const APPS = [
-  { icon: "📊", label: "AI Analysis",   desc: "Shelf & SKU detection",    href: "/dashboard/analysis",     color: "#7c3aed" },
-  { icon: "👁️", label: "Vision Agent",  desc: "8-step FMCG pipeline",     href: "/dashboard/vision-agent", color: "#3b82f6" },
-  { icon: "🤖", label: "AI Agent",      desc: "Autonomous analysis",       href: "/dashboard/agent",        color: "#10b981" },
-  { icon: "📋", label: "My Reports",    desc: "Analysis history",          href: "/dashboard/reports",      color: "#f59e0b" },
-  { icon: "👤", label: "My Profile",    desc: "Data vault & listings",     href: "/dashboard/profile",      color: "#ec4899" },
-  { icon: "🏪", label: "Layout Editor", desc: "3D store planning",         href: "/layout-editor",          color: "#8b5cf6" },
-  { icon: "💬", label: "Forum",         desc: "Community marketplace",     href: "/forum",                  color: "#06b6d4" },
-  { icon: "🗂️", label: "Catalog",       desc: "FMCG product database",     href: "/dashboard",              color: "#a78bfa" },
+  { img: "/apps/ai-analysis.png",   label: "AI Analysis",   href: "/dashboard/analysis",     color: "#7c3aed" },
+  { img: "/apps/vision-agent.png",  label: "Vision Agent",  href: "/dashboard/vision-agent", color: "#3b82f6" },
+  { img: "/apps/ai-agent.png",      label: "AI Agent",      href: "/dashboard/agent",        color: "#10b981" },
+  { img: "/apps/my-reports.png",    label: "My Reports",    href: "/dashboard/reports",      color: "#f59e0b" },
+  { img: "/apps/my-profile.png",    label: "My Profile",    href: "/dashboard/profile",      color: "#ec4899" },
+  { img: "/apps/layout-editor.png", label: "Layout Editor", href: "/layout-editor",          color: "#8b5cf6" },
+  { img: "/apps/forum.png",         label: "Forum",         href: "/forum",                  color: "#06b6d4" },
+  { img: "/apps/catalog.png",       label: "Catalog",       href: "/dashboard",              color: "#a78bfa" },
 ];
 
 // ── Mock Promotion data (by sector keyword) ───────────────────────────────────
@@ -542,32 +542,58 @@ export default function DashboardPage() {
           {/* ── App launcher + 4 panels grid ─────────────────────────── */}
           <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 16, alignItems: "start" }}>
 
-            {/* App Launcher — compact icon grid */}
-            <div style={{ ...card, padding: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#888", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>Tools & Apps</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {/* ── App Launcher — reference card style ─────────────────── */}
+            <div style={{ background: "rgba(8,4,22,0.7)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 20, padding: "18px 16px 14px" }}>
+
+              {/* Section title like reference */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#f0f0f0", letterSpacing: "0.18em", textTransform: "uppercase" }}>TOOLS &amp; APPS</span>
+                <span style={{ color: "#a78bfa", fontSize: 12 }}>✦</span>
+                <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(124,58,237,0.4) 0%, transparent 100%)" }} />
+              </div>
+
+              {/* 2-col grid of app cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {APPS.map(app => (
-                  <Link key={app.label} href={app.href}
-                    style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, textDecoration: "none", transition: "all 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = app.color; e.currentTarget.style.background = `${app.color}14`; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: `${app.color}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: 16 }}>{app.icon}</span>
+                  <Link key={app.label} href={app.href} style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: "#080614", border: "1px solid rgba(255,255,255,0.07)", aspectRatio: "1/1", transition: "transform 0.2s, border-color 0.2s", cursor: "pointer" }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.borderColor = `${app.color}60`; e.currentTarget.style.boxShadow = `0 0 18px ${app.color}30`; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.boxShadow = "none"; }}>
+                      {/* 3D icon image fills the card */}
+                      <img src={app.img} alt={app.label}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      {/* Bottom label overlay */}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 10px 8px", background: "linear-gradient(0deg, rgba(4,2,16,0.92) 0%, transparent 100%)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>{app.label}</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "#ccc", lineHeight: 1.2 }}>{app.label}</span>
                   </Link>
                 ))}
               </div>
+
+              {/* Sector stats card */}
               {currentSector && (
-                <div style={{ marginTop: 12, padding: "10px 12px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 10 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#a78bfa", marginBottom: 6 }}>{currentSector.sectorLabel}</div>
+                <div style={{ marginTop: 12, padding: "12px 14px", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(124,58,237,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>{currentSector.sectorLabel}</span>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                  </div>
                   {[
-                    { label: "Companies", val: currentSector.companies.length },
-                    { label: "Products",  val: currentSector.companies.reduce((a,c) => a + c.products.length, 0) },
+                    { icon: "M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0H5m14 0h2m-16 0H3", label: "Companies", val: currentSector.companies.length },
+                    { icon: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z", label: "Products", val: currentSector.companies.reduce((a,c) => a + c.products.length, 0) },
                   ].map(r => (
-                    <div key={r.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: "#555" }}>{r.label}</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#a78bfa" }}>{r.val}</span>
+                    <div key={r.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><path d={r.icon}/></svg>
+                        <span style={{ fontSize: 11, color: "#555" }}>{r.label}</span>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#a78bfa", letterSpacing: "-0.02em" }}>{r.val}</span>
                     </div>
                   ))}
                 </div>
