@@ -1416,3 +1416,110 @@ References: Coursue Dashboard + Finance Dashboard (Alice Smith) + Paytop (Aida M
 4. Pitch StoreScope cho Circle grants qua Canteen channel
 5. Tích hợp RetailLayoutNFT vào `/forum` — mint NFT khi save layout
 6. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan TX
+
+---
+
+## Nhật ký làm việc — 2026-06-04
+
+### Công việc đã hoàn thành
+
+#### 1. Dashboard — Sidebar redesign theo reference
+- Deep purple gradient sidebar `linear-gradient(175deg, #0d0221, #130535, #0a0118)`
+- Logo: 42px glow square icon
+- User card: glassmorphism + 46px avatar với glow ring + online dot tím
+- Nav items: circular icon containers (inactive) / square icon (active) + unique SVG icon mỗi route + chevron `>`
+- Active item: purple gradient card + border + glow shadow
+- Sectors: dot-line header + circle icon + name + chevron, active = gradient card
+- Width: 242px
+
+#### 2. Dashboard — 4 Panels redesign theo reference image
+- **Search**: 44px circular blue icon header + glow border input + product thumbnails + neon green `#00e676` prices
+- **Promotions**: Purple icon + promo cards với left accent line + neon green outlined discount box + folded corner ribbon
+- **Products**: Green icon + rows với colored thumbnails + neon green price + red discount badge
+- **Marketplace**: Indigo icon + holographic radar rings + SVG pulse waveform + purple gradient "List your data" button
+
+#### 3. App Launcher — PremiumAppCard với premium effects (ui-ux-pro-max §7)
+- `PremiumAppCard` React component với: 3D mouse-tracking tilt, spring physics cubic-bezier(0.34,1.56,0.64,1), shimmer sweep (translateX only), color glow orb, image zoom, label slide-up, chevron nudge
+- Stagger entrance: `cardEntrance` animation, 55ms × index delay
+- Scale feedback 0.95 on press
+- `@media prefers-reduced-motion` disable all (§1 a11y)
+
+#### 4. Dashboard — Sidebar nav redesign (reference mobile screenshot)
+- Circular icon containers per nav item với SVG icons riêng (grid, chart, eye, robot, document, user, house, chat)
+- Active: purple gradient card + border glow
+- SECTORS header với dot + gradient line
+
+#### 5. 40 Product images
+- Copy 40 ảnh sản phẩm FMCG holographic vào `public/products/`
+- `PRODUCT_IMG` mapping cho 8 promo products trong dashboard
+- Dashboard panels dùng ảnh thật thay emoji
+
+#### 6. Trang Catalog `/catalog`
+- 40 sản phẩm đầy đủ: Pepsi, Mirinda, 7Up, Tea Plus, Sting, Aquafina, Vinamilk, Lay's, Cheetos, Oreo, Hảo Hảo
+- Category filter + Brand filter + Search + Sort (discount/price asc/desc)
+- Product cards: ảnh holographic + brand + name + neon green price + discount badge
+- Stagger entrance animation
+
+#### 7. Guide Icon — thay thế toàn bộ emoji icons
+- `public/guide-icon.png` — glassmorphism robot bubble với notification dot
+- `HowItWorks.tsx`: floating mascot 80px (guideFloat animation) + step cards 52px icons
+- `ReceptionistWidget.tsx`: 4 chỗ thay 🤖 → guide-icon.png (64px button, 36px header, 28px message/typing)
+
+#### 8. FeaturesGrid (Homepage) — redesign theo reference
+- Filter tabs: single pill glassmorphism container, active = purple gradient, dividers
+- Feature cards: dark navy gradient + unique SVG particle/wave background 6 variants
+- Icon: 68px rounded square với gradient + glow
+- Category label uppercase colored + title 20px bold + See More colored per card
+- Badges: Most Popular / New / Live (pulse dot)
+- Hover: translateY(-5px) + color border + colored glow
+
+#### 9. Scan Trend chart — period tabs + tooltip
+- Tabs: Ngày (7 ngày) / Tuần (8 tuần) / Tháng (12 tháng)
+- Summary: Tổng / Trung bình / Cao nhất
+- Y-axis labels + hover tooltip (số lượt + delta ▲/▼)
+- 2 đường: hiện tại (solid) + kỳ trước (dashed)
+
+### Commits 2026-06-04
+
+| Commit | Mô tả |
+|---|---|
+| `f566a62` | feat(dashboard): sidebar redesign reference image |
+| `32aa63b` | feat(dashboard): 4 panels redesign reference image |
+| `f2c9770` | feat(dashboard): premium app card effects ui-ux-pro-max §7 |
+| `3b1d0f1` | feat(dashboard): app launcher 3D holographic icons |
+| `a310a8c` | feat: 40 product images + catalog page |
+| `d32531b` | feat(howItWorks): replace emoji icons with robot guide icon |
+| `b0cea76` | fix(receptionist): replace emoji with guide-icon.png |
+| `5fef18b` | feat(homepage): FeaturesGrid redesign per reference image |
+| `fa0d2ab` | feat(dashboard): Scan Trend period tabs + tooltip |
+
+**Đã push lên:** `origin` (storescope-ai-Shelby)
+
+### Assets mới thêm
+
+| File | Mô tả |
+|---|---|
+| `public/guide-icon.png` | Robot bubble glassmorphism icon |
+| `public/apps/*.png` | 8 app launcher 3D holographic icons |
+| `public/products/*.png` | 40 FMCG product holographic images |
+| `public/hero-bg.png` | Holographic retail shelves hero |
+| `public/dashboard-bg.png` | Data streams background |
+
+### Quyết định kỹ thuật — 2026-06-04
+
+| Quyết định | Lý do |
+|---|---|
+| SVG particle backgrounds mỗi card | Unique visual identity, no image dependency, performance tốt |
+| `PremiumAppCard` component riêng | Cần useState/useRef per card cho 3D tilt — không thể inline |
+| Neon green `#00e676` cho prices | Match với reference image, tạo contrast mạnh |
+| `PRODUCT_IMG` mapping by id | Clean separation, dễ mở rộng thêm sản phẩm |
+| `guide-icon.png` thay emoji toàn bộ | Brand consistency, emoji inconsistent across platforms |
+| Filter tabs single pill container | Match reference, professional SaaS look |
+
+### Việc cần làm tiếp (cập nhật 2026-06-04)
+
+1. Deploy lên Vercel
+2. Submit Google Form Arc OSS Showcase
+3. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan
+4. Tích hợp RetailLayoutNFT vào `/forum`
+5. Pitch StoreScope cho Circle grants
