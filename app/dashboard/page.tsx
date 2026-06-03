@@ -199,17 +199,30 @@ export default function DashboardPage() {
     borderRadius: 16,
   };
 
-  // SVG area chart data — mock monthly scan trends (Paytop style)
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const THIS_YEAR  = [12, 18, 15, 25, 32, 28, 42, 38, 50, 46, 58, 65];
-  const LAST_YEAR  = [8,  12, 10, 18, 22, 20, 30, 27, 35, 32, 40, 45];
-  const chartW = 600; const chartH = 120; const pad = 20;
-  const toY = (v: number) => chartH - pad - ((v / 70) * (chartH - pad * 2));
-  const toX = (i: number) => pad + (i / 11) * (chartW - pad * 2);
-  const makePath = (data: number[]) =>
-    data.map((v,i) => `${i === 0 ? "M" : "L"} ${toX(i).toFixed(1)} ${toY(v).toFixed(1)}`).join(" ");
-  const makeArea = (data: number[]) =>
-    makePath(data) + ` L ${toX(11).toFixed(1)} ${chartH} L ${toX(0).toFixed(1)} ${chartH} Z`;
+  // ── Scan Trend — period tabs + hover tooltip ──────────────────────────────
+  const [chartPeriod, setChartPeriod] = useState<"day"|"week"|"month">("month");
+  const [hoveredPoint, setHoveredPoint] = useState<{ i: number; v: number; x: number; y: number; label: string } | null>(null);
+
+  const CHART_PERIODS = {
+    day: {
+      label: "Ngày", subLabel: "7 ngày gần nhất",
+      labels:   ["T2",  "T3",  "T4",  "T5",  "T6",  "T7",  "CN"],
+      current:  [3,     7,     5,     12,    9,     4,     8],
+      previous: [2,     5,     4,     8,     6,     3,     5],
+    },
+    week: {
+      label: "Tuần", subLabel: "8 tuần gần nhất",
+      labels:   ["T1","T2","T3","T4","T5","T6","T7","T8"],
+      current:  [18,  25,  22,  35,  28,  42,  38,  45],
+      previous: [12,  18,  16,  25,  20,  30,  27,  35],
+    },
+    month: {
+      label: "Tháng", subLabel: "12 tháng gần nhất",
+      labels:   ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+      current:  [12,  18,  15,  25,  32,  28,  42,  38,  50,  46,  58,  65],
+      previous: [8,   12,  10,  18,  22,  20,  30,  27,  35,  32,  40,  45],
+    },
+  };
 
   const displayName = anonUser?.displayName ?? "User";
 
@@ -391,56 +404,140 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── Area Chart — Paytop smooth area chart ─────────────────── */}
-          <div style={{ ...card, padding: "18px 20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0" }}>Scan Trend</div>
-                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Analyses performed per month</div>
-              </div>
-              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                  <span style={{ width: 10, height: 3, borderRadius: 999, background: "#7c3aed", display: "inline-block" }} />
-                  <span style={{ fontSize: 11, color: "#666" }}>This Year</span>
-                </div>
-                <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                  <span style={{ width: 10, height: 3, borderRadius: 999, background: "#3b82f6", display: "inline-block" }} />
-                  <span style={{ fontSize: 11, color: "#666" }}>Last Year</span>
-                </div>
-                <span style={{ fontSize: 11, color: "#555", padding: "4px 10px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, cursor: "pointer" }}>By months ▾</span>
-              </div>
-            </div>
+          {/* ── Scan Trend — period tabs + tooltip + summary stats ───── */}
+          {(() => {
+            const pd = CHART_PERIODS[chartPeriod];
+            const n  = pd.current.length;
+            const maxVal = Math.max(...pd.current, ...pd.previous);
+            const total  = pd.current.reduce((a, b) => a + b, 0);
+            const avg    = Math.round(total / n);
+            const peak   = Math.max(...pd.current);
+            const W = 560; const H = 150; const PL = 34; const PR = 12; const PB = 22; const PT = 12;
+            const iW = W - PL - PR; const iH = H - PT - PB;
+            const tx = (i: number) => PL + (i / (n - 1)) * iW;
+            const ty = (v: number) => PT + iH - ((v / (maxVal * 1.15)) * iH);
+            const linePath = (data: number[]) => data.map((v,i) => `${i===0?"M":"L"} ${tx(i).toFixed(1)} ${ty(v).toFixed(1)}`).join(" ");
+            const areaPath = (data: number[]) => linePath(data) + ` L ${tx(n-1).toFixed(1)} ${H-PB} L ${PL} ${H-PB} Z`;
+            const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({ val: Math.round(maxVal * 1.15 * f), y: ty(maxVal * 1.15 * f) }));
 
-            {/* SVG Area Chart */}
-            <div style={{ overflowX: "auto" }}>
-              <svg width="100%" viewBox={`0 0 ${chartW} ${chartH + 24}`} style={{ display: "block" }}>
-                <defs>
-                  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.3"/>
-                    <stop offset="100%" stopColor="#7c3aed" stopOpacity="0"/>
-                  </linearGradient>
-                  <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2"/>
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0"/>
-                  </linearGradient>
-                </defs>
-                {/* Grid lines */}
-                {[0.25, 0.5, 0.75, 1].map(f => (
-                  <line key={f} x1={pad} y1={toY(70 * f)} x2={chartW - pad} y2={toY(70 * f)} stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
-                ))}
-                {/* Area fills */}
-                <path d={makeArea(LAST_YEAR)} fill="url(#g2)"/>
-                <path d={makeArea(THIS_YEAR)} fill="url(#g1)"/>
-                {/* Lines */}
-                <path d={makePath(LAST_YEAR)} fill="none" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d={makePath(THIS_YEAR)} fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                {/* Month labels */}
-                {MONTHS.map((m, i) => (
-                  <text key={m} x={toX(i)} y={chartH + 18} textAnchor="middle" fill="#444" fontSize="9">{m}</text>
-                ))}
-              </svg>
-            </div>
-          </div>
+            return (
+              <div style={{ ...card, padding: "20px 22px 16px" }}>
+
+                {/* Header: title + period tabs */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0" }}>Scan Trend</div>
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{pd.subLabel} · số lượt phân tích hàng hóa</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {(["day","week","month"] as const).map(p => (
+                      <button key={p} onClick={() => { setChartPeriod(p); setHoveredPoint(null); }}
+                        style={{ padding: "5px 13px", borderRadius: 8, border: `1px solid ${chartPeriod===p ? "#7c3aed" : "rgba(255,255,255,0.08)"}`, background: chartPeriod===p ? "rgba(124,58,237,0.15)" : "transparent", color: chartPeriod===p ? "#a78bfa" : "#555", fontSize: 12, fontWeight: chartPeriod===p ? 600 : 400, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
+                        {CHART_PERIODS[p].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary stats row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 28, marginBottom: 14, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  {[
+                    { label: "Tổng", value: total, color: "#a78bfa" },
+                    { label: "TB/" + pd.label.toLowerCase(), value: avg, color: "#60a5fa" },
+                    { label: "Cao nhất", value: peak, color: "#4ade80" },
+                  ].map(s => (
+                    <div key={s.label}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: s.color, letterSpacing: "-0.03em", lineHeight: 1 }}>{s.value}</div>
+                      <div style={{ fontSize: 10, color: "#444", marginTop: 2, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
+                    </div>
+                  ))}
+                  <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                      <span style={{ width: 12, height: 2, background: "#7c3aed", display: "inline-block", borderRadius: 1 }} />
+                      <span style={{ fontSize: 11, color: "#555" }}>Hiện tại</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                      <span style={{ width: 12, height: 2, background: "#3b82f6", display: "inline-block", borderRadius: 1, opacity: 0.55 }} />
+                      <span style={{ fontSize: 11, color: "#555" }}>Kỳ trước</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SVG Chart */}
+                <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block", overflow: "visible" }}>
+                  <defs>
+                    <linearGradient id="tg1" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4"/><stop offset="100%" stopColor="#7c3aed" stopOpacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="tg2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15"/><stop offset="100%" stopColor="#3b82f6" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+
+                  {/* Y-axis grid + labels */}
+                  {yTicks.map(({ val, y }) => val > 0 && (
+                    <g key={val}>
+                      <line x1={PL} y1={y} x2={W-PR} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+                      <text x={PL-5} y={y+3} textAnchor="end" fill="#333" fontSize="8.5" fontFamily="monospace">{val}</text>
+                    </g>
+                  ))}
+
+                  {/* Areas */}
+                  <path d={areaPath(pd.previous)} fill="url(#tg2)"/>
+                  <path d={areaPath(pd.current)}  fill="url(#tg1)"/>
+
+                  {/* Lines */}
+                  <path d={linePath(pd.previous)} fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.55" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 3"/>
+                  <path d={linePath(pd.current)}  fill="none" stroke="#7c3aed" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+
+                  {/* Hover vertical line */}
+                  {hoveredPoint && (
+                    <line x1={hoveredPoint.x} y1={PT} x2={hoveredPoint.x} y2={H-PB} stroke="rgba(255,255,255,0.12)" strokeWidth="1" strokeDasharray="4 2"/>
+                  )}
+
+                  {/* Data points — invisible large hit area + visible dot */}
+                  {pd.current.map((v, i) => {
+                    const cx = tx(i); const cy = ty(v);
+                    const isHovered = hoveredPoint?.i === i;
+                    return (
+                      <g key={i}>
+                        <circle cx={cx} cy={cy} r={10} fill="transparent" style={{ cursor: "crosshair" }}
+                          onMouseEnter={() => setHoveredPoint({ i, v, x: cx, y: cy, label: pd.labels[i] })}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                        <circle cx={cx} cy={cy} r={isHovered ? 5 : 3} fill={isHovered ? "#fff" : "#9060f0"} stroke="#7c3aed" strokeWidth="1.5" style={{ transition: "r 0.1s" }}/>
+                      </g>
+                    );
+                  })}
+
+                  {/* Tooltip box */}
+                  {hoveredPoint && (() => {
+                    const bx = Math.min(hoveredPoint.x - 30, W - PR - 68);
+                    const by = Math.max(hoveredPoint.y - 44, PT);
+                    const prev = pd.previous[hoveredPoint.i];
+                    const diff = hoveredPoint.v - prev;
+                    return (
+                      <g>
+                        <rect x={bx} y={by} width={68} height={36} rx="7" fill="rgba(12,4,28,0.96)" stroke="rgba(124,58,237,0.45)" strokeWidth="1"/>
+                        <text x={bx+34} y={by+14} textAnchor="middle" fill="#a78bfa" fontSize="9" fontWeight="600">{hoveredPoint.label}</text>
+                        <text x={bx+34} y={by+27} textAnchor="middle" fill="#ffffff" fontSize="12" fontWeight="800">{hoveredPoint.v} lượt</text>
+                        {diff !== 0 && (
+                          <text x={bx+34} y={by+27} textAnchor="middle" fill={diff > 0 ? "#4ade80" : "#f87171"} fontSize="8" dy="10">
+                            {diff > 0 ? "▲" : "▼"} {Math.abs(diff)}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })()}
+
+                  {/* X-axis labels */}
+                  {pd.labels.map((l, i) => (
+                    <text key={l} x={tx(i)} y={H-6} textAnchor="middle" fill={hoveredPoint?.i === i ? "#a78bfa" : "#333"} fontSize="9" fontWeight={hoveredPoint?.i === i ? "600" : "400"}>{l}</text>
+                  ))}
+                </svg>
+              </div>
+            );
+          })()}
 
           {/* ── App launcher + 4 panels grid ─────────────────────────── */}
           <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 16, alignItems: "start" }}>
