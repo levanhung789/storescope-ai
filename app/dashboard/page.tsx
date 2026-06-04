@@ -556,17 +556,17 @@ export default function DashboardPage() {
         <div style={{ flex: 1, overflow: "auto" }}>
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* ── HERO — background image, no border ───────────────────── */}
-          <div style={{ position:"relative", overflow:"hidden", borderRadius:14, minHeight:130 }}>
+          {/* ── SHARED BG WRAPPER: Hero + Stats — one image, no border ─── */}
+          <div style={{ position:"relative", overflow:"hidden", borderRadius:14 }}>
 
-            {/* Background image — full cover */}
-            <img src="/hero/hero-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center", display:"block" }} />
+            {/* Single background image for both sections */}
+            <img src="/hero/stats-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center top", display:"block" }} />
 
-            {/* Dark overlay for text readability */}
-            <div style={{ position:"absolute", inset:0, background:"linear-gradient(90deg, rgba(5,4,18,0.82) 0%, rgba(5,4,18,0.55) 50%, rgba(5,4,18,0.2) 100%)", pointerEvents:"none" }} />
+            {/* Dark overlay */}
+            <div style={{ position:"absolute", inset:0, background:"linear-gradient(180deg, rgba(5,4,18,0.75) 0%, rgba(5,4,18,0.8) 60%, rgba(5,4,18,0.9) 100%)", pointerEvents:"none" }} />
 
-            {/* Content on top */}
-            <div style={{ position:"relative", zIndex:2, padding:"22px 26px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            {/* ── HERO content ─────────────────────────────────────────── */}
+            <div style={{ position:"relative", zIndex:2, minHeight:130, padding:"22px 26px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
 
               {/* Left: greeting */}
               <div>
@@ -607,17 +607,10 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </div>
-          </div>
 
-          {/* ── 5 Stats cards — background image, no border ───────────── */}
-          {!loading && (
-            <div style={{ position:"relative", overflow:"hidden", borderRadius:14, padding:"14px" }}>
-              {/* Background image */}
-              <img src="/hero/stats-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center", display:"block" }} />
-              {/* Dark overlay for card readability */}
-              <div style={{ position:"absolute", inset:0, background:"rgba(5,4,18,0.72)", pointerEvents:"none" }} />
-              {/* Cards grid — on top of bg */}
-              <div style={{ position:"relative", zIndex:1, display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
+            {/* ── 5 Stats cards — inside shared bg, no individual bg ─── */}
+            {!loading && (
+              <div style={{ position:"relative", zIndex:2, padding:"0 16px 16px", display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
               {([
                 { label:"Scans",           value:78642+sectors.length*100, change:"16.3%", color:"#7c3aed", icon:"/charts/scans.png",     pts:"0,28 20,22 40,25 60,14 80,18 100,8  120,12 140,4  160,7"  },
                 { label:"Companies",       value:totalCompanies,            change:"8.3%",  color:"#10b981", icon:"/charts/companies.png", pts:"0,26 20,20 40,24 60,16 80,19 100,11 120,15 140,9  160,12" },
@@ -659,8 +652,8 @@ export default function DashboardPage() {
                 </div>
               ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>{/* end shared bg wrapper */}
 
           {/* ── Row 2: Scan Trend + AI Analytics CTA ───────────────────── */}
           <div style={{ display:"grid", gridTemplateColumns:"1.01fr 1fr", gap:14, alignItems:"stretch" }}>
