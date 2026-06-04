@@ -556,21 +556,45 @@ export default function DashboardPage() {
         <div style={{ flex: 1, overflow: "auto" }}>
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* ── Greeting + AI Insight ─────────────────────────────────── */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 270px", gap:14, alignItems:"start" }}>
+          {/* ── HERO — 3-col: text | 3D placeholder | AI Insight ───────── */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 300px", gap:16, alignItems:"center", minHeight:110, background:"linear-gradient(135deg,rgba(10,5,30,0.6),rgba(20,8,50,0.4))", borderRadius:16, padding:"20px 24px", border:"1px solid rgba(124,58,237,0.1)", margin:"0 0 0" }}>
+
+            {/* Left: Greeting */}
             <div>
-              <h1 style={{ fontSize:20, fontWeight:800, color:"#fff", margin:"0 0 3px", letterSpacing:"-0.02em" }}>Good morning, {displayName} 👋</h1>
-              <p style={{ fontSize:12, color:"#555", margin:"0 0 0" }}>Your AI co-pilot for retail intelligence is ready.</p>
+              <h1 style={{ fontSize:24, fontWeight:800, color:"#fff", margin:"0 0 6px", letterSpacing:"-0.025em" }}>Good morning, {displayName} 👋</h1>
+              <p style={{ fontSize:13, color:"rgba(167,139,250,0.5)", margin:0 }}>Your AI co-pilot for retail intelligence is ready.</p>
             </div>
-            <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"11px 14px" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:7 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>AI Insight</span>
-                <span style={{ fontSize:9, padding:"2px 7px", borderRadius:999, background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.25)", color:"#10b981", fontWeight:700 }}>New</span>
+
+            {/* Center: 3D logo placeholder */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <div style={{ position:"relative", width:120, height:100, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                {/* Glow rings */}
+                <div style={{ position:"absolute", width:100, height:100, borderRadius:"50%", border:"1px solid rgba(124,58,237,0.2)", animation:"pulse 3s infinite" }}/>
+                <div style={{ position:"absolute", width:80, height:80, borderRadius:"50%", border:"1px solid rgba(124,58,237,0.3)", animation:"pulse 3s 0.5s infinite" }}/>
+                {/* Hexagon logo */}
+                <div style={{ width:64, height:64, background:"linear-gradient(135deg,#4c1d95,#7c3aed)", clipPath:"polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 0 30px rgba(124,58,237,0.6)", zIndex:1 }}>
+                  <span style={{ fontSize:24, fontWeight:900, color:"#fff", letterSpacing:"-0.05em" }}>S</span>
+                </div>
+                {/* Floating dots */}
+                {[0,1,2,3].map(i => (
+                  <div key={i} style={{ position:"absolute", width:6, height:6, borderRadius:"50%", background:["#7c3aed","#3b82f6","#10b981","#f59e0b"][i], top:`${[10,70,20,60][i]}%`, left:`${[80,10,15,85][i]}%`, animation:`pulse 2s ${i*0.4}s infinite` }}/>
+                ))}
               </div>
-              <p style={{ fontSize:11, color:"#555", lineHeight:1.5, margin:"0 0 8px" }}>
-                <strong style={{ color:"#a78bfa" }}>{currentSector?.sectorLabel ?? "FMCG"}</strong> sales increased this week across 24 key markets.
+            </div>
+
+            {/* Right: AI Insight card */}
+            <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, padding:"14px 16px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+                <span style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>AI Insight</span>
+                <span style={{ fontSize:9, padding:"2px 8px", borderRadius:999, background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.25)", color:"#10b981", fontWeight:700 }}>New</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" style={{ marginLeft:"auto" }}><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <p style={{ fontSize:11, color:"#666", lineHeight:1.5, margin:"0 0 10px" }}>
+                Sales for <strong style={{ color:"#a78bfa" }}>{currentSector?.sectorLabel ?? "FMCG"}</strong> increased by 18.6% this week across 24 key markets.
               </p>
-              <Link href="/dashboard/analysis" style={{ fontSize:10, fontWeight:600, color:"#a78bfa", background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)", borderRadius:7, padding:"4px 10px", textDecoration:"none" }}>View Full Insight →</Link>
+              <Link href="/dashboard/analysis" style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#a78bfa", background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)", borderRadius:8, padding:"5px 12px", textDecoration:"none" }}>
+                View Full Insight →
+              </Link>
             </div>
           </div>
 
@@ -599,7 +623,10 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── Scan Trend — period tabs + tooltip + summary stats ───── */}
+          {/* ── Row 2: Scan Trend (60%) + AI Analytics CTA (40%) ──────── */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:14, alignItems:"stretch" }}>
+
+          {/* ── Scan Trend ─────────────────────────────────────────────── */}
           {(() => {
             const pd = CHART_PERIODS[chartPeriod];
             const n  = pd.current.length;
@@ -734,311 +761,203 @@ export default function DashboardPage() {
             );
           })()}
 
-          {/* ── App launcher + 4 panels grid ─────────────────────────── */}
-          <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 16, alignItems: "start" }}>
+          {/* ── AI Analytics CTA ──────────────────────────────────────── */}
+          <div style={{ position:"relative", background:"linear-gradient(145deg,#0c0525,#180a45,#0a0220)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:16, padding:"28px 22px", overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+            {/* Glow bg */}
+            <div style={{ position:"absolute", top:"-20%", right:"-10%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,0.25) 0%,transparent 70%)", filter:"blur(30px)", pointerEvents:"none" }}/>
+            <div style={{ position:"absolute", bottom:"10%", right:"15%", width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%)", filter:"blur(20px)", pointerEvents:"none" }}/>
 
-            {/* ── App Launcher — reference card style ─────────────────── */}
-            <div style={{ background: "rgba(8,4,22,0.7)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 20, padding: "18px 16px 14px" }}>
-
-              {/* Section title like reference */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#f0f0f0", letterSpacing: "0.18em", textTransform: "uppercase" }}>TOOLS &amp; APPS</span>
-                <span style={{ color: "#a78bfa", fontSize: 12 }}>✦</span>
-                <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(124,58,237,0.4) 0%, transparent 100%)" }} />
-              </div>
-
-              {/* 2-col grid — PremiumAppCard with 3D tilt + shimmer + glow */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {APPS.map((app, i) => (
-                  <PremiumAppCard key={app.label} app={app} index={i} />
-                ))}
-              </div>
-
-              {/* Sector stats card */}
-              {currentSector && (
-                <div style={{ marginTop: 12, padding: "12px 14px", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(124,58,237,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#f0f0f0" }}>{currentSector.sectorLabel}</span>
-                    </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-                  </div>
-                  {[
-                    { icon: "M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0H5m14 0h2m-16 0H3", label: "Companies", val: currentSector.companies.length },
-                    { icon: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z", label: "Products", val: currentSector.companies.reduce((a,c) => a + c.products.length, 0) },
-                  ].map(r => (
-                    <div key={r.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><path d={r.icon}/></svg>
-                        <span style={{ fontSize: 11, color: "#555" }}>{r.label}</span>
-                      </div>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: "#a78bfa", letterSpacing: "-0.02em" }}>{r.val}</span>
-                    </div>
-                  ))}
+            {/* Placeholder for 3D globe image */}
+            <div style={{ position:"absolute", bottom:0, right:0, width:160, height:160, display:"flex", alignItems:"center", justifyContent:"center", opacity:0.4 }}>
+              <div style={{ width:120, height:120, borderRadius:"50%", border:"1px solid rgba(124,58,237,0.3)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div style={{ width:80, height:80, borderRadius:"50%", border:"1px solid rgba(59,130,246,0.3)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.4)" }}/>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* ── 4 Panels — reference design ──────────────────────────── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-
-              {/* ── Panel 1: Search ───────────────────────────────────── */}
-              <div style={{ ...card, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#1e40af,#3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 16px rgba(59,130,246,0.45)" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                  </div>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Search</span>
-                  <span style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: "#3b82f6", boxShadow: "0 0 6px #3b82f6" }} />
-                </div>
-                {/* Search input with glow */}
-                <div style={{ position: "relative" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.5)" strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                  <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm sản phẩm..."
-                    style={{ width: "100%", padding: "10px 36px 10px 36px", background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 10, color: "#f0f0f0", fontSize: 13, outline: "none", boxSizing: "border-box", boxShadow: "0 0 0 2px rgba(124,58,237,0.08)", transition: "border-color 0.2s, box-shadow 0.2s" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.6)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.15)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.25)"; e.currentTarget.style.boxShadow = "0 0 0 2px rgba(124,58,237,0.08)"; }}
-                  />
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.4)" strokeWidth="2" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </div>
-                {/* Product rows */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
-                  {(search ? searchResults : PROMO_PRODUCTS.slice(0, 4)).map(p => {
-                    const thumbColors: Record<string,string> = { beverage:"linear-gradient(135deg,#1e3a8a,#3b82f6)", snack:"linear-gradient(135deg,#78350f,#f59e0b)", dairy:"linear-gradient(135deg,#065f46,#10b981)", instant:"linear-gradient(135deg,#7c2d12,#ef4444)" };
-                    return (
-                      <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 8, background: thumbColors[p.sector] ?? "#111", flexShrink: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                          {PRODUCT_IMG[p.id] ? <img src={PRODUCT_IMG[p.id]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", fontSize: 16 }}>{p.sector === "beverage" ? "🥤" : p.sector === "snack" ? "🍟" : p.sector === "dairy" ? "🥛" : "🍜"}</span>}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-                          <div style={{ fontSize: 11, color: "#555" }}>{p.seller}</div>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#00e676", flexShrink: 0, letterSpacing: "-0.01em" }}>{fmtVND(p.salePrice)}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* ── Panel 2: Promotions ───────────────────────────────── */}
-              <div style={{ ...card, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#5b21b6,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 16px rgba(168,85,247,0.45)" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                  </div>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Promotions</span>
-                  <span style={{ marginLeft: "auto", fontSize: 10, padding: "3px 10px", borderRadius: 999, background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.35)", color: "#c4b5fd", fontWeight: 600 }}>{currentSector?.sectorLabel ?? "All"}</span>
-                </div>
-                {/* Promo cards */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 240, overflowY: "auto" }}>
-                  {promos.map(p => (
-                    <div key={p.id} style={{ position: "relative", borderRadius: 12, overflow: "hidden", padding: "14px 14px", background: `linear-gradient(135deg, rgba(14,6,40,0.95), rgba(30,10,80,0.85))`, border: "1px solid rgba(124,58,237,0.25)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                      {/* Left accent */}
-                      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: p.color }} />
-                      <div style={{ minWidth: 0, paddingLeft: 8 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: p.color, marginBottom: 3 }}>{p.brand}</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>{p.title}</div>
-                        <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{p.start} — {p.end}</div>
-                      </div>
-                      {/* Neon discount box */}
-                      <div style={{ flexShrink: 0, border: "2px solid #00e676", borderRadius: 8, padding: "4px 8px", color: "#00e676", fontSize: 13, fontWeight: 900, background: "rgba(0,230,118,0.06)", boxShadow: "0 0 10px rgba(0,230,118,0.2)", textAlign: "center", whiteSpace: "nowrap" }}>{p.discount}</div>
-                      {/* Folded corner */}
-                      <div style={{ position: "absolute", top: 0, right: 0, width: 0, height: 0, borderStyle: "solid", borderWidth: "0 18px 18px 0", borderColor: `transparent ${p.color} transparent transparent`, opacity: 0.8 }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Panel 3: Products ─────────────────────────────────── */}
-              <div style={{ ...card, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#065f46,#10b981)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 16px rgba(16,185,129,0.45)" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                  </div>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Products</span>
-                  <span style={{ marginLeft: "auto", fontSize: 11, color: "#555", display: "flex", alignItems: "center", gap: 4 }}>Newest <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg></span>
-                </div>
-                {/* Product rows with thumbnail */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 240, overflowY: "auto" }}>
-                  {promoProducts.map(p => {
-                    const thumbColors: Record<string,string> = { beverage:"linear-gradient(135deg,#1e3a8a,#3b82f6)", snack:"linear-gradient(135deg,#78350f,#f59e0b)", dairy:"linear-gradient(135deg,#065f46,#10b981)", instant:"linear-gradient(135deg,#7c2d12,#ef4444)" };
-                    return (
-                      <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: thumbColors[p.sector] ?? "#111", flexShrink: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                          {PRODUCT_IMG[p.id] ? <img src={PRODUCT_IMG[p.id]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", fontSize: 18 }}>{p.sector === "beverage" ? "🥤" : p.sector === "snack" ? "🍟" : p.sector === "dairy" ? "🥛" : "🍜"}</span>}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-                          <div style={{ fontSize: 10, color: "#444" }}>{p.seller} · {p.location}</div>
-                        </div>
-                        <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: "#00e676", letterSpacing: "-0.01em" }}>{fmtVND(p.salePrice)}</div>
-                          <div style={{ fontSize: 10, padding: "1px 6px", borderRadius: 999, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", display: "inline-block", marginTop: 2, fontWeight: 700 }}>-{p.discount}%</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* ── Panel 4: Marketplace ──────────────────────────────── */}
-              <div style={{ ...card, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#1e3a8a,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 16px rgba(109,40,217,0.45)" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                  </div>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Marketplace</span>
-                  <Link href="/forum" style={{ marginLeft: "auto", fontSize: 12, color: "#a78bfa", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>See all <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></Link>
-                </div>
-
-                {marketListings.length === 0 ? (
-                  /* Holographic empty state */
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "12px 0 8px", gap: 14 }}>
-                    {/* Radar rings + pulse */}
-                    <div style={{ position: "relative", width: 120, height: 80 }}>
-                      {[60,46,32,18].map((r,i) => (
-                        <div key={i} style={{ position: "absolute", top: "50%", left: "50%", width: r*2, height: r, transform: "translate(-50%,-50%)", borderRadius: "50%", border: `1px solid rgba(124,58,237,${0.12 + i*0.08})` }} />
-                      ))}
-                      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 120 80">
-                        <defs>
-                          <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                        </defs>
-                        <polyline points="8,40 28,40 40,20 55,58 70,28 85,52 100,40 116,40" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" style={{ animation: "radarPulse 2s ease-in-out infinite" }}/>
-                        <circle cx="55" cy="58" r="3" fill="#7c3aed" style={{ animation: "pulse 2s infinite" }}/>
-                      </svg>
-                    </div>
-                    <div style={{ fontSize: 12, color: "#444", textAlign: "center", lineHeight: 1.5 }}>No {currentSector?.sectorLabel} data listed yet</div>
-                    <Link href="/dashboard/profile" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 20px", background: "linear-gradient(135deg,rgba(80,20,180,0.4),rgba(120,50,220,0.3))", border: "1px solid rgba(124,58,237,0.4)", borderRadius: 10, color: "#c4b5fd", textDecoration: "none", fontSize: 13, fontWeight: 700, boxShadow: "0 0 14px rgba(124,58,237,0.2)" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      List your data
-                    </Link>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 210, overflowY: "auto" }}>
-                    {marketListings.map(l => (
-                      <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 8, background: "linear-gradient(135deg,#4c1d95,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</div>
-                          <div style={{ fontSize: 10, color: "#444" }}>{l.sellerEmail?.split("@")[0] ?? l.sellerWallet.slice(0,8) + "…"}</div>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#a78bfa", flexShrink: 0 }}>${l.price}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          {/* ── Tools & Shortcuts ──────────────────────────────────────── */}
-          <div style={{ ...card, padding:"12px 16px", marginTop:2 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-              <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Tools &amp; Shortcuts</span>
-              <Link href="/dashboard" style={{ fontSize:10, color:"#555", textDecoration:"none" }}>View all →</Link>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(8,1fr)", gap:8 }}>
-              {([
-                { label:"Smart Scanner",  href:"/dashboard/analysis",     color:"#7c3aed" },
-                { label:"Image Search",   href:"/dashboard/vision-agent", color:"#3b82f6" },
-                { label:"Compare",        href:"/dashboard/analysis",     color:"#10b981" },
-                { label:"AI Insights",    href:"/dashboard/analysis",     color:"#f59e0b" },
-                { label:"Report Builder", href:"/dashboard/reports",      color:"#ec4899" },
-                { label:"Alerts",         href:"/dashboard",              color:"#ef4444" },
-                { label:"Data Export",    href:"/dashboard/reports",      color:"#8b5cf6" },
-                { label:"Integrations",   href:"/forum",                  color:"#06b6d4" },
-              ] as {label:string;href:string;color:string}[]).map((t,i) => (
-                <Link key={i} href={t.href} style={{ textDecoration:"none" }}>
-                  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"10px 6px", borderRadius:9, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", cursor:"pointer", transition:"all 0.15s", textAlign:"center" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = `${t.color}40`; e.currentTarget.style.background = `${t.color}0a`; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}>
-                    <div style={{ width:30, height:30, borderRadius:8, background:`${t.color}18`, border:`1px solid ${t.color}28`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    </div>
-                    <span style={{ fontSize:9, fontWeight:600, color:"#777", lineHeight:1.2 }}>{t.label}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Latest Promotions + Watchlist ──────────────────────────── */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 260px", gap:12, marginTop:2 }}>
-            <div style={{ ...card, padding:"14px 16px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Latest Promotions</span>
-                <Link href="/forum" style={{ fontSize:10, color:"#7c3aed", textDecoration:"none" }}>View all</Link>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
-                {promos.slice(0,3).map((p,i) => (
-                  <div key={i} style={{ position:"relative", borderRadius:9, overflow:"hidden", padding:"10px 10px 8px", background:"rgba(10,5,30,0.9)", border:`1px solid ${p.color}20` }}>
-                    <div style={{ position:"absolute", top:0, left:0, bottom:0, width:2, background:p.color }}/>
-                    <div style={{ fontSize:10, fontWeight:800, color:p.color, marginBottom:3, paddingLeft:7 }}>{p.discount}</div>
-                    <div style={{ fontSize:11, fontWeight:700, color:"#fff", paddingLeft:7, marginBottom:2 }}>{p.brand}</div>
-                    <div style={{ fontSize:9, color:"#444", paddingLeft:7 }}>{p.start} — {p.end}</div>
-                    {PRODUCT_IMG[`pp${i+1}`] ? <img src={PRODUCT_IMG[`pp${i+1}`]} alt="" style={{ position:"absolute", bottom:-4, right:-4, width:36, height:36, objectFit:"contain", opacity:0.6 }}/> : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{ ...card, padding:"14px 16px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>My Watchlist</span>
-              </div>
-              {([{b:"Coca-Cola",c:"+18.6%"},{b:"Nescafe Gold",c:"+12.4%"},{b:"Lay's Classic",c:"+9.8%"},{b:"Pepsi",c:"+7.2%"}] as {b:string;c:string}[]).map((w,i) => (
-                <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                  <div style={{ width:24, height:24, borderRadius:5, background:"rgba(124,58,237,0.1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:"#a78bfa", flexShrink:0 }}>{w.b[0]}</div>
-                  <span style={{ flex:1, fontSize:11, color:"#ddd", fontWeight:500 }}>{w.b}</span>
-                  <span style={{ fontSize:11, fontWeight:700, color:"#10b981" }}>{w.c}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Global Search ──────────────────────────────────────────── */}
-          <div style={{ ...card, padding:"14px 18px", marginTop:2 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
-              <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Global Search</span>
-              <span style={{ fontSize:10, color:"#444" }}>Search across companies, products, barcodes, and more.</span>
-            </div>
-            <div style={{ display:"flex", gap:8, marginBottom:8 }}>
-              <div style={{ flex:1, position:"relative" }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" style={{ position:"absolute", left:9, top:"50%", transform:"translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search companies, products, barcodes, categories..."
-                  style={{ width:"100%", padding:"8px 12px 8px 28px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, color:"#f0f0f0", fontSize:12, outline:"none", boxSizing:"border-box" }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
-                  onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
-                />
-              </div>
-              <Link href="/dashboard/analysis" style={{ padding:"8px 16px", background:"linear-gradient(135deg,#5b21b6,#7c3aed)", borderRadius:8, color:"#fff", fontSize:12, fontWeight:700, textDecoration:"none", display:"flex", alignItems:"center", gap:5, flexShrink:0 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                Search
+            <div style={{ position:"relative", zIndex:1 }}>
+              <div style={{ fontSize:10, color:"rgba(167,139,250,0.5)", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:10 }}>AI-POWERED</div>
+              <h3 style={{ fontSize:19, fontWeight:800, color:"#fff", lineHeight:1.3, margin:"0 0 12px", letterSpacing:"-0.02em", maxWidth:200 }}>
+                Unlock deeper insights with <span style={{ color:"#a78bfa" }}>AI Analytics</span>
+              </h3>
+              <p style={{ fontSize:12, color:"rgba(167,139,250,0.5)", lineHeight:1.6, margin:"0 0 20px", maxWidth:220 }}>
+                Get smart recommendations, demand forecasting, and market predictions tailored to your business.
+              </p>
+              <Link href="/dashboard/analysis" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 18px", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.4)", borderRadius:10, fontSize:13, fontWeight:700, color:"#c4b5fd", textDecoration:"none" }}>
+                Explore AI Analytics →
               </Link>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-              <span style={{ fontSize:9, color:"#444" }}>Popular:</span>
-              {(["Coca Cola","Nescafe","Sprite","Pepsi","Lay's","Oreo","Vinamilk"] as string[]).map(t => (
-                <button key={t} onClick={() => setSearch(t)}
-                  style={{ padding:"2px 8px", borderRadius:999, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", color:"#555", fontSize:10, cursor:"pointer", fontFamily:"inherit" }}>
-                  {t}
-                </button>
-              ))}
+            {/* Carousel dots */}
+            <div style={{ display:"flex", gap:5, marginTop:20, position:"relative", zIndex:1 }}>
+              {[1,2,3].map((_,i) => <span key={i} style={{ width: i===0?18:6, height:5, borderRadius:3, background: i===0?"#7c3aed":"rgba(124,58,237,0.25)" }}/>)}
             </div>
           </div>
 
+          </div>{/* end chart + CTA row */}
+
+          {/* ── Row 3: Tools (wide) + Promotions + Watchlist — 3 cols ─── */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 260px", gap:14, alignItems:"start" }}>
+
+            {/* Tools & Shortcuts */}
+            <div style={{ ...card, padding:"14px 16px", gridColumn:"1 / 2" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+                  <span style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>Tools &amp; Shortcuts</span>
+                </div>
+                <Link href="/dashboard" style={{ fontSize:10, color:"#555", textDecoration:"none" }}>View all &gt;</Link>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+                {([
+                  { label:"Smart Scanner",   sub:"Scan & Analyze",     href:"/dashboard/analysis",     color:"#7c3aed" },
+                  { label:"Image Search",    sub:"Visual Discovery",   href:"/dashboard/vision-agent", color:"#3b82f6" },
+                  { label:"Compare",         sub:"Side-by-side",       href:"/dashboard/analysis",     color:"#10b981" },
+                  { label:"Market Insights", sub:"AI Intelligence",    href:"/dashboard/analysis",     color:"#f59e0b" },
+                  { label:"Report Builder",  sub:"Custom Reports",     href:"/dashboard/reports",      color:"#ec4899" },
+                  { label:"Alerts",          sub:"Set & Monitor",      href:"/dashboard",              color:"#ef4444" },
+                  { label:"Data Export",     sub:"Export Data",        href:"/dashboard/reports",      color:"#8b5cf6" },
+                  { label:"Integrations",    sub:"Connect Systems",    href:"/forum",                  color:"#06b6d4" },
+                ] as {label:string;sub:string;href:string;color:string}[]).map((t,i) => (
+                  <Link key={i} href={t.href} style={{ textDecoration:"none" }}>
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"10px 6px", borderRadius:9, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", cursor:"pointer", transition:"all 0.15s", textAlign:"center" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor=`${t.color}40`; e.currentTarget.style.background=`${t.color}0a`; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.05)"; e.currentTarget.style.background="rgba(255,255,255,0.02)"; }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:`${t.color}18`, border:`1px solid ${t.color}28`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      </div>
+                      <div style={{ fontSize:9, fontWeight:600, color:"#ccc", lineHeight:1.2 }}>{t.label}</div>
+                      <div style={{ fontSize:8, color:"#444" }}>{t.sub}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Latest Promotions */}
+            <div style={{ ...card, padding:"14px 16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                  <span style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>Latest Promotions</span>
+                </div>
+                <Link href="/forum" style={{ fontSize:10, color:"#7c3aed", textDecoration:"none" }}>View all</Link>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {promos.slice(0,3).map((p,i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"rgba(10,5,30,0.8)", border:`1px solid ${p.color}20`, borderRadius:10, position:"relative", overflow:"hidden" }}>
+                    <div style={{ position:"absolute", top:0, left:0, bottom:0, width:2, background:p.color }}/>
+                    {/* Product image placeholder */}
+                    <div style={{ width:44, height:44, borderRadius:8, background:`${p.color}15`, border:`1px solid ${p.color}25`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden" }}>
+                      {PRODUCT_IMG[`pp${i+1}`] ? <img src={PRODUCT_IMG[`pp${i+1}`]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:9, fontWeight:700, color:p.color }}>{p.discount}</span>}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+                        <span style={{ fontSize:9, fontWeight:800, color:"#fff", background:p.color, padding:"1px 6px", borderRadius:999 }}>{p.discount}</span>
+                        <span style={{ fontSize:11, fontWeight:700, color:"#f0f0f0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.brand}</span>
+                      </div>
+                      <div style={{ fontSize:10, color:"#666" }}>{p.title}</div>
+                      <div style={{ fontSize:9, color:"#444", marginTop:2 }}>Valid till {p.end}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* My Watchlist */}
+            <div style={{ ...card, padding:"14px 16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  <span style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>My Watchlist</span>
+                </div>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                {([
+                  { brand:"Coca-Cola",    change:"+18.6%", color:"#ef4444" },
+                  { brand:"Nescafe Gold", change:"+12.4%", color:"#f59e0b" },
+                  { brand:"Lay's Classic",change:"+9.8%",  color:"#f59e0b" },
+                ] as {brand:string;change:string;color:string}[]).map((w,i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ width:32, height:32, borderRadius:8, background:`${w.color}15`, border:`1px solid ${w.color}25`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color:w.color, flexShrink:0 }}>{w.brand[0]}</div>
+                    <span style={{ flex:1, fontSize:12, color:"#ddd", fontWeight:500 }}>{w.brand}</span>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:"#10b981" }}>{w.change}</div>
+                      <div style={{ fontSize:9, color:"#444" }}>vs last 7d</div>
+                    </div>
+                  </div>
+                ))}
+                <Link href="/forum" style={{ display:"block", textAlign:"center", padding:"7px", borderRadius:8, border:"1px solid rgba(255,255,255,0.06)", fontSize:10, color:"#555", textDecoration:"none", marginTop:4 }}>View Watchlist →</Link>
+              </div>
+            </div>
+
+          </div>{/* end 3-col row */}
+
+          {/* ── Row 4: Global Search + Top Growing Category ─────────────── */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 260px", gap:14 }}>
+
+            {/* Global Search */}
+            <div style={{ ...card, padding:"16px 18px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>
+                <span style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>Global Search</span>
+                <span style={{ fontSize:10, color:"#444" }}>Search across companies, products, barcodes, and more.</span>
+              </div>
+              <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+                <div style={{ flex:1, position:"relative" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" style={{ position:"absolute", left:9, top:"50%", transform:"translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search companies, products, barcodes, categories..."
+                    style={{ width:"100%", padding:"9px 12px 9px 28px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, color:"#f0f0f0", fontSize:12, outline:"none", boxSizing:"border-box" }}
+                    onFocus={e => (e.currentTarget.style.borderColor="rgba(124,58,237,0.4)")}
+                    onBlur={e => (e.currentTarget.style.borderColor="rgba(255,255,255,0.07)")}
+                  />
+                </div>
+                <Link href="/dashboard/analysis" style={{ padding:"9px 18px", background:"linear-gradient(135deg,#5b21b6,#7c3aed)", borderRadius:8, color:"#fff", fontSize:12, fontWeight:700, textDecoration:"none", display:"flex", alignItems:"center", gap:5, flexShrink:0 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                  Search
+                </Link>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                <span style={{ fontSize:10, color:"#444" }}>Popular Searches</span>
+                {(["Coca Cola","Nescafe","Sprite","Pepsi","Haldiram","Parle-G","8901234567890","Maggi"] as string[]).map(t => (
+                  <button key={t} onClick={() => setSearch(t)}
+                    style={{ padding:"3px 9px", borderRadius:999, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", color:"#555", fontSize:10, cursor:"pointer", fontFamily:"inherit", transition:"color 0.15s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color="#a78bfa")}
+                    onMouseLeave={e => (e.currentTarget.style.color="#555")}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Growing Category */}
+            <div style={{ ...card, padding:"16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Top Growing Category</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                <div style={{ width:44, height:44, borderRadius:10, background:"rgba(124,58,237,0.12)", border:"1px solid rgba(124,58,237,0.25)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:16, fontWeight:800, color:"#fff", letterSpacing:"-0.02em" }}>{currentSector?.sectorLabel ?? "FMCG"}</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:"#10b981" }}>+ {((sectors.length || 1) * 3.2).toFixed(1)}%</div>
+                  <div style={{ fontSize:9, color:"#444" }}>vs last 7 days</div>
+                </div>
+              </div>
+              {/* Mini bar chart */}
+              <div style={{ display:"flex", gap:3, alignItems:"flex-end", height:40 }}>
+                {[6,9,7,14,11,18,16,22].map((h,i) => (
+                  <div key={i} style={{ flex:1, borderRadius:3, background: i===7?"#7c3aed":"rgba(124,58,237,0.2)", height:`${h*1.8}px`, transition:"height 0.3s" }}/>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
-        </div>{/* end scrollable wrapper */}
+        </div>
       </main>
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
