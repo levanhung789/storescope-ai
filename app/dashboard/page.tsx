@@ -609,9 +609,15 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── 5 Stats cards — reference layout ─────────────────────── */}
+          {/* ── 5 Stats cards — background image, no border ───────────── */}
           {!loading && (
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
+            <div style={{ position:"relative", overflow:"hidden", borderRadius:14, padding:"14px" }}>
+              {/* Background image */}
+              <img src="/hero/stats-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center", display:"block" }} />
+              {/* Dark overlay for card readability */}
+              <div style={{ position:"absolute", inset:0, background:"rgba(5,4,18,0.72)", pointerEvents:"none" }} />
+              {/* Cards grid — on top of bg */}
+              <div style={{ position:"relative", zIndex:1, display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
               {([
                 { label:"Scans",           value:78642+sectors.length*100, change:"16.3%", color:"#7c3aed", icon:"/charts/scans.png",     pts:"0,28 20,22 40,25 60,14 80,18 100,8  120,12 140,4  160,7"  },
                 { label:"Companies",       value:totalCompanies,            change:"8.3%",  color:"#10b981", icon:"/charts/companies.png", pts:"0,26 20,20 40,24 60,16 80,19 100,11 120,15 140,9  160,12" },
@@ -652,7 +658,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>{/* end cards grid */}
+            </div>{/* end bg wrapper */}
           )}
 
           {/* ── Row 2: Scan Trend + AI Analytics CTA ───────────────────── */}
