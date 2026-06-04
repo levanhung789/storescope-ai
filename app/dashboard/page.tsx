@@ -35,37 +35,39 @@ interface PromoItem {
   id: string; brand: string; title: string;
   discount: string; desc: string;
   start: string; end: string; color: string;
+  img?: string;
 }
 
+// ── Promo data — sorted by discount % desc (based on Co.op/BHX research) ────
 const PROMO_MAP: { keywords: string[]; items: PromoItem[] }[] = [
   {
-    keywords: ["beverage","drink","nước","pepsi","coca","sting","aquafina"],
+    keywords: ["beverage","drink","nước","pepsi","coca","sting","aquafina","7up","mirinda"],
     items: [
-      { id:"b1", brand:"Pepsi",    title:"Summer Refresh",    discount:"25% OFF", desc:"Mua 2 tặng 1 — tất cả chai 500ml", start:"01/06/2026", end:"30/06/2026", color:"#3b82f6" },
-      { id:"b2", brand:"Sting",    title:"Energy Weekend",    discount:"15% OFF", desc:"Khuyến mãi cuối tuần đồ uống năng lượng", start:"24/05/2026", end:"26/05/2026", color:"#ef4444" },
-      { id:"b3", brand:"Aquafina", title:"Hydration Month",   discount:"10% OFF", desc:"Giảm giá nước suối toàn hệ thống", start:"01/06/2026", end:"30/06/2026", color:"#06b6d4" },
+      { id:"b1", brand:"Pepsi",    title:"Pepsi Không Calo 320ml",  discount:"-34%", desc:"Co.op Online — Pepsi không calo giảm sốc", start:"01/06", end:"30/06/2026", color:"#3b82f6", img:"/products/Nước ngọt Pepsi không calo lon 320ml.png" },
+      { id:"b2", brand:"Sting",    title:"Sting Dâu 330ml × 6",     discount:"-28%", desc:"Nước tăng lực combo 6 lon giảm mạnh",      start:"01/06", end:"15/06/2026", color:"#ef4444", img:"/products/Sting Dâu 330ml × 6.png" },
+      { id:"b3", brand:"Aquafina", title:"Aquafina 500ml × 24",     discount:"-27%", desc:"Thùng 24 chai nước tinh khiết siêu tiết kiệm", start:"01/06", end:"30/06/2026", color:"#06b6d4", img:"/products/Aquafina 500ml × 24.png" },
     ],
   },
   {
-    keywords: ["snack","chip","lay","cheeto","bánh","cracker"],
+    keywords: ["snack","chip","lay","cheeto","bánh","cracker","oreo"],
     items: [
-      { id:"s1", brand:"Lay's",   title:"Snack Festival",  discount:"20% OFF", desc:"Giảm 20% tất cả hương vị Lay's", start:"15/05/2026", end:"15/06/2026", color:"#f59e0b" },
-      { id:"s2", brand:"Cheetos", title:"Fiesta Sale",     discount:"18% OFF", desc:"Combo pack tiết kiệm cho gia đình", start:"20/05/2026", end:"10/06/2026", color:"#f97316" },
-      { id:"s3", brand:"Oreo",    title:"Cookie Month",    discount:"12% OFF", desc:"Mua 3 hộp tặng 1 hộp Oreo", start:"01/06/2026", end:"30/06/2026", color:"#a78bfa" },
+      { id:"s1", brand:"Lay's",   title:"Lay's Classic 120g",   discount:"-22%", desc:"Giảm 22% khoai tây chiên Lay's tại siêu thị",     start:"15/05", end:"15/06/2026", color:"#f59e0b", img:"/products/Lay's Classic 120g.png" },
+      { id:"s2", brand:"Cheetos", title:"Cheetos Flamin Hot 85g",discount:"-18%", desc:"Combo pack snack cay giảm giá cho gia đình",      start:"20/05", end:"10/06/2026", color:"#f97316", img:"/products/Cheetos Flamin Hot 85g.png" },
+      { id:"s3", brand:"Oreo",    title:"Oreo Sandwich 432g",   discount:"-15%", desc:"Bánh quy Oreo hộp lớn khuyến mãi tháng 6",        start:"01/06", end:"30/06/2026", color:"#a78bfa", img:"/products/Oreo Sandwich 432g.png" },
     ],
   },
   {
     keywords: ["dairy","milk","sữa","vinamilk","th true","yogurt"],
     items: [
-      { id:"d1", brand:"Vinamilk",    title:"Milk Month",       discount:"12% OFF", desc:"Ưu đãi sữa tươi toàn quốc tháng 6", start:"01/06/2026", end:"30/06/2026", color:"#10b981" },
-      { id:"d2", brand:"TH True Milk",title:"Fresh Farm Deal",  discount:"8% OFF",  desc:"Sữa hữu cơ giảm giá đặc biệt", start:"10/06/2026", end:"20/06/2026", color:"#34d399" },
+      { id:"d1", brand:"Vinamilk",    title:"Vinamilk Sữa Tươi 1L",  discount:"-16%", desc:"Sữa tươi thanh trùng Vinamilk giảm tháng 6", start:"01/06", end:"30/06/2026", color:"#10b981", img:"/products/Vinamilk Sữa Tươi 1L.png" },
+      { id:"d2", brand:"Pepsi",       title:"Pepsi Cola 1.5L",        discount:"-28%", desc:"Chai lớn Pepsi cola giảm giá tại Co.op",      start:"01/06", end:"30/06/2026", color:"#3b82f6", img:"/products/PEPsi 1.5L.png" },
     ],
   },
   {
     keywords: ["instant","mì","noodle","maggi","hảo hảo"],
     items: [
-      { id:"i1", brand:"Hảo Hảo", title:"Bữa Ngon Tiết Kiệm", discount:"22% OFF", desc:"Thùng 30 gói giảm giá đặc biệt", start:"01/06/2026", end:"30/06/2026", color:"#ef4444" },
-      { id:"i2", brand:"Maggi",   title:"Spice Season",        discount:"16% OFF", desc:"Combo gia vị nấu ăn cho bếp gia đình", start:"20/05/2026", end:"20/06/2026", color:"#f59e0b" },
+      { id:"i1", brand:"Hảo Hảo", title:"Hảo Hảo Tôm Chua Cay ×30", discount:"-22%", desc:"Thùng 30 gói mì ăn liền giảm sốc tháng 6", start:"01/06", end:"30/06/2026", color:"#ef4444", img:"/products/Hảo Hảo Tôm Chua Cay ×30.png" },
+      { id:"i2", brand:"Pepsi",   title:"6 lon Pepsi không calo",     discount:"-34%", desc:"Combo 6 lon Pepsi không calo siêu rẻ",       start:"01/06", end:"30/06/2026", color:"#3b82f6", img:"/products/6 lon nước ngọt Pepsi không calo 320ml.png" },
     ],
   },
 ];
@@ -881,21 +883,28 @@ export default function DashboardPage() {
                 </div>
                 <Link href="/forum" style={{ fontSize:10, color:"#7c3aed", textDecoration:"none" }}>View all</Link>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
                 {promos.slice(0,3).map((p,i) => (
-                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"rgba(10,5,30,0.8)", border:`1px solid ${p.color}20`, borderRadius:10, position:"relative", overflow:"hidden" }}>
-                    <div style={{ position:"absolute", top:0, left:0, bottom:0, width:2, background:p.color }}/>
-                    {/* Product image placeholder */}
-                    <div style={{ width:44, height:44, borderRadius:8, background:`${p.color}15`, border:`1px solid ${p.color}25`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden" }}>
-                      {PRODUCT_IMG[`pp${i+1}`] ? <img src={PRODUCT_IMG[`pp${i+1}`]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:9, fontWeight:700, color:p.color }}>{p.discount}</span>}
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px 8px 8px", background:"rgba(8,4,24,0.85)", border:`1px solid ${p.color}25`, borderRadius:10, position:"relative", overflow:"hidden", transition:"border-color 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor=`${p.color}55`)}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor=`${p.color}25`)}>
+                    {/* Left accent line */}
+                    <div style={{ position:"absolute", top:0, left:0, bottom:0, width:2.5, background:`linear-gradient(180deg,${p.color},${p.color}55)`, borderRadius:"2px 0 0 2px" }}/>
+                    {/* Product image — prominent */}
+                    <div style={{ width:54, height:54, borderRadius:9, background:`${p.color}12`, border:`1px solid ${p.color}20`, flexShrink:0, overflow:"hidden", boxShadow:`0 2px 10px ${p.color}20` }}>
+                      {p.img
+                        ? <img src={p.img} alt={p.title} loading="lazy" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+                        : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🛍️</div>
+                      }
                     </div>
+                    {/* Info */}
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
-                        <span style={{ fontSize:9, fontWeight:800, color:"#fff", background:p.color, padding:"1px 6px", borderRadius:999 }}>{p.discount}</span>
+                      <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:3 }}>
+                        <span style={{ fontSize:10, fontWeight:800, color:p.color, background:`${p.color}15`, padding:"2px 7px", borderRadius:999, flexShrink:0 }}>{p.discount}</span>
                         <span style={{ fontSize:11, fontWeight:700, color:"#f0f0f0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.brand}</span>
                       </div>
-                      <div style={{ fontSize:10, color:"#666" }}>{p.title}</div>
-                      <div style={{ fontSize:9, color:"#444", marginTop:2 }}>Valid till {p.end}</div>
+                      <div style={{ fontSize:10, color:"rgba(200,190,230,0.6)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:2 }}>{p.title}</div>
+                      <div style={{ fontSize:9, color:"#444" }}>Valid till {p.end}</div>
                     </div>
                   </div>
                 ))}
