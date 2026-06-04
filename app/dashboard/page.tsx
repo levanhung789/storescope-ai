@@ -804,15 +804,11 @@ export default function DashboardPage() {
           </div>{/* end Scan Trend offset wrapper */}
 
           {/* ── AI Analytics CTA ──────────────────────────────────────── */}
-          <div style={{ position:"relative", background:"linear-gradient(145deg,#0c0525,#180a45,#0a0220)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:16, padding:"28px 20px 28px 28px", overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
-            {/* Glow bg */}
-            <div style={{ position:"absolute", top:"-20%", right:"-10%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,0.25) 0%,transparent 70%)", filter:"blur(30px)", pointerEvents:"none" }}/>
-            <div style={{ position:"absolute", bottom:"10%", right:"15%", width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%)", filter:"blur(20px)", pointerEvents:"none" }}/>
-
-            {/* 3D Globe image */}
-            <div style={{ position:"absolute", bottom:-10, right:-10, width:190, height:160, overflow:"hidden", opacity:0.85 }}>
-              <img src="/hero/hero-globe.png" alt="" style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"center", filter:"drop-shadow(0 0 16px rgba(59,130,246,0.6))" }} />
-            </div>
+          <div style={{ position:"relative", borderRadius:16, overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+            {/* Background image */}
+            <img src="/hero/ai-analytics-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"left center", display:"block" }} />
+            {/* Dark overlay — left side darker for text */}
+            <div style={{ position:"absolute", inset:0, background:"linear-gradient(90deg, rgba(5,2,20,0.88) 0%, rgba(5,2,20,0.65) 45%, rgba(5,2,20,0.3) 100%)", pointerEvents:"none" }} />
 
             <div style={{ position:"relative", zIndex:1 }}>
               <div style={{ fontSize:10, color:"rgba(167,139,250,0.5)", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:10 }}>AI-POWERED</div>
