@@ -624,7 +624,7 @@ export default function DashboardPage() {
           )}
 
           {/* ── Row 2: Scan Trend (60%) + AI Analytics CTA (40%) ──────── */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:14, alignItems:"stretch" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"0.8fr 272px", gap:14, alignItems:"stretch" }}>
 
           {/* ── Scan Trend ─────────────────────────────────────────────── */}
           {(() => {
@@ -634,7 +634,7 @@ export default function DashboardPage() {
             const total  = pd.current.reduce((a, b) => a + b, 0);
             const avg    = Math.round(total / n);
             const peak   = Math.max(...pd.current);
-            const W = 560; const H = 150; const PL = 34; const PR = 12; const PB = 22; const PT = 12;
+            const W = 448; const H = 120; const PL = 34; const PR = 12; const PB = 22; const PT = 12;
             const iW = W - PL - PR; const iH = H - PT - PB;
             const tx = (i: number) => PL + (i / (n - 1)) * iW;
             const ty = (v: number) => PT + iH - ((v / (maxVal * 1.15)) * iH);
@@ -762,7 +762,7 @@ export default function DashboardPage() {
           })()}
 
           {/* ── AI Analytics CTA ──────────────────────────────────────── */}
-          <div style={{ position:"relative", background:"linear-gradient(145deg,#0c0525,#180a45,#0a0220)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:16, padding:"28px 22px", overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+          <div style={{ position:"relative", background:"linear-gradient(145deg,#0c0525,#180a45,#0a0220)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:16, padding:"28px 22px", overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between", minHeight:"calc(100% * 1.2)" }}>
             {/* Glow bg */}
             <div style={{ position:"absolute", top:"-20%", right:"-10%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,0.25) 0%,transparent 70%)", filter:"blur(30px)", pointerEvents:"none" }}/>
             <div style={{ position:"absolute", bottom:"10%", right:"15%", width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%)", filter:"blur(20px)", pointerEvents:"none" }}/>
