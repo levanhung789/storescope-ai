@@ -624,10 +624,10 @@ export default function DashboardPage() {
           )}
 
           {/* ── Row 2: Scan Trend + AI Analytics CTA ───────────────────── */}
-          <div style={{ display:"grid", gridTemplateColumns:"0.8fr 1fr", gap:14, alignItems:"stretch" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"0.88fr 1fr", gap:14, alignItems:"stretch" }}>
 
-          {/* ── Scan Trend — offset 10% from left ─────────────────────── */}
-          <div style={{ marginLeft:"10%" }}>
+          {/* ── Scan Trend — wider 10% to the right ──────────────────── */}
+          <div>
           {(() => {
             const pd = CHART_PERIODS[chartPeriod];
             const n  = pd.current.length;
