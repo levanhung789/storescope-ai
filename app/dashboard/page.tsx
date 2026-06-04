@@ -612,25 +612,27 @@ export default function DashboardPage() {
                   onMouseEnter={e => { e.currentTarget.style.borderColor=`${s.color}35`; e.currentTarget.style.transform="translateY(-2px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.06)"; e.currentTarget.style.transform="translateY(0)"; }}>
 
-                  {/* Row 1: icon + label + chevron */}
-                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                    <div style={{ width:30, height:30, borderRadius:8, overflow:"hidden", flexShrink:0, boxShadow:`0 0 12px ${s.color}35` }}>
+                  {/* Icon (large) + info stacked bên phải — cùng chiều cao */}
+                  <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8 }}>
+                    {/* Large icon */}
+                    <div style={{ width:52, height:52, borderRadius:12, overflow:"hidden", flexShrink:0, boxShadow:`0 0 16px ${s.color}40` }}>
                       <img src={s.icon} alt={s.label} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
                     </div>
-                    <span style={{ flex:1, fontSize:11, fontWeight:500, color:"#c0c8d8", letterSpacing:"-0.01em", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.label}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" style={{ flexShrink:0 }}><path d="M9 18l6-6-6-6"/></svg>
-                  </div>
-
-                  {/* Row 2: large number */}
-                  <div style={{ fontSize:24, fontWeight:800, color:"#ffffff", letterSpacing:"-0.04em", lineHeight:1, marginBottom:6 }}>
-                    {s.value.toLocaleString()}
-                  </div>
-
-                  {/* Row 3: % change */}
-                  <div style={{ fontSize:11, color:"#10b981", fontWeight:600, marginBottom:8, display:"flex", alignItems:"center", gap:3 }}>
-                    <span style={{ fontSize:10 }}>↑</span>
-                    <span>{s.change}</span>
-                    <span style={{ color:"rgba(255,255,255,0.25)", fontWeight:400 }}>vs last 7 days</span>
+                    {/* Info column — ngang bên phải icon */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3 }}>
+                        <span style={{ fontSize:11, fontWeight:500, color:"#8a9bb5", letterSpacing:"0.01em", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.label}</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" style={{ flexShrink:0 }}><path d="M9 18l6-6-6-6"/></svg>
+                      </div>
+                      <div style={{ fontSize:22, fontWeight:800, color:"#ffffff", letterSpacing:"-0.04em", lineHeight:1.1, marginBottom:4 }}>
+                        {s.value.toLocaleString()}
+                      </div>
+                      <div style={{ fontSize:11, color:"#10b981", fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
+                        <span>↑</span>
+                        <span>{s.change}</span>
+                        <span style={{ color:"rgba(255,255,255,0.22)", fontWeight:400 }}>vs last 7 days</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Row 4: sparkline full width */}
