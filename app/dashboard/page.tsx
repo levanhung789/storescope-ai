@@ -812,23 +812,23 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
                 {([
-                  { label:"Smart Scanner",   sub:"Scan & Analyze",     href:"/dashboard/analysis",     color:"#7c3aed" },
-                  { label:"Image Search",    sub:"Visual Discovery",   href:"/dashboard/vision-agent", color:"#3b82f6" },
-                  { label:"Compare",         sub:"Side-by-side",       href:"/dashboard/analysis",     color:"#10b981" },
-                  { label:"Market Insights", sub:"AI Intelligence",    href:"/dashboard/analysis",     color:"#f59e0b" },
-                  { label:"Report Builder",  sub:"Custom Reports",     href:"/dashboard/reports",      color:"#ec4899" },
-                  { label:"Alerts",          sub:"Set & Monitor",      href:"/dashboard",              color:"#ef4444" },
-                  { label:"Data Export",     sub:"Export Data",        href:"/dashboard/reports",      color:"#8b5cf6" },
-                  { label:"Integrations",    sub:"Connect Systems",    href:"/forum",                  color:"#06b6d4" },
-                ] as {label:string;sub:string;href:string;color:string}[]).map((t,i) => (
+                  { label:"Smart Scanner",   sub:"Scan & Analyze",     href:"/dashboard/analysis",     color:"#7c3aed", img:"/apps/ai-analysis.png"    },
+                  { label:"Image Search",    sub:"Visual Discovery",   href:"/dashboard/vision-agent", color:"#3b82f6", img:"/apps/vision-agent.png"   },
+                  { label:"AI Agent",        sub:"Autonomous",         href:"/dashboard/agent",        color:"#10b981", img:"/apps/ai-agent.png"        },
+                  { label:"Market Insights", sub:"AI Intelligence",    href:"/dashboard/analysis",     color:"#f59e0b", img:"/apps/catalog.png"         },
+                  { label:"Report Builder",  sub:"Custom Reports",     href:"/dashboard/reports",      color:"#ec4899", img:"/apps/my-reports.png"      },
+                  { label:"My Profile",      sub:"Data & Listings",    href:"/dashboard/profile",      color:"#a78bfa", img:"/apps/my-profile.png"      },
+                  { label:"Layout Editor",   sub:"3D Store Planning",  href:"/layout-editor",          color:"#8b5cf6", img:"/apps/layout-editor.png"   },
+                  { label:"Forum & Mkt",     sub:"Marketplace",        href:"/forum",                  color:"#06b6d4", img:"/apps/forum.png"           },
+                ] as {label:string;sub:string;href:string;color:string;img:string}[]).map((t,i) => (
                   <Link key={i} href={t.href} style={{ textDecoration:"none" }}>
-                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"10px 6px", borderRadius:9, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", cursor:"pointer", transition:"all 0.15s", textAlign:"center" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor=`${t.color}40`; e.currentTarget.style.background=`${t.color}0a`; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.05)"; e.currentTarget.style.background="rgba(255,255,255,0.02)"; }}>
-                      <div style={{ width:32, height:32, borderRadius:8, background:`${t.color}18`, border:`1px solid ${t.color}28`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"8px 4px", borderRadius:10, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", cursor:"pointer", transition:"all 0.2s", textAlign:"center" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor=`${t.color}50`; e.currentTarget.style.background=`${t.color}10`; e.currentTarget.style.transform="translateY(-2px)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.05)"; e.currentTarget.style.background="rgba(255,255,255,0.02)"; e.currentTarget.style.transform="translateY(0)"; }}>
+                      <div style={{ width:44, height:44, borderRadius:10, overflow:"hidden", flexShrink:0 }}>
+                        <img src={t.img} alt={t.label} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
                       </div>
-                      <div style={{ fontSize:9, fontWeight:600, color:"#ccc", lineHeight:1.2 }}>{t.label}</div>
+                      <div style={{ fontSize:9, fontWeight:600, color:"#ddd", lineHeight:1.2 }}>{t.label}</div>
                       <div style={{ fontSize:8, color:"#444" }}>{t.sub}</div>
                     </div>
                   </Link>
