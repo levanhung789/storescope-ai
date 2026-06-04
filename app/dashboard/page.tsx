@@ -41,7 +41,7 @@ interface PromoItem {
 // ── Promo data — sorted by discount % desc (based on Co.op/BHX research) ────
 const PROMO_MAP: { keywords: string[]; items: PromoItem[] }[] = [
   {
-    keywords: ["beverage","drink","nước","pepsi","coca","sting","aquafina","7up","mirinda"],
+    keywords: ["beverage","drink","nước","pepsi","coca","sting","aquafina","7up","mirinda","condiment","oil","seasoning","gia vị","dầu","nước chấm"],
     items: [
       { id:"b1", brand:"Pepsi",    title:"Pepsi Không Calo 320ml",  discount:"-34%", desc:"Co.op Online — Pepsi không calo giảm sốc", start:"01/06", end:"30/06/2026", color:"#3b82f6", img:"/products/Nước ngọt Pepsi không calo lon 320ml.png" },
       { id:"b2", brand:"Sting",    title:"Sting Dâu 330ml × 6",     discount:"-28%", desc:"Nước tăng lực combo 6 lon giảm mạnh",      start:"01/06", end:"15/06/2026", color:"#ef4444", img:"/products/Sting Dâu 330ml × 6.png" },
@@ -73,8 +73,9 @@ const PROMO_MAP: { keywords: string[]; items: PromoItem[] }[] = [
 ];
 
 const DEFAULT_PROMOS: PromoItem[] = [
-  { id:"x1", brand:"StoreScope", title:"Platform Launch",  discount:"30% OFF", desc:"Giảm phí phân tích dữ liệu tháng đầu", start:"01/06/2026", end:"30/06/2026", color:"#7c3aed" },
-  { id:"x2", brand:"All Brands", title:"Summer Mega Sale", discount:"UP TO 50%", desc:"Đại tiệc khuyến mãi hè toàn bộ ngành hàng", start:"01/06/2026", end:"31/07/2026", color:"#a78bfa" },
+  { id:"x1", brand:"Pepsi",    title:"Pepsi Không Calo 320ml",  discount:"-34%", desc:"Co.op Online — giảm sốc hè 2026", start:"01/06", end:"30/06/2026", color:"#3b82f6", img:"/products/Nước ngọt Pepsi không calo lon 320ml.png" },
+  { id:"x2", brand:"Sting",    title:"Sting Dâu 330ml × 6",     discount:"-28%", desc:"Nước tăng lực combo 6 lon",        start:"01/06", end:"15/06/2026", color:"#ef4444", img:"/products/Sting Dâu 330ml × 6.png" },
+  { id:"x3", brand:"Aquafina", title:"Aquafina 500ml × 24",     discount:"-27%", desc:"Thùng 24 chai siêu tiết kiệm",     start:"01/06", end:"30/06/2026", color:"#06b6d4", img:"/products/Aquafina 500ml × 24.png" },
 ];
 
 function getPromos(sectorLabel: string): PromoItem[] {
