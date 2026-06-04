@@ -556,37 +556,63 @@ export default function DashboardPage() {
         <div style={{ flex: 1, overflow: "auto" }}>
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* ── HERO — 3-col: text | 3D placeholder | AI Insight ───────── */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 300px", gap:16, alignItems:"center", minHeight:110, background:"linear-gradient(135deg,rgba(10,5,30,0.6),rgba(20,8,50,0.4))", borderRadius:16, padding:"20px 24px", border:"1px solid rgba(124,58,237,0.1)", margin:"0 0 0" }}>
+          {/* ── HERO — elegant full-width banner ─────────────────────── */}
+          <div style={{ position:"relative", overflow:"hidden", borderRadius:16, minHeight:128, background:"linear-gradient(135deg,#07091a 0%,#0d0b2a 45%,#070918 100%)", border:"1px solid rgba(255,255,255,0.06)" }}>
 
-            {/* Left: Greeting */}
-            <div>
-              <h1 style={{ fontSize:24, fontWeight:800, color:"#fff", margin:"0 0 6px", letterSpacing:"-0.025em" }}>Good morning, {displayName} 👋</h1>
-              <p style={{ fontSize:13, color:"rgba(167,139,250,0.5)", margin:0 }}>Your AI co-pilot for retail intelligence is ready.</p>
-            </div>
+            {/* Subtle radial glow on right */}
+            <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 68% 50%, rgba(59,130,246,0.07) 0%, transparent 65%)", pointerEvents:"none" }}/>
 
-            {/* Center: 3D holographic S logo image */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
-              <img
-                src="/hero/hero-center.png"
-                alt="StoreScope AI"
-                style={{ width:"100%", maxHeight:110, objectFit:"contain", objectPosition:"center", filter:"drop-shadow(0 0 20px rgba(59,130,246,0.5))", animation:"heroFloat 4s ease-in-out infinite" }}
+            {/* Hero image — mix-blend-mode:screen makes dark bg transparent */}
+            <div style={{ position:"absolute", right:"-2%", top:"50%", transform:"translateY(-50%)", width:"54%", height:"140%", pointerEvents:"none" }}>
+              <img src="/hero/hero-center.png" alt=""
+                style={{ width:"100%", height:"100%", objectFit:"contain", objectPosition:"center right", mixBlendMode:"screen", opacity:0.92, animation:"heroFloat 5s ease-in-out infinite" }}
               />
             </div>
 
-            {/* Right: AI Insight card */}
-            <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, padding:"14px 16px" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                <span style={{ fontSize:13, fontWeight:700, color:"#f0f0f0" }}>AI Insight</span>
-                <span style={{ fontSize:9, padding:"2px 8px", borderRadius:999, background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.25)", color:"#10b981", fontWeight:700 }}>New</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" style={{ marginLeft:"auto" }}><path d="M6 9l6 6 6-6"/></svg>
+            {/* Left gradient fade over image */}
+            <div style={{ position:"absolute", inset:0, background:"linear-gradient(90deg, #07091a 30%, rgba(7,9,26,0.7) 55%, transparent 75%)", pointerEvents:"none" }}/>
+
+            {/* Content */}
+            <div style={{ position:"relative", zIndex:2, padding:"22px 26px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+
+              {/* Left: greeting */}
+              <div>
+                <div style={{ fontSize:11, color:"rgba(124,58,237,0.7)", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>
+                  {new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}
+                </div>
+                <h1 style={{ fontSize:22, fontWeight:800, color:"#ffffff", margin:"0 0 6px", letterSpacing:"-0.025em" }}>
+                  Good morning, {displayName} 👋
+                </h1>
+                <p style={{ fontSize:12, color:"rgba(167,139,250,0.45)", margin:"0 0 14px", letterSpacing:"0.01em" }}>
+                  Your AI co-pilot for retail intelligence is ready.
+                </p>
+                <div style={{ display:"flex", gap:8 }}>
+                  <Link href="/dashboard/analysis" style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"7px 16px", background:"rgba(124,58,237,0.18)", border:"1px solid rgba(124,58,237,0.35)", borderRadius:999, fontSize:12, fontWeight:600, color:"#c4b5fd", textDecoration:"none", transition:"background 0.2s" }}
+                    onMouseEnter={e=>(e.currentTarget.style.background="rgba(124,58,237,0.3)")}
+                    onMouseLeave={e=>(e.currentTarget.style.background="rgba(124,58,237,0.18)")}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    New Analysis
+                  </Link>
+                  <Link href="/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"7px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:999, fontSize:12, fontWeight:400, color:"rgba(167,139,250,0.5)", textDecoration:"none" }}>
+                    View Dashboard
+                  </Link>
+                </div>
               </div>
-              <p style={{ fontSize:11, color:"#666", lineHeight:1.5, margin:"0 0 10px" }}>
-                Sales for <strong style={{ color:"#a78bfa" }}>{currentSector?.sectorLabel ?? "FMCG"}</strong> increased by 18.6% this week across 24 key markets.
-              </p>
-              <Link href="/dashboard/analysis" style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#a78bfa", background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)", borderRadius:8, padding:"5px 12px", textDecoration:"none" }}>
-                View Full Insight →
-              </Link>
+
+              {/* Right: AI Insight card — glassmorphism subtle */}
+              <div style={{ background:"rgba(13,9,40,0.7)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", border:"1px solid rgba(124,58,237,0.18)", borderRadius:12, padding:"14px 16px", minWidth:230, maxWidth:260, flexShrink:0 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:"#e8e8f0" }}>AI Insight</span>
+                  <span style={{ fontSize:9, padding:"2px 7px", borderRadius:999, background:"rgba(16,185,129,0.1)", border:"1px solid rgba(16,185,129,0.22)", color:"#10b981", fontWeight:700 }}>New</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" style={{ marginLeft:"auto" }}><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <p style={{ fontSize:11, color:"rgba(167,139,250,0.45)", lineHeight:1.6, margin:"0 0 10px" }}>
+                  Sales for <strong style={{ color:"#a78bfa" }}>{currentSector?.sectorLabel ?? "FMCG"}</strong> increased 18.6% this week across 24 key markets.
+                </p>
+                <Link href="/dashboard/analysis" style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:11, fontWeight:600, color:"rgba(124,58,237,0.8)", textDecoration:"none" }}>
+                  View Full Insight <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
+              </div>
             </div>
           </div>
 
