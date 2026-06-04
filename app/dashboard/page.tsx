@@ -429,11 +429,11 @@ export default function DashboardPage() {
             const icon = ICONS[item.key] ?? <circle cx="12" cy="12" r="4"/>;
 
             return (
-              <Link key={item.key} href={item.href} style={{ textDecoration: "none", display: "block", marginBottom: 4 }}>
+              <Link key={item.key} href={item.href} className="nav-item" style={{ textDecoration: "none", display: "block", marginBottom: 2 }}>
                 <div style={{
                   display: "flex", alignItems: "center", gap: 10,
-                  padding: item.active ? "11px 12px" : "9px 10px",
-                  borderRadius: 12,
+                  padding: item.active ? "10px 12px" : "9px 10px",
+                  borderRadius: 10,
                   background: item.active
                     ? "linear-gradient(135deg, rgba(100,40,200,0.85) 0%, rgba(140,60,230,0.7) 50%, rgba(80,20,160,0.85) 100%)"
                     : "transparent",
@@ -521,7 +521,7 @@ export default function DashboardPage() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" style={{ position:"absolute", left:11, top:"50%", transform:"translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search anything... (e.g., company, product, barcode, location)"
               style={{ width:"100%", padding:"8px 52px 8px 32px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:9, color:"#f0f0f0", fontSize:12, outline:"none", boxSizing:"border-box", transition:"border-color 0.2s" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
+              onFocus={e => (e.currentTarget.className += " input-elegant")}
               onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
             />
             <span style={{ position:"absolute", right:9, top:"50%", transform:"translateY(-50%)", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:4, padding:"1px 6px", fontSize:10, color:"#555", fontFamily:"monospace", pointerEvents:"none" }}>⌘ K</span>
@@ -582,15 +582,13 @@ export default function DashboardPage() {
                   Your AI co-pilot for retail intelligence is ready.
                 </p>
                 <div style={{ display:"flex", gap:10 }}>
-                  <Link href="/dashboard/analysis"
-                    style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px", background:"#7c3aed", border:"none", borderRadius:999, fontSize:13, fontWeight:700, color:"#fff", textDecoration:"none", boxShadow:"0 4px 20px rgba(124,58,237,0.45)", transition:"background 0.2s" }}
-                    onMouseEnter={e=>(e.currentTarget.style.background="#6d28d9")}
-                    onMouseLeave={e=>(e.currentTarget.style.background="#7c3aed")}>
+                  <Link href="/dashboard/analysis" className="btn-primary"
+                    style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px", background:"#7c3aed", border:"none", borderRadius:999, fontSize:13, fontWeight:700, color:"#fff", textDecoration:"none", boxShadow:"0 4px 20px rgba(124,58,237,0.4)", letterSpacing:"0.01em" }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                     New Analysis
                   </Link>
-                  <Link href="/dashboard"
-                    style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 18px", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.14)", borderRadius:999, fontSize:13, fontWeight:400, color:"rgba(220,210,255,0.7)", textDecoration:"none" }}>
+                  <Link href="/dashboard" className="btn-ghost"
+                    style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 18px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:999, fontSize:13, fontWeight:400, color:"rgba(210,200,255,0.65)", textDecoration:"none" }}>
                     View Dashboard
                   </Link>
                 </div>
@@ -626,9 +624,9 @@ export default function DashboardPage() {
                 { label:"Images",          value:totalImages,               change:"19.6%", color:"#f59e0b", icon:"/charts/images.png",    pts:"0,30 20,23 40,21 60,12 80,16 100,6  120,10 140,3  160,5"  },
                 { label:"Markets Tracked", value:sectors.length,            change:"5 new this week", color:"#8b5cf6", icon:"/charts/markets.png",  pts:"0,28 20,22 40,25 60,17 80,20 100,13 120,16 140,10 160,13" },
               ] as {label:string;value:number;change:string;color:string;icon:string;pts:string}[]).map((s,i) => (
-                <div key={i} style={{ background:"rgba(13,17,31,0.9)", backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"14px 14px 10px", cursor:"pointer", transition:"border-color 0.2s, transform 0.2s", overflow:"hidden" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor=`${s.color}35`; e.currentTarget.style.transform="translateY(-2px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.06)"; e.currentTarget.style.transform="translateY(0)"; }}>
+                <div key={i} className="card-hover stagger-item" style={{ background:"rgba(13,17,31,0.9)", backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"14px 14px 10px", cursor:"pointer", overflow:"hidden" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor=`${s.color}40`; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.06)"; }}>
 
                   {/* Icon (large) + info stacked bên phải — cùng chiều cao */}
                   <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8 }}>
@@ -642,7 +640,7 @@ export default function DashboardPage() {
                         <span style={{ fontSize:11, fontWeight:500, color:"#8a9bb5", letterSpacing:"0.01em", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.label}</span>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" style={{ flexShrink:0 }}><path d="M9 18l6-6-6-6"/></svg>
                       </div>
-                      <div style={{ fontSize:22, fontWeight:800, color:"#ffffff", letterSpacing:"-0.04em", lineHeight:1.1, marginBottom:4 }}>
+                      <div className="data-number" style={{ fontSize:22, fontWeight:800, color:"#ffffff", letterSpacing:"-0.04em", lineHeight:1.1, marginBottom:4 }}>
                         {s.value.toLocaleString()}
                       </div>
                       <div style={{ fontSize:11, color:"#10b981", fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
@@ -818,7 +816,7 @@ export default function DashboardPage() {
               <p style={{ fontSize:12, color:"rgba(167,139,250,0.5)", lineHeight:1.6, margin:"0 0 20px", maxWidth:220 }}>
                 Get smart recommendations, demand forecasting, and market predictions tailored to your business.
               </p>
-              <Link href="/dashboard/analysis" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 18px", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.4)", borderRadius:10, fontSize:13, fontWeight:700, color:"#c4b5fd", textDecoration:"none" }}>
+              <Link href="/dashboard/analysis" className="btn-primary" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 18px", background:"rgba(124,58,237,0.22)", border:"1px solid rgba(124,58,237,0.4)", borderRadius:10, fontSize:13, fontWeight:700, color:"#c4b5fd", textDecoration:"none" }}>
                 Explore AI Analytics →
               </Link>
             </div>
@@ -994,25 +992,108 @@ export default function DashboardPage() {
         </div>
       </main>
       <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes heroFloat { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-6px) scale(1.02)} }
-        @keyframes radarPulse { 0%,100%{opacity:0.5;filter:drop-shadow(0 0 2px #7c3aed)} 50%{opacity:1;filter:drop-shadow(0 0 8px #a78bfa)} }
+        /* ── §6 Typography: font smoothing + rendering ─────────────── */
+        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-        /* §7 stagger entrance — translateY + scale + opacity only */
-        @keyframes cardEntrance {
-          from { opacity:0; transform:perspective(520px) translateY(18px) scale(0.9); }
-          to   { opacity:1; transform:perspective(520px) translateY(0)     scale(1); }
+        /* ── §6 Text selection — on-brand purple tint ──────────────── */
+        ::selection { background: rgba(124,58,237,0.28); color: #fff; }
+
+        /* ── §6 Scrollbar — thin, elegant, minimal ─────────────────── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.25); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.45); }
+
+        /* ── §7 Global transition tokens — 200ms ease-out ──────────── */
+        a, button { transition: all 200ms cubic-bezier(0.25,0.46,0.45,0.94); }
+
+        /* ── §7 Premium button: scale feedback + glow ──────────────── */
+        .btn-primary {
+          transition: background 200ms ease-out, transform 180ms cubic-bezier(0.34,1.56,0.64,1),
+                      box-shadow 200ms ease-out, opacity 200ms ease-out;
+        }
+        .btn-primary:hover  { transform: translateY(-1px) scale(1.02); box-shadow: 0 6px 24px rgba(124,58,237,0.45); }
+        .btn-primary:active { transform: translateY(0) scale(0.97); }
+
+        .btn-ghost {
+          transition: background 200ms ease-out, border-color 200ms ease-out,
+                      color 200ms ease-out, transform 180ms ease-out;
+        }
+        .btn-ghost:hover  { background: rgba(255,255,255,0.08) !important; transform: translateY(-1px); }
+        .btn-ghost:active { transform: scale(0.97); }
+
+        /* ── §7 Input focus — smooth purple glow ───────────────────── */
+        .input-elegant {
+          transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+        }
+        .input-elegant:focus {
+          border-color: rgba(124,58,237,0.55) !important;
+          box-shadow: 0 0 0 3px rgba(124,58,237,0.12), 0 0 0 1px rgba(124,58,237,0.3);
+          outline: none;
         }
 
-        /* §7 shimmer — translateX only (hardware accelerated) */
+        /* ── §7 Card hover — lift + glow (transform only) ──────────── */
+        .card-hover {
+          transition: transform 220ms cubic-bezier(0.34,1.56,0.64,1),
+                      border-color 220ms ease-out, box-shadow 220ms ease-out;
+        }
+        .card-hover:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.2);
+        }
+
+        /* ── §6 Nav item transitions ────────────────────────────────── */
+        .nav-item {
+          transition: background 180ms ease-out, color 180ms ease-out,
+                      border-color 180ms ease-out, transform 180ms ease-out;
+        }
+        .nav-item:hover { transform: translateX(2px); }
+
+        /* ── §6 Section labels — luxury typography ──────────────────── */
+        .label-section {
+          font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+          text-transform: uppercase; color: rgba(124,58,237,0.6);
+        }
+
+        /* ── §6 Data numbers — tabular figures prevent layout shift ─── */
+        .data-number { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+        /* ── §7 Keyframes ───────────────────────────────────────────── */
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes heroFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        @keyframes radarPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+        @keyframes cardEntrance {
+          from { opacity:0; transform: translateY(14px) scale(0.97); }
+          to   { opacity:1; transform: translateY(0)    scale(1); }
+        }
         @keyframes shimmerSlide {
-          from { transform: skewX(-18deg) translateX(-50%);  }
+          from { transform: skewX(-18deg) translateX(-50%); }
           to   { transform: skewX(-18deg) translateX(420%); }
         }
+        @keyframes fadeUp {
+          from { opacity:0; transform: translateY(10px); }
+          to   { opacity:1; transform: translateY(0); }
+        }
+        @keyframes glowPulse {
+          0%,100% { box-shadow: 0 0 12px rgba(124,58,237,0.3); }
+          50%     { box-shadow: 0 0 24px rgba(124,58,237,0.6); }
+        }
 
-        /* §1 reduced-motion: disable all motion for a11y */
+        /* ── §7 Stagger entrance for list items ─────────────────────── */
+        .stagger-item { animation: fadeUp 350ms cubic-bezier(0.25,0.46,0.45,0.94) both; }
+        .stagger-item:nth-child(1) { animation-delay: 0ms;  }
+        .stagger-item:nth-child(2) { animation-delay: 50ms; }
+        .stagger-item:nth-child(3) { animation-delay: 100ms;}
+        .stagger-item:nth-child(4) { animation-delay: 150ms;}
+        .stagger-item:nth-child(5) { animation-delay: 200ms;}
+
+        /* ── §1 Reduced-motion: disable all animations (a11y) ──────── */
         @media (prefers-reduced-motion: reduce) {
-          * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
         }
       `}</style>
     </div>
