@@ -1523,3 +1523,87 @@ References: Coursue Dashboard + Finance Dashboard (Alice Smith) + Paytop (Aida M
 3. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan
 4. Tích hợp RetailLayoutNFT vào `/forum`
 5. Pitch StoreScope cho Circle grants
+
+---
+
+## Nhật ký làm việc — 2026-06-04 (phiên 2)
+
+### Thống kê công việc hôm nay
+
+#### 1. Dashboard — Layout redesign theo StoreScope AI Pro reference
+- `3bafa70` feat: layout matching StoreScope AI Pro reference
+  - Hero section 3-col, 5 stats cards, Scan Trend side-by-side với AI Analytics CTA
+  - Row 3: Tools & Shortcuts + Promotions + Watchlist (3-col)
+  - Row 4: Global Search + Top Growing Category
+
+#### 2. Dashboard — Stats cards chuẩn reference
+- `f0e710b` Stats cards redesign: icon 52px bên trái + số liệu bên phải + % change
+- `4146b48` Layout icon + info ngang bên phải, cùng chiều cao
+- `4fd527e` Icon lớn hơn, thông tin số liệu nằm ngang
+
+#### 3. Chart icons cho 5 stats cards
+- `d49170c` Thêm icon neon cho 5 biểu đồ: Scans, Companies, Products, Images, Markets
+- Files: `public/charts/scans.png`, `companies.png`, `products.png`, `images.png`, `markets.png`
+
+#### 4. Tools & Shortcuts — PNG icons 3D holographic
+- `9ee9d47` Thay SVG bolt icons bằng ảnh PNG thật từ `/apps/`
+- 8 ảnh: ai-analysis, vision-agent, ai-agent, catalog, my-reports, my-profile, layout-editor, forum
+
+#### 5. Scan Trend chart — tinh chỉnh kích thước
+- `-20%` width và height ban đầu (W=448, H=120)
+- +10% width → `0.8fr→0.88fr`
+- +15% width thêm → `0.88fr→1.01fr`, W=515
+- AI Analytics CTA: `1fr` fill remaining space
+- Chart + AI Analytics side-by-side: `gridTemplateColumns: "1.01fr 1fr"`
+
+#### 6. Hero section images
+- `44e05a7` hero-center.png (S hexagon logo) + hero-globe.png (globe) áp dụng
+- `b9f9425` Elegant redesign: mix-blend-mode:screen, gradient overlay
+- `18c13fb` Banner bg image `7cce2a40` (holographic chart visualization)
+- `51f76fa` Banner bg thay bằng `e90d397f` (S hexagon platform với floating icons)
+- `a482a27` Hero tall 380px, ảnh nền đầy đủ S logo + platform
+- `a955bcf` Gộp Hero + Stats dùng chung 1 ảnh nền `8b75a286`
+- `8625ccf` Stats section dùng `8b75a286` làm nền riêng biệt
+
+#### 7. AI Analytics CTA
+- `a3272d4` Dùng ảnh `17106442` (globe + analytics) làm nền
+- `21614b5` Thêm viền `rgba(124,58,237,0.3)`
+- `779a43e` Fix content alignment (flexDirection column, padding), bg shift 10% trái
+- `50cf52e` Split description 2 hàng
+
+#### 8. Premium Typography + Effects (ui-ux-pro-max §6§7)
+- `1d3d8a5` Applied:
+  - §6: `antialiased`, `::selection` purple, scrollbar 5px, `tabular-nums` cho số liệu
+  - §7: `btn-primary` spring `cubic-bezier(0.34,1.56,0.64,1)` + glow hover
+  - `card-hover` translateY(-3px), `nav-item` drift, `input-elegant` glow focus
+  - Stagger entrance 50ms/card, `fadeUp` keyframe, `heroFloat` simplified
+  - `@media prefers-reduced-motion` disable all (§1 a11y)
+
+#### 9. Latest Promotions — Hình ảnh sản phẩm thật
+- `d308548` Cập nhật PROMO_MAP với dữ liệu thực từ Co.op Online:
+  - Pepsi không calo -34%, Sting Dâu -28%, Aquafina -27%, Hảo Hảo -22%
+  - `PromoItem.img` field thêm vào tất cả items
+  - Display: 54px ảnh sản phẩm thật + discount badge + left accent gradient
+- `dd96ae3` Fix DEFAULT_PROMOS: thêm img + keywords condiment/oil/seasoning
+
+### Hình ảnh mới thêm hôm nay
+| File | Mô tả |
+|---|---|
+| `public/hero/hero-bg.png` | S hexagon platform e90d397f |
+| `public/hero/stats-bg.png` | S hexagon + purple data viz 8b75a286 |
+| `public/hero/ai-analytics-bg.png` | Globe + analytics 17106442 |
+| `public/charts/scans.png` | Neon QR scan icon |
+| `public/charts/companies.png` | Neon building icon |
+| `public/charts/products.png` | Neon products icon |
+| `public/charts/images.png` | Neon images icon |
+| `public/charts/markets.png` | Neon globe icon |
+
+### Commits hôm nay (phiên 2): 30 commits
+Từ `7be21f3` → `dd96ae3`
+
+### Việc cần làm tiếp
+1. Deploy lên Vercel — push `vercel-repo`
+2. Cập nhật CLAUDE.md vào `storescope-ai` repo
+3. Submit Google Form Arc OSS Showcase
+4. Pitch Circle grants
+5. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan
