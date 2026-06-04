@@ -598,25 +598,32 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── 5 Stats cards with sparklines (reference style) ───────── */}
+          {/* ── 5 Stats cards with sparklines + chart icons ───────────── */}
           {!loading && (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
               {[
-                { label:"Scans",     value:78642+sectors.length*100, change:"+16.3%", color:"#7c3aed", pts:"0,18 13,14 26,16 39,9 52,12 65,5 80,7" },
-                { label:"Companies", value:totalCompanies,            change:"+8.3%",  color:"#10b981", pts:"0,17 13,13 26,15 39,9 52,12 65,6 80,8" },
-                { label:"Products",  value:totalProducts,             change:"+14.7%", color:"#3b82f6", pts:"0,18 13,14 26,16 39,8 52,11 65,4 80,6" },
-                { label:"Images",    value:totalImages,               change:"+19.6%", color:"#f59e0b", pts:"0,19 13,15 26,13 39,7 52,10 65,3 80,5" },
-                { label:"Markets",   value:sectors.length,            change:"+5 new", color:"#ec4899", pts:"0,18 13,13 26,15 39,10 52,12 65,7 80,9" },
+                { label:"Scans",     value:78642+sectors.length*100, change:"+16.3%", color:"#7c3aed", pts:"0,18 13,14 26,16 39,9 52,12 65,5 80,7",  icon:"/charts/scans.png"     },
+                { label:"Companies", value:totalCompanies,            change:"+8.3%",  color:"#10b981", pts:"0,17 13,13 26,15 39,9 52,12 65,6 80,8",  icon:"/charts/companies.png" },
+                { label:"Products",  value:totalProducts,             change:"+14.7%", color:"#3b82f6", pts:"0,18 13,14 26,16 39,8 52,11 65,4 80,6",  icon:"/charts/products.png"  },
+                { label:"Images",    value:totalImages,               change:"+19.6%", color:"#f59e0b", pts:"0,19 13,15 26,13 39,7 52,10 65,3 80,5",  icon:"/charts/images.png"    },
+                { label:"Markets",   value:sectors.length,            change:"+5 new", color:"#ec4899", pts:"0,18 13,13 26,15 39,10 52,12 65,7 80,9", icon:"/charts/markets.png"   },
               ].map((s,i) => (
-                <div key={i} style={{ ...card, padding:"12px 14px", cursor:"pointer", transition:"border-color 0.2s" }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = `${s.color}40`)}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:5 }}>
-                    <span style={{ fontSize:9, color:"#555", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em" }}>{s.label}</span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                <div key={i} style={{ ...card, padding:"12px 14px", cursor:"pointer", transition:"border-color 0.2s, transform 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = `${s.color}40`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  {/* Header: icon + label + chevron */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+                    <div style={{ width:36, height:36, borderRadius:9, overflow:"hidden", flexShrink:0, boxShadow:`0 0 10px ${s.color}30` }}>
+                      <img src={s.icon} alt={s.label} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:9, color:"#555", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em" }}>{s.label}</div>
+                      <div style={{ fontSize:17, fontWeight:800, color:"#fff", letterSpacing:"-0.03em", lineHeight:1.2 }}>{s.value.toLocaleString()}</div>
+                    </div>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" style={{ flexShrink:0 }}><path d="M9 18l6-6-6-6"/></svg>
                   </div>
-                  <div style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-0.03em", marginBottom:4 }}>{s.value.toLocaleString()}</div>
-                  <div style={{ fontSize:9, color:"#10b981", fontWeight:600, marginBottom:6 }}>{s.change} <span style={{ color:"#444" }}>vs 7d</span></div>
+                  {/* % change + sparkline */}
+                  <div style={{ fontSize:9, color:"#10b981", fontWeight:600, marginBottom:5 }}>{s.change} <span style={{ color:"#444" }}>vs 7d</span></div>
                   <Sparkline pts={s.pts} color={s.color} />
                 </div>
               ))}
