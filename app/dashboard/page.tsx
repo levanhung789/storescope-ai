@@ -804,7 +804,7 @@ export default function DashboardPage() {
           </div>{/* end Scan Trend offset wrapper */}
 
           {/* ── AI Analytics CTA ──────────────────────────────────────── */}
-          <div style={{ position:"relative", borderRadius:16, overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+          <div style={{ position:"relative", borderRadius:16, overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between", border:"1px solid rgba(124,58,237,0.3)" }}>
             {/* Background image */}
             <img src="/hero/ai-analytics-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"left center", display:"block" }} />
             {/* Dark overlay — left side darker for text */}
