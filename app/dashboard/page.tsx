@@ -658,8 +658,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
-              </div>{/* end cards grid */}
-            </div>{/* end bg wrapper */}
+              </div>
+            </div>
           )}
 
           {/* ── Row 2: Scan Trend + AI Analytics CTA ───────────────────── */}
