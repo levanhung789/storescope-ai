@@ -565,21 +565,13 @@ export default function DashboardPage() {
               <p style={{ fontSize:13, color:"rgba(167,139,250,0.5)", margin:0 }}>Your AI co-pilot for retail intelligence is ready.</p>
             </div>
 
-            {/* Center: 3D logo placeholder */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <div style={{ position:"relative", width:120, height:100, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                {/* Glow rings */}
-                <div style={{ position:"absolute", width:100, height:100, borderRadius:"50%", border:"1px solid rgba(124,58,237,0.2)", animation:"pulse 3s infinite" }}/>
-                <div style={{ position:"absolute", width:80, height:80, borderRadius:"50%", border:"1px solid rgba(124,58,237,0.3)", animation:"pulse 3s 0.5s infinite" }}/>
-                {/* Hexagon logo */}
-                <div style={{ width:64, height:64, background:"linear-gradient(135deg,#4c1d95,#7c3aed)", clipPath:"polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 0 30px rgba(124,58,237,0.6)", zIndex:1 }}>
-                  <span style={{ fontSize:24, fontWeight:900, color:"#fff", letterSpacing:"-0.05em" }}>S</span>
-                </div>
-                {/* Floating dots */}
-                {[0,1,2,3].map(i => (
-                  <div key={i} style={{ position:"absolute", width:6, height:6, borderRadius:"50%", background:["#7c3aed","#3b82f6","#10b981","#f59e0b"][i], top:`${[10,70,20,60][i]}%`, left:`${[80,10,15,85][i]}%`, animation:`pulse 2s ${i*0.4}s infinite` }}/>
-                ))}
-              </div>
+            {/* Center: 3D holographic S logo image */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
+              <img
+                src="/hero/hero-center.png"
+                alt="StoreScope AI"
+                style={{ width:"100%", maxHeight:110, objectFit:"contain", objectPosition:"center", filter:"drop-shadow(0 0 20px rgba(59,130,246,0.5))", animation:"heroFloat 4s ease-in-out infinite" }}
+              />
             </div>
 
             {/* Right: AI Insight card */}
@@ -790,13 +782,9 @@ export default function DashboardPage() {
             <div style={{ position:"absolute", top:"-20%", right:"-10%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,0.25) 0%,transparent 70%)", filter:"blur(30px)", pointerEvents:"none" }}/>
             <div style={{ position:"absolute", bottom:"10%", right:"15%", width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%)", filter:"blur(20px)", pointerEvents:"none" }}/>
 
-            {/* Placeholder for 3D globe image */}
-            <div style={{ position:"absolute", bottom:0, right:0, width:160, height:160, display:"flex", alignItems:"center", justifyContent:"center", opacity:0.4 }}>
-              <div style={{ width:120, height:120, borderRadius:"50%", border:"1px solid rgba(124,58,237,0.3)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                <div style={{ width:80, height:80, borderRadius:"50%", border:"1px solid rgba(59,130,246,0.3)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.4)" }}/>
-                </div>
-              </div>
+            {/* 3D Globe image */}
+            <div style={{ position:"absolute", bottom:-10, right:-10, width:190, height:160, overflow:"hidden", opacity:0.85 }}>
+              <img src="/hero/hero-globe.png" alt="" style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"center", filter:"drop-shadow(0 0 16px rgba(59,130,246,0.6))" }} />
             </div>
 
             <div style={{ position:"relative", zIndex:1 }}>
@@ -984,6 +972,7 @@ export default function DashboardPage() {
       </main>
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes heroFloat { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-6px) scale(1.02)} }
         @keyframes radarPulse { 0%,100%{opacity:0.5;filter:drop-shadow(0 0 2px #7c3aed)} 50%{opacity:1;filter:drop-shadow(0 0 8px #a78bfa)} }
 
         /* §7 stagger entrance — translateY + scale + opacity only */
