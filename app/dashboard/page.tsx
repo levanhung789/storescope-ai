@@ -348,6 +348,13 @@ export default function DashboardPage() {
 
   const displayName = anonUser?.displayName ?? "User";
 
+  // ── Mini sparkline for stats cards ────────────────────────────────────────
+  const Sparkline = ({ pts, color }: { pts: string; color: string }) => (
+    <svg width="80" height="20" viewBox="0 0 80 20" style={{ display:"block" }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8"/>
+    </svg>
+  );
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", color: "#f0f0f0", fontFamily: "inherit", position: "relative" }}>
 
@@ -508,87 +515,85 @@ export default function DashboardPage() {
       {/* main: no overflow so dropdowns aren't clipped */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative", zIndex: 2 }}>
 
-        {/* ── Header — sticky top, zIndex:50 so dropdown renders above content */}
-        <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 24px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0, background: "rgba(8,4,20,0.95)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 50 }}>
-          {/* Search bar */}
-          <div style={{ flex: 1, maxWidth: 400, position: "relative" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products, sellers, sectors..."
-              style={{ width: "100%", padding: "9px 12px 9px 34px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#f0f0f0", fontSize: 13, outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.5)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+        {/* ── Header — reference: ⌘K search + bell + bookmark + global ── */}
+        <header style={{ borderBottom:"1px solid rgba(255,255,255,0.05)", padding:"10px 20px", display:"flex", alignItems:"center", gap:12, flexShrink:0, background:"rgba(6,8,15,0.97)", backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)", position:"sticky", top:0, zIndex:50 }}>
+          <div style={{ flex:1, maxWidth:520, position:"relative" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" style={{ position:"absolute", left:11, top:"50%", transform:"translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search anything... (e.g., company, product, barcode, location)"
+              style={{ width:"100%", padding:"8px 52px 8px 32px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:9, color:"#f0f0f0", fontSize:12, outline:"none", boxSizing:"border-box", transition:"border-color 0.2s" }}
+              onFocus={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
             />
+            <span style={{ position:"absolute", right:9, top:"50%", transform:"translateY(-50%)", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:4, padding:"1px 6px", fontSize:10, color:"#555", fontFamily:"monospace", pointerEvents:"none" }}>⌘ K</span>
           </div>
-
-          {/* Live badge (Paytop) */}
-          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 999 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", animation: "pulse 2s infinite" }} />
-            <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 600 }}>Live</span>
-          </div>
-
-          {/* Bell */}
-          <button style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#888" }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          </button>
-
-          {/* Avatar + name */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff" }}>
-              {displayName[0]?.toUpperCase() ?? "U"}
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            <div style={{ position:"relative" }}>
+              <button style={{ width:32, height:32, borderRadius:7, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#888" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </button>
+              <span style={{ position:"absolute", top:-3, right:-3, width:15, height:15, borderRadius:"50%", background:"#7c3aed", fontSize:8, fontWeight:700, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center" }}>3</span>
             </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f0", lineHeight: 1.2 }}>{displayName}</div>
-              <div style={{ fontSize: 10, color: "#555" }}>@{displayName.toLowerCase()}</div>
+            <button style={{ width:32, height:32, borderRadius:7, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#888" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:7, color:"#888", fontSize:11, cursor:"pointer", fontFamily:"inherit" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>
+              Global
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:"linear-gradient(135deg,#7c3aed,#ec4899)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#fff" }}>{displayName[0]?.toUpperCase() ?? "U"}</div>
+              <div>
+                <div style={{ fontSize:12, fontWeight:600, color:"#f0f0f0", lineHeight:1.2 }}>{displayName}</div>
+                <div style={{ fontSize:9, color:"#444" }}>Enterprise Admin</div>
+              </div>
             </div>
+            {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
           </div>
-          {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
         </header>
 
         {/* Scrollable content wrapper */}
         <div style={{ flex: 1, overflow: "auto" }}>
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* ── Greeting — Paytop "Hey [Name]!" ──────────────────────── */}
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+          {/* ── Greeting + AI Insight ─────────────────────────────────── */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 270px", gap:14, alignItems:"start" }}>
             <div>
-              <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, letterSpacing: "-0.025em", color: "#f0f0f0" }}>
-                Hey {displayName}! 👋
-              </h2>
-              <p style={{ margin: 0, fontSize: 13, color: "#555" }}>
-                {currentSector ? `Viewing: ${currentSector.sectorLabel}` : "What sector would you like to analyze today?"}
-              </p>
+              <h1 style={{ fontSize:20, fontWeight:800, color:"#fff", margin:"0 0 3px", letterSpacing:"-0.02em" }}>Good morning, {displayName} 👋</h1>
+              <p style={{ fontSize:12, color:"#555", margin:"0 0 0" }}>Your AI co-pilot for retail intelligence is ready.</p>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link href="/dashboard/analysis"
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#7c3aed", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none", transition: "background 0.2s" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#6d28d9")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#7c3aed")}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                AI Analysis
-              </Link>
+            <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"11px 14px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:7 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>AI Insight</span>
+                <span style={{ fontSize:9, padding:"2px 7px", borderRadius:999, background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.25)", color:"#10b981", fontWeight:700 }}>New</span>
+              </div>
+              <p style={{ fontSize:11, color:"#555", lineHeight:1.5, margin:"0 0 8px" }}>
+                <strong style={{ color:"#a78bfa" }}>{currentSector?.sectorLabel ?? "FMCG"}</strong> sales increased this week across 24 key markets.
+              </p>
+              <Link href="/dashboard/analysis" style={{ fontSize:10, fontWeight:600, color:"#a78bfa", background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)", borderRadius:7, padding:"4px 10px", textDecoration:"none" }}>View Full Insight →</Link>
             </div>
           </div>
 
-          {/* ── Stats row — Paytop/Finance styled cards ───────────────── */}
+          {/* ── 5 Stats cards with sparklines (reference style) ───────── */}
           {!loading && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
               {[
-                { label: "Sectors",   value: sectors.length,    color: "#a78bfa", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
-                { label: "Companies", value: totalCompanies,    color: "#60a5fa", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" },
-                { label: "Products",  value: totalProducts,     color: "#34d399", icon: "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" },
-                { label: "Images",    value: totalImages,       color: "#f59e0b", icon: "M23 7l-7 5 7 5V7z M1 5h9v14H1z" },
-              ].map((s, i) => (
-                <div key={s.label} style={{ ...card, padding: "16px 18px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: `${s.color}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="1.8"><path d={s.icon}/></svg>
-                    </div>
-                    <span style={{ fontSize: 10, color: "#4ade80", fontWeight: 600, background: "rgba(74,222,128,0.1)", padding: "2px 7px", borderRadius: 999 }}>+{(i+1)*3}%</span>
+                { label:"Scans",     value:78642+sectors.length*100, change:"+16.3%", color:"#7c3aed", pts:"0,18 13,14 26,16 39,9 52,12 65,5 80,7" },
+                { label:"Companies", value:totalCompanies,            change:"+8.3%",  color:"#10b981", pts:"0,17 13,13 26,15 39,9 52,12 65,6 80,8" },
+                { label:"Products",  value:totalProducts,             change:"+14.7%", color:"#3b82f6", pts:"0,18 13,14 26,16 39,8 52,11 65,4 80,6" },
+                { label:"Images",    value:totalImages,               change:"+19.6%", color:"#f59e0b", pts:"0,19 13,15 26,13 39,7 52,10 65,3 80,5" },
+                { label:"Markets",   value:sectors.length,            change:"+5 new", color:"#ec4899", pts:"0,18 13,13 26,15 39,10 52,12 65,7 80,9" },
+              ].map((s,i) => (
+                <div key={i} style={{ ...card, padding:"12px 14px", cursor:"pointer", transition:"border-color 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = `${s.color}40`)}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:5 }}>
+                    <span style={{ fontSize:9, color:"#555", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em" }}>{s.label}</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
                   </div>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: s.color, letterSpacing: "-0.03em", lineHeight: 1 }}>{s.value.toLocaleString()}</div>
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-0.03em", marginBottom:4 }}>{s.value.toLocaleString()}</div>
+                  <div style={{ fontSize:9, color:"#10b981", fontWeight:600, marginBottom:6 }}>{s.change} <span style={{ color:"#444" }}>vs 7d</span></div>
+                  <Sparkline pts={s.pts} color={s.color} />
                 </div>
               ))}
             </div>
@@ -936,6 +941,102 @@ export default function DashboardPage() {
 
             </div>
           </div>
+
+          {/* ── Tools & Shortcuts ──────────────────────────────────────── */}
+          <div style={{ ...card, padding:"12px 16px", marginTop:2 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Tools &amp; Shortcuts</span>
+              <Link href="/dashboard" style={{ fontSize:10, color:"#555", textDecoration:"none" }}>View all →</Link>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(8,1fr)", gap:8 }}>
+              {([
+                { label:"Smart Scanner",  href:"/dashboard/analysis",     color:"#7c3aed" },
+                { label:"Image Search",   href:"/dashboard/vision-agent", color:"#3b82f6" },
+                { label:"Compare",        href:"/dashboard/analysis",     color:"#10b981" },
+                { label:"AI Insights",    href:"/dashboard/analysis",     color:"#f59e0b" },
+                { label:"Report Builder", href:"/dashboard/reports",      color:"#ec4899" },
+                { label:"Alerts",         href:"/dashboard",              color:"#ef4444" },
+                { label:"Data Export",    href:"/dashboard/reports",      color:"#8b5cf6" },
+                { label:"Integrations",   href:"/forum",                  color:"#06b6d4" },
+              ] as {label:string;href:string;color:string}[]).map((t,i) => (
+                <Link key={i} href={t.href} style={{ textDecoration:"none" }}>
+                  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"10px 6px", borderRadius:9, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", cursor:"pointer", transition:"all 0.15s", textAlign:"center" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = `${t.color}40`; e.currentTarget.style.background = `${t.color}0a`; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}>
+                    <div style={{ width:30, height:30, borderRadius:8, background:`${t.color}18`, border:`1px solid ${t.color}28`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <span style={{ fontSize:9, fontWeight:600, color:"#777", lineHeight:1.2 }}>{t.label}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Latest Promotions + Watchlist ──────────────────────────── */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 260px", gap:12, marginTop:2 }}>
+            <div style={{ ...card, padding:"14px 16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Latest Promotions</span>
+                <Link href="/forum" style={{ fontSize:10, color:"#7c3aed", textDecoration:"none" }}>View all</Link>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
+                {promos.slice(0,3).map((p,i) => (
+                  <div key={i} style={{ position:"relative", borderRadius:9, overflow:"hidden", padding:"10px 10px 8px", background:"rgba(10,5,30,0.9)", border:`1px solid ${p.color}20` }}>
+                    <div style={{ position:"absolute", top:0, left:0, bottom:0, width:2, background:p.color }}/>
+                    <div style={{ fontSize:10, fontWeight:800, color:p.color, marginBottom:3, paddingLeft:7 }}>{p.discount}</div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#fff", paddingLeft:7, marginBottom:2 }}>{p.brand}</div>
+                    <div style={{ fontSize:9, color:"#444", paddingLeft:7 }}>{p.start} — {p.end}</div>
+                    {PRODUCT_IMG[`pp${i+1}`] ? <img src={PRODUCT_IMG[`pp${i+1}`]} alt="" style={{ position:"absolute", bottom:-4, right:-4, width:36, height:36, objectFit:"contain", opacity:0.6 }}/> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ ...card, padding:"14px 16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>My Watchlist</span>
+              </div>
+              {([{b:"Coca-Cola",c:"+18.6%"},{b:"Nescafe Gold",c:"+12.4%"},{b:"Lay's Classic",c:"+9.8%"},{b:"Pepsi",c:"+7.2%"}] as {b:string;c:string}[]).map((w,i) => (
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ width:24, height:24, borderRadius:5, background:"rgba(124,58,237,0.1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:"#a78bfa", flexShrink:0 }}>{w.b[0]}</div>
+                  <span style={{ flex:1, fontSize:11, color:"#ddd", fontWeight:500 }}>{w.b}</span>
+                  <span style={{ fontSize:11, fontWeight:700, color:"#10b981" }}>{w.c}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Global Search ──────────────────────────────────────────── */}
+          <div style={{ ...card, padding:"14px 18px", marginTop:2 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+              <span style={{ fontSize:12, fontWeight:700, color:"#f0f0f0" }}>Global Search</span>
+              <span style={{ fontSize:10, color:"#444" }}>Search across companies, products, barcodes, and more.</span>
+            </div>
+            <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+              <div style={{ flex:1, position:"relative" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" style={{ position:"absolute", left:9, top:"50%", transform:"translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search companies, products, barcodes, categories..."
+                  style={{ width:"100%", padding:"8px 12px 8px 28px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, color:"#f0f0f0", fontSize:12, outline:"none", boxSizing:"border-box" }}
+                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
+                  onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
+                />
+              </div>
+              <Link href="/dashboard/analysis" style={{ padding:"8px 16px", background:"linear-gradient(135deg,#5b21b6,#7c3aed)", borderRadius:8, color:"#fff", fontSize:12, fontWeight:700, textDecoration:"none", display:"flex", alignItems:"center", gap:5, flexShrink:0 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                Search
+              </Link>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+              <span style={{ fontSize:9, color:"#444" }}>Popular:</span>
+              {(["Coca Cola","Nescafe","Sprite","Pepsi","Lay's","Oreo","Vinamilk"] as string[]).map(t => (
+                <button key={t} onClick={() => setSearch(t)}
+                  style={{ padding:"2px 8px", borderRadius:999, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", color:"#555", fontSize:10, cursor:"pointer", fontFamily:"inherit" }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
         </div>{/* end scrollable wrapper */}
       </main>
