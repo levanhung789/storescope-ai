@@ -348,10 +348,10 @@ export default function DashboardPage() {
 
   const displayName = anonUser?.displayName ?? "User";
 
-  // ── Mini sparkline for stats cards ────────────────────────────────────────
+  // ── Full-width sparkline (reference style — line only, no fill) ───────────
   const Sparkline = ({ pts, color }: { pts: string; color: string }) => (
-    <svg width="80" height="20" viewBox="0 0 80 20" style={{ display:"block" }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8"/>
+    <svg width="100%" height="32" viewBox="0 0 160 32" preserveAspectRatio="none" style={{ display:"block" }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
     </svg>
   );
 
@@ -598,33 +598,45 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── 5 Stats cards with sparklines + chart icons ───────────── */}
+          {/* ── 5 Stats cards — reference layout ─────────────────────── */}
           {!loading && (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10 }}>
-              {[
-                { label:"Scans",     value:78642+sectors.length*100, change:"+16.3%", color:"#7c3aed", pts:"0,18 13,14 26,16 39,9 52,12 65,5 80,7",  icon:"/charts/scans.png"     },
-                { label:"Companies", value:totalCompanies,            change:"+8.3%",  color:"#10b981", pts:"0,17 13,13 26,15 39,9 52,12 65,6 80,8",  icon:"/charts/companies.png" },
-                { label:"Products",  value:totalProducts,             change:"+14.7%", color:"#3b82f6", pts:"0,18 13,14 26,16 39,8 52,11 65,4 80,6",  icon:"/charts/products.png"  },
-                { label:"Images",    value:totalImages,               change:"+19.6%", color:"#f59e0b", pts:"0,19 13,15 26,13 39,7 52,10 65,3 80,5",  icon:"/charts/images.png"    },
-                { label:"Markets",   value:sectors.length,            change:"+5 new", color:"#ec4899", pts:"0,18 13,13 26,15 39,10 52,12 65,7 80,9", icon:"/charts/markets.png"   },
-              ].map((s,i) => (
-                <div key={i} style={{ ...card, padding:"12px 14px", cursor:"pointer", transition:"border-color 0.2s, transform 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = `${s.color}40`; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                  {/* Header: icon + label + chevron */}
+              {([
+                { label:"Scans",           value:78642+sectors.length*100, change:"16.3%", color:"#7c3aed", icon:"/charts/scans.png",     pts:"0,28 20,22 40,25 60,14 80,18 100,8  120,12 140,4  160,7"  },
+                { label:"Companies",       value:totalCompanies,            change:"8.3%",  color:"#10b981", icon:"/charts/companies.png", pts:"0,26 20,20 40,24 60,16 80,19 100,11 120,15 140,9  160,12" },
+                { label:"Products",        value:totalProducts,             change:"14.7%", color:"#3b82f6", icon:"/charts/products.png",  pts:"0,28 20,21 40,26 60,13 80,17 100,7  120,11 140,3  160,6"  },
+                { label:"Images",          value:totalImages,               change:"19.6%", color:"#f59e0b", icon:"/charts/images.png",    pts:"0,30 20,23 40,21 60,12 80,16 100,6  120,10 140,3  160,5"  },
+                { label:"Markets Tracked", value:sectors.length,            change:"5 new this week", color:"#8b5cf6", icon:"/charts/markets.png",  pts:"0,28 20,22 40,25 60,17 80,20 100,13 120,16 140,10 160,13" },
+              ] as {label:string;value:number;change:string;color:string;icon:string;pts:string}[]).map((s,i) => (
+                <div key={i} style={{ background:"rgba(13,17,31,0.9)", backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"14px 14px 10px", cursor:"pointer", transition:"border-color 0.2s, transform 0.2s", overflow:"hidden" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor=`${s.color}35`; e.currentTarget.style.transform="translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.06)"; e.currentTarget.style.transform="translateY(0)"; }}>
+
+                  {/* Row 1: icon + label + chevron */}
                   <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                    <div style={{ width:36, height:36, borderRadius:9, overflow:"hidden", flexShrink:0, boxShadow:`0 0 10px ${s.color}30` }}>
+                    <div style={{ width:30, height:30, borderRadius:8, overflow:"hidden", flexShrink:0, boxShadow:`0 0 12px ${s.color}35` }}>
                       <img src={s.icon} alt={s.label} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
                     </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:9, color:"#555", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em" }}>{s.label}</div>
-                      <div style={{ fontSize:17, fontWeight:800, color:"#fff", letterSpacing:"-0.03em", lineHeight:1.2 }}>{s.value.toLocaleString()}</div>
-                    </div>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" style={{ flexShrink:0 }}><path d="M9 18l6-6-6-6"/></svg>
+                    <span style={{ flex:1, fontSize:11, fontWeight:500, color:"#c0c8d8", letterSpacing:"-0.01em", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.label}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" style={{ flexShrink:0 }}><path d="M9 18l6-6-6-6"/></svg>
                   </div>
-                  {/* % change + sparkline */}
-                  <div style={{ fontSize:9, color:"#10b981", fontWeight:600, marginBottom:5 }}>{s.change} <span style={{ color:"#444" }}>vs 7d</span></div>
-                  <Sparkline pts={s.pts} color={s.color} />
+
+                  {/* Row 2: large number */}
+                  <div style={{ fontSize:24, fontWeight:800, color:"#ffffff", letterSpacing:"-0.04em", lineHeight:1, marginBottom:6 }}>
+                    {s.value.toLocaleString()}
+                  </div>
+
+                  {/* Row 3: % change */}
+                  <div style={{ fontSize:11, color:"#10b981", fontWeight:600, marginBottom:8, display:"flex", alignItems:"center", gap:3 }}>
+                    <span style={{ fontSize:10 }}>↑</span>
+                    <span>{s.change}</span>
+                    <span style={{ color:"rgba(255,255,255,0.25)", fontWeight:400 }}>vs last 7 days</span>
+                  </div>
+
+                  {/* Row 4: sparkline full width */}
+                  <div style={{ margin:"0 -14px -10px" }}>
+                    <Sparkline pts={s.pts} color={s.color} />
+                  </div>
                 </div>
               ))}
             </div>
