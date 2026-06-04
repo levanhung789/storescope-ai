@@ -635,7 +635,7 @@ export default function DashboardPage() {
             const total  = pd.current.reduce((a, b) => a + b, 0);
             const avg    = Math.round(total / n);
             const peak   = Math.max(...pd.current);
-            const W = 448; const H = 120; const PL = 34; const PR = 12; const PB = 22; const PT = 12;
+            const W = 515; const H = 120; const PL = 34; const PR = 12; const PB = 22; const PT = 12;
             const iW = W - PL - PR; const iH = H - PT - PB;
             const tx = (i: number) => PL + (i / (n - 1)) * iW;
             const ty = (v: number) => PT + iH - ((v / (maxVal * 1.15)) * iH);
