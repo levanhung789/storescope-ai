@@ -560,7 +560,7 @@ export default function DashboardPage() {
           <div style={{ position:"relative", overflow:"hidden", borderRadius:14 }}>
 
             {/* Single background image for both sections */}
-            <img src="/hero/stats-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center top", display:"block" }} />
+            <img src="/hero/stats-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center -40%", display:"block" }} />
 
             {/* Dark overlay */}
             <div style={{ position:"absolute", inset:0, background:"linear-gradient(180deg, rgba(5,4,18,0.75) 0%, rgba(5,4,18,0.8) 60%, rgba(5,4,18,0.9) 100%)", pointerEvents:"none" }} />
