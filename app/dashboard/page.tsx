@@ -816,7 +816,7 @@ export default function DashboardPage() {
                   Unlock deeper insights<br/>with <span style={{ color:"#a78bfa" }}>AI Analytics</span>
                 </h3>
                 <p style={{ fontSize:11, color:"rgba(190,180,230,0.55)", lineHeight:1.65, margin:0 }}>
-                  Smart recommendations, demand forecasting, and market predictions tailored to your business.
+                  Smart recommendations, demand forecasting,<br/>and market predictions tailored to your business.
                 </p>
               </div>
 
