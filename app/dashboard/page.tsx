@@ -624,7 +624,7 @@ export default function DashboardPage() {
           )}
 
           {/* ── Row 2: Scan Trend (60%) + AI Analytics CTA (40%) ──────── */}
-          <div style={{ display:"grid", gridTemplateColumns:"0.8fr 340px", gap:14, alignItems:"stretch" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"0.8fr 1fr", gap:14, alignItems:"stretch" }}>
 
           {/* ── Scan Trend ─────────────────────────────────────────────── */}
           {(() => {
