@@ -802,27 +802,33 @@ export default function DashboardPage() {
           </div>{/* end Scan Trend offset wrapper */}
 
           {/* ── AI Analytics CTA ──────────────────────────────────────── */}
-          <div style={{ position:"relative", borderRadius:16, overflow:"hidden", display:"flex", flexDirection:"column", justifyContent:"space-between", border:"1px solid rgba(124,58,237,0.3)" }}>
-            {/* Background image */}
-            <img src="/hero/ai-analytics-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"left center", display:"block" }} />
+          <div style={{ position:"relative", borderRadius:16, overflow:"hidden", border:"1px solid rgba(124,58,237,0.3)", minHeight:220 }}>
+            {/* Background image — shifted 10% left (objectPosition 20%) */}
+            <img src="/hero/ai-analytics-bg.png" alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"20% center", display:"block" }} />
             {/* Dark overlay — left side darker for text */}
-            <div style={{ position:"absolute", inset:0, background:"linear-gradient(90deg, rgba(5,2,20,0.88) 0%, rgba(5,2,20,0.65) 45%, rgba(5,2,20,0.3) 100%)", pointerEvents:"none" }} />
+            <div style={{ position:"absolute", inset:0, background:"linear-gradient(90deg, rgba(5,2,20,0.90) 0%, rgba(5,2,20,0.68) 45%, rgba(5,2,20,0.25) 100%)", pointerEvents:"none" }} />
 
-            <div style={{ position:"relative", zIndex:1 }}>
-              <div style={{ fontSize:10, color:"rgba(167,139,250,0.5)", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:10 }}>AI-POWERED</div>
-              <h3 style={{ fontSize:19, fontWeight:800, color:"#fff", lineHeight:1.3, margin:"0 0 12px", letterSpacing:"-0.02em", maxWidth:200 }}>
-                Unlock deeper insights with <span style={{ color:"#a78bfa" }}>AI Analytics</span>
-              </h3>
-              <p style={{ fontSize:12, color:"rgba(167,139,250,0.5)", lineHeight:1.6, margin:"0 0 20px", maxWidth:220 }}>
-                Get smart recommendations, demand forecasting, and market predictions tailored to your business.
-              </p>
-              <Link href="/dashboard/analysis" className="btn-primary" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 18px", background:"rgba(124,58,237,0.22)", border:"1px solid rgba(124,58,237,0.4)", borderRadius:10, fontSize:13, fontWeight:700, color:"#c4b5fd", textDecoration:"none" }}>
-                Explore AI Analytics →
-              </Link>
-            </div>
-            {/* Carousel dots */}
-            <div style={{ display:"flex", gap:5, marginTop:20, position:"relative", zIndex:1 }}>
-              {[1,2,3].map((_,i) => <span key={i} style={{ width: i===0?18:6, height:5, borderRadius:3, background: i===0?"#7c3aed":"rgba(124,58,237,0.25)" }}/>)}
+            {/* Content — full height flex column */}
+            <div style={{ position:"relative", zIndex:1, height:"100%", padding:"24px 22px", display:"flex", flexDirection:"column", justifyContent:"space-between", minHeight:220 }}>
+              <div>
+                <div style={{ fontSize:10, color:"rgba(167,139,250,0.6)", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:10, fontWeight:700 }}>AI-POWERED</div>
+                <h3 style={{ fontSize:18, fontWeight:800, color:"#fff", lineHeight:1.35, margin:"0 0 10px", letterSpacing:"-0.02em" }}>
+                  Unlock deeper insights<br/>with <span style={{ color:"#a78bfa" }}>AI Analytics</span>
+                </h3>
+                <p style={{ fontSize:11, color:"rgba(190,180,230,0.55)", lineHeight:1.65, margin:0 }}>
+                  Smart recommendations, demand forecasting, and market predictions tailored to your business.
+                </p>
+              </div>
+
+              <div>
+                <Link href="/dashboard/analysis" className="btn-primary" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"9px 16px", background:"rgba(124,58,237,0.22)", border:"1px solid rgba(124,58,237,0.4)", borderRadius:10, fontSize:12, fontWeight:700, color:"#c4b5fd", textDecoration:"none", marginBottom:14 }}>
+                  Explore AI Analytics →
+                </Link>
+                {/* Carousel dots */}
+                <div style={{ display:"flex", gap:5 }}>
+                  {[1,2,3].map((_,i) => <span key={i} style={{ width: i===0?18:6, height:4, borderRadius:2, background: i===0?"#7c3aed":"rgba(124,58,237,0.22)" }}/>)}
+                </div>
+              </div>
             </div>
           </div>
 
