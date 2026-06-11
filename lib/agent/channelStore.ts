@@ -27,13 +27,26 @@ export interface ChannelMessage {
   status:     "pending" | "analyzing" | "done" | "error" | "insufficient_funds";
 }
 
+// Per-account bot config — user brings their own bot token (BotFather / Zalo OA)
+export interface BotConfig {
+  channel:       Channel;
+  secret:        string;   // webhook path segment
+  token:         string;   // bot token / OA access token
+  botUsername?:  string;
+  walletId:      string;
+  walletAddress: string;
+  createdAt:     number;
+}
+
 // Global stores
 const g = globalThis as typeof globalThis & {
   __channelUsers?:    Map<string, ChannelUser>;
   __channelMessages?: ChannelMessage[];
+  __channelBots?:     Map<string, BotConfig>; // key: `${channel}:${secret}`
 };
 if (!g.__channelUsers)    g.__channelUsers    = new Map();
 if (!g.__channelMessages) g.__channelMessages = [];
+if (!g.__channelBots)     g.__channelBots     = new Map();
 
 function userKey(channel: Channel, userId: string) { return `${channel}:${userId}`; }
 
@@ -78,6 +91,40 @@ export function updateMessage(id: string, patch: Partial<ChannelMessage>) {
 export function getMessages(channel?: Channel, limit = 50): ChannelMessage[] {
   const all = g.__channelMessages!;
   return (channel ? all.filter(m => m.channel === channel) : all).slice(0, limit);
+}
+
+// ── Personal bot registry ─────────────────────────────────────────────────────
+function botKey(channel: Channel, secret: string) { return `${channel}:${secret}`; }
+
+export function registerBot(bot: BotConfig): void {
+  // Remove any existing bot for this wallet/channel before registering the new one
+  for (const [key, existing] of g.__channelBots!) {
+    if (existing.channel === bot.channel && existing.walletId === bot.walletId) {
+      g.__channelBots!.delete(key);
+    }
+  }
+  g.__channelBots!.set(botKey(bot.channel, bot.secret), bot);
+}
+
+export function getBotBySecret(channel: Channel, secret: string): BotConfig | null {
+  return g.__channelBots!.get(botKey(channel, secret)) ?? null;
+}
+
+export function getBotByWallet(channel: Channel, walletId: string): BotConfig | null {
+  for (const bot of g.__channelBots!.values()) {
+    if (bot.channel === channel && bot.walletId === walletId) return bot;
+  }
+  return null;
+}
+
+export function removeBot(channel: Channel, walletId: string): BotConfig | null {
+  for (const [key, bot] of g.__channelBots!) {
+    if (bot.channel === channel && bot.walletId === walletId) {
+      g.__channelBots!.delete(key);
+      return bot;
+    }
+  }
+  return null;
 }
 
 // ── Channel stats ──────────────────────────────────────────────────────────────

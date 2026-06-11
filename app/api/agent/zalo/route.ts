@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
         "👋 Xin chào! Tôi là StoreScope AI Bot.\n\n" +
         "📸 Gửi ảnh kệ hàng → AI phân tích 8 bước (OSA, SoS, Recommendations)\n\n" +
         "💳 Phí: 0.025 USDC/lần\n\n" +
-        "🔗 Liên kết ví tại: https://storescope-ai.vercel.app/login\n" +
-        "Sau đó nhắn: /link <walletId> <walletAddress>"
+        `🔗 User ID của bạn: ${sender}\n\n` +
+        "Vào https://storescope-ai.vercel.app/dashboard/agent → mục \"Zalo OA\" → dán User ID này để liên kết với ví Circle của bạn."
       );
       return NextResponse.json({ ok: true });
     }

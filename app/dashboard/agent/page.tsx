@@ -457,7 +457,7 @@ export default function AgentPage() {
         )}
 
         {/* ── Multi-Channel Integration ── */}
-        <ChannelsPanel />
+        <ChannelsPanel session={currentSession} />
 
         {/* Tab switcher */}
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
@@ -679,19 +679,127 @@ export default function AgentPage() {
 }
 
 // ── Channels Panel ─────────────────────────────────────────────────────────────
-function ChannelsPanel() {
+type ChannelUser = {
+  channel: "telegram" | "zalo" | "webchat";
+  userId: string;
+  username?: string;
+  circleWalletId: string;
+  walletAddress: string;
+  linkedAt: number;
+  totalAnalyses: number;
+  totalSpentUSDC: number;
+};
+
+function ChannelsPanel({ session }: { session: import("../../_lib/circle").CircleSession | null }) {
   const [stats, setStats]   = useState<{telegram:{users:number;analyses:number};zalo:{users:number;analyses:number};webchat:{users:number;analyses:number};totalRevenue:number} | null>(null);
   const [cfg, setCfg]       = useState<{telegram:boolean;zalo:boolean} | null>(null);
-  // chatOpen no longer needed — widget manages itself
+  const [users, setUsers]   = useState<ChannelUser[]>([]);
+  const [tgInput, setTgInput]     = useState("");
+  const [zaloInput, setZaloInput] = useState("");
+  const [linking, setLinking]     = useState<"telegram" | "zalo" | null>(null);
+  const [linkMsg, setLinkMsg]     = useState<{ channel: "telegram" | "zalo"; text: string; ok: boolean } | null>(null);
+
+  const [myBot, setMyBot]               = useState<{ connected: boolean; botUsername?: string } | null>(null);
+  const [botTokenInput, setBotTokenInput] = useState("");
+  const [botBusy, setBotBusy]           = useState(false);
+  const [botMsg, setBotMsg]             = useState<{ text: string; ok: boolean } | null>(null);
+
+  const refreshUsers = () => fetch("/api/agent/channels?type=users").then(r => r.json()).then(d => setUsers(d.users ?? []));
+
+  const refreshMyBot = () => {
+    if (!session) { setMyBot(null); return; }
+    fetch(`/api/agent/telegram-bots?walletId=${session.walletId}`).then(r => r.json()).then(d => setMyBot(d));
+  };
 
   useEffect(() => {
     fetch("/api/agent/channels").then(r => r.json()).then(d => {
       setStats(d.stats);
       setCfg(d.configured);
     });
+    refreshUsers();
   }, []);
 
+  useEffect(() => {
+    refreshMyBot();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.walletId]);
+
+  const connectBot = async () => {
+    if (!session) { setBotMsg({ text: "Kết nối Circle Wallet trước.", ok: false }); return; }
+    const token = botTokenInput.trim();
+    if (!token) return;
+    setBotBusy(true);
+    setBotMsg(null);
+    try {
+      const res = await fetch("/api/agent/telegram-bots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletId: session.walletId, walletAddress: session.walletAddress, token }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBotTokenInput("");
+        setBotMsg({ text: `✓ Đã kết nối @${data.botUsername}!`, ok: true });
+        refreshMyBot();
+        refreshUsers();
+      } else {
+        setBotMsg({ text: data.error ?? "Kết nối thất bại.", ok: false });
+      }
+    } catch {
+      setBotMsg({ text: "Lỗi kết nối.", ok: false });
+    } finally {
+      setBotBusy(false);
+    }
+  };
+
+  const disconnectBot = async () => {
+    if (!session) return;
+    setBotBusy(true);
+    try {
+      await fetch("/api/agent/telegram-bots", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletId: session.walletId }),
+      });
+      setMyBot({ connected: false });
+      setBotMsg(null);
+    } finally {
+      setBotBusy(false);
+    }
+  };
+
+  const myTelegram = session ? users.find(u => u.channel === "telegram" && u.circleWalletId === session.walletId) : undefined;
+  const myZalo     = session ? users.find(u => u.channel === "zalo" && u.circleWalletId === session.walletId) : undefined;
+
+  const linkChannel = async (channel: "telegram" | "zalo") => {
+    if (!session) { setLinkMsg({ channel, text: "Kết nối Circle Wallet trước khi liên kết.", ok: false }); return; }
+    const userId = (channel === "telegram" ? tgInput : zaloInput).trim();
+    if (!userId) return;
+    setLinking(channel);
+    setLinkMsg(null);
+    try {
+      const res = await fetch("/api/agent/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "link", channel, userId, walletId: session.walletId, walletAddress: session.walletAddress }),
+      });
+      if (res.ok) {
+        await refreshUsers();
+        if (channel === "telegram") setTgInput(""); else setZaloInput("");
+        setLinkMsg({ channel, text: "✓ Liên kết thành công!", ok: true });
+      } else {
+        setLinkMsg({ channel, text: "Liên kết thất bại, thử lại.", ok: false });
+      }
+    } catch {
+      setLinkMsg({ channel, text: "Lỗi kết nối.", ok: false });
+    } finally {
+      setLinking(null);
+    }
+  };
+
   const cardS: React.CSSProperties = { background: "#111", border: "1px solid #1f1f1f", borderRadius: 16, padding: 20, marginBottom: 16 };
+  const linkInputS: React.CSSProperties = { flex: 1, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "6px 10px", color: "#f0f0f0", fontSize: 11, outline: "none", minWidth: 0 };
+  const linkBtnS: React.CSSProperties = { padding: "6px 12px", borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 };
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -737,6 +845,65 @@ function ChannelsPanel() {
                 Bot active — users can send images to analyze
               </div>
           }
+
+          {/* Per-account link row */}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1a1a1a" }}>
+            {myTelegram ? (
+              <div style={{ fontSize: 11, color: "#4ade80" }}>
+                ✓ Đã liên kết — ID: <code style={{ color: "#a78bfa" }}>{myTelegram.userId}</code>
+                {myTelegram.username ? ` (@${myTelegram.username})` : ""}
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: "#555", marginBottom: 6 }}>
+                  Nhắn <code style={{ color: "#818cf8" }}>/start</code> cho bot để lấy User ID, dán vào đây để liên kết ví:
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input value={tgInput} onChange={e => setTgInput(e.target.value)} placeholder="Telegram User ID" style={linkInputS} />
+                  <button onClick={() => linkChannel("telegram")} disabled={linking === "telegram" || !tgInput.trim()} style={linkBtnS}>
+                    {linking === "telegram" ? "..." : "Link"}
+                  </button>
+                </div>
+              </>
+            )}
+            {linkMsg?.channel === "telegram" && (
+              <div style={{ fontSize: 10, marginTop: 4, color: linkMsg.ok ? "#4ade80" : "#f87171" }}>{linkMsg.text}</div>
+            )}
+          </div>
+
+          {/* Connect your own bot (per-account bot token) */}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1a1a1a" }}>
+            {myBot?.connected ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                <div style={{ fontSize: 11, color: "#4ade80" }}>
+                  ✓ Bot riêng: <code style={{ color: "#a78bfa" }}>@{myBot.botUsername}</code>
+                </div>
+                <button onClick={disconnectBot} disabled={botBusy} style={{ ...linkBtnS, background: "#2a2a2a" }}>
+                  {botBusy ? "..." : "Ngắt"}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: "#555", marginBottom: 6 }}>
+                  Hoặc dùng bot riêng của bạn — tạo qua <code style={{ color: "#818cf8" }}>@BotFather</code>, dán token vào đây:
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    value={botTokenInput}
+                    onChange={e => setBotTokenInput(e.target.value)}
+                    placeholder="123456789:AAH..."
+                    style={linkInputS}
+                  />
+                  <button onClick={connectBot} disabled={botBusy || !botTokenInput.trim()} style={linkBtnS}>
+                    {botBusy ? "..." : "Connect"}
+                  </button>
+                </div>
+              </>
+            )}
+            {botMsg && (
+              <div style={{ fontSize: 10, marginTop: 4, color: botMsg.ok ? "#4ade80" : "#f87171" }}>{botMsg.text}</div>
+            )}
+          </div>
         </div>
 
         {/* Zalo */}
@@ -775,6 +942,30 @@ function ChannelsPanel() {
                 OA active — users can send images to analyze
               </div>
           }
+
+          {/* Per-account link row */}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1a1a1a" }}>
+            {myZalo ? (
+              <div style={{ fontSize: 11, color: "#4ade80" }}>
+                ✓ Đã liên kết — ID: <code style={{ color: "#a78bfa" }}>{myZalo.userId}</code>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: "#555", marginBottom: 6 }}>
+                  Theo dõi OA để bot gửi User ID, dán vào đây để liên kết ví:
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input value={zaloInput} onChange={e => setZaloInput(e.target.value)} placeholder="Zalo User ID" style={linkInputS} />
+                  <button onClick={() => linkChannel("zalo")} disabled={linking === "zalo" || !zaloInput.trim()} style={linkBtnS}>
+                    {linking === "zalo" ? "..." : "Link"}
+                  </button>
+                </div>
+              </>
+            )}
+            {linkMsg?.channel === "zalo" && (
+              <div style={{ fontSize: 10, marginTop: 4, color: linkMsg.ok ? "#4ade80" : "#f87171" }}>{linkMsg.text}</div>
+            )}
+          </div>
         </div>
 
         {/* Web Chat */}
