@@ -128,11 +128,13 @@ export async function handleTelegramUpdate(token: string, update: Record<string,
       return;
     }
 
-    // Download and convert to base64
+    // Download and convert to base64.
+    // Telegram's file server always responds with "application/octet-stream",
+    // so derive the real MIME type from the message instead of the response headers.
     const imgRes  = await fetch(fileUrl);
     const buffer  = await imgRes.arrayBuffer();
     const base64  = Buffer.from(buffer).toString("base64");
-    const mime    = imgRes.headers.get("content-type") ?? "image/jpeg";
+    const mime    = msg.photo ? "image/jpeg" : (msg.document?.mime_type ?? "image/jpeg");
 
     const response = await handleImageMessage("telegram", userId, username, base64, mime);
     await sendMessage(chatId, response.text);
