@@ -62,9 +62,27 @@ export async function analyzeImage(
     max_tokens: 4000,
   });
 
-  const raw = response.choices[0]?.message?.content ?? "{}";
+  const choice = response.choices[0];
+  const raw    = choice?.message?.content;
+
+  // GPT-4o can refuse (content filter / safety) or return nothing for unreadable
+  // images — in that case `content` is empty/null. Fail loudly instead of
+  // silently returning a PipelineResult full of zero/default values.
+  if (!raw || choice?.finish_reason === "content_filter") {
+    throw new Error("AI không thể phân tích ảnh này (ảnh không rõ hoặc bị từ chối phân tích). Vui lòng gửi ảnh chụp rõ kệ hàng/sản phẩm, đủ sáng.");
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const p   = JSON.parse(raw) as Record<string, any>;
+  let p: Record<string, any>;
+  try {
+    p = JSON.parse(raw);
+  } catch {
+    throw new Error("AI trả về dữ liệu không hợp lệ. Vui lòng thử lại với ảnh khác.");
+  }
+
+  if (!p.step1_quality && !p.step2_count && !p.step3_skus) {
+    throw new Error("Không nhận diện được kệ hàng/sản phẩm trong ảnh. Vui lòng gửi ảnh chụp rõ kệ hàng FMCG (đủ sáng, không bị che).");
+  }
 
   const result: PipelineResult = {
     id:        makeId(),
