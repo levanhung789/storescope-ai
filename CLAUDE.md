@@ -1607,3 +1607,74 @@ Từ `7be21f3` → `dd96ae3`
 3. Submit Google Form Arc OSS Showcase
 4. Pitch Circle grants
 5. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan
+
+---
+
+## Nhật ký làm việc — 2026-06-09
+
+### Công việc đã hoàn thành
+
+#### 1. Redesign `/dashboard/analysis` theo reference image
+
+Toàn bộ UI trang AI Analysis được làm lại để match với reference screenshot:
+
+**Sidebar:**
+- Thêm SVG icons cho từng nav item (house/crosshair/eye/monitor/doc/grid/chat)
+- Màu nền đổi sang `#06060f`, border `#14142a` (dark navy tone)
+- "Arc Testnet Connected" badge với animated green glow dot ở bottom
+- Language switcher giữ nguyên cuối sidebar
+
+**Header:**
+- Đổi từ tag + title nhỏ → "AI Shelf Intelligence" cỡ 22px + sparkle icon `✦` (svg, tím)
+- Subtitle: "Upload shelf images and convert retail execution into AI insights and on-chain proof."
+- Giữ nguyên WalletButton + CircleWalletButton
+- Thêm "View Reports" button (ghost, link `/dashboard/reports`)
+
+**Upload zone (redesign hoàn toàn):**
+- Card holographic với `linear-gradient(135deg, #0c0c1e, #0f0f2a)` + purple dashed border
+- Corner accent decorations (4 góc)
+- Cloud upload icon 3-layer với radial glow background
+- Heading "Upload shelf image" + subtitle + format badges (JPG / PNG / WEBP / Max 10MB)
+- Khi có ảnh: preview với "Change" button overlay
+- "Try Demo Image" button → fetch `/shelf-hero.png` và load vào state
+
+**CTA button:**
+- "Connect Wallet & Run Analysis" với `linear-gradient(135deg, #7c3aed, #6d28d9)`
+- `box-shadow: 0 4px 20px rgba(124,58,237,0.35)` khi active
+- Spring hover: opacity 0.88
+
+**Pipeline cards (mới):**
+- 3 cards ngang (01/02/03): Upload Image / AI Retail Detection / On-chain Proof Report
+- Mỗi card: số tag tím + SVG icon + title + description
+- Dotted connector (3 chấm) giữa các cards
+
+**10 Micro-Tasks panel (redesign):**
+- Header: "10 Micro-Tasks ✦" (trái) + "Each task = 1 on-chain transaction" (phải)
+- Short labels match reference: "Image Registration", "Image Quality Audit", "Shelf Object Detection", v.v.
+- Mỗi row: number badge (circle) + task name/desc + status badge ("● Pending"/"✓ Done") + USDC price
+- Footer: database icon + "Estimated on-chain execution cost" + "0 / 10 tasks completed" + `$0.025 USDC` (teal `#2dd4bf`)
+- Progress bar teal khi running
+
+**Layout:**
+- Đổi từ `gridTemplateColumns: "320px 1fr"` → `"1fr 390px"`
+- Budget progress bar tách thành dải riêng phía trên CTA
+- Xóa empty state cũ (upload zone đã tích hợp thay thế)
+
+### Quyết định kỹ thuật — 2026-06-09
+
+| Quyết định | Lý do |
+|---|---|
+| `1fr 390px` thay `320px 1fr` | Upload zone cần không gian rộng hơn; task panel cố định 390px đủ hiển thị label |
+| Corner accent decorations inline style | Không cần CSS class; chỉ dùng 1 lần, giữ file gọn |
+| Short labels riêng (shortLabels object) | ANALYSIS_TASKS trong arc.ts có label dài; reference dùng label ngắn — tránh sửa source of truth |
+| "Try Demo Image" fetch `/shelf-hero.png` | Không cần API; ảnh đã có trong public — fetch + blob + File object đơn giản |
+| Xóa empty state cũ | Upload zone mới đã handle trạng thái empty trực tiếp; component thừa |
+| Teal `#2dd4bf` cho tổng giá | Match màu reference image; phân biệt với purple accent tasks |
+
+### Việc cần làm tiếp (cập nhật 2026-06-09)
+
+1. Deploy lên Vercel — push `vercel-repo`
+2. Submit Google Form Arc OSS Showcase
+3. Test pipeline đầy đủ: upload ảnh → USDC → ArcScan
+4. Pitch Circle grants
+5. Tích hợp RetailLayoutNFT vào `/forum`

@@ -860,65 +860,54 @@ export default function AnalysisPage() {
       )}
 
       {/* Sidebar */}
-      <aside style={{ width: 220, flexShrink: 0, background: "#0a0a0a", borderRight: "1px solid #1f1f1f", display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "16px 14px", borderBottom: "1px solid #1f1f1f" }}>
+      <aside style={{ width: 220, flexShrink: 0, background: "#06060f", borderRight: "1px solid #14142a", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "16px 14px", borderBottom: "1px solid #14142a" }}>
           <a href="/" style={{ textDecoration: "none", display: "flex" }}>
             <img src="/logo.png" alt="StoreScope AI" style={{ height: 73, width: "auto", objectFit: "contain", filter: "invert(1)" }} />
           </a>
         </div>
         <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
-          <LanguageSwitcher variant="sidebar" />
           {[
-            { labelKey: "nav.dashboard",  href: "/dashboard",              active: false },
-            { labelKey: "nav.analysis",   href: "/dashboard/analysis",     active: true  },
-            { labelKey: "nav.visionAgent",href: "/dashboard/vision-agent", active: false },
-            { labelKey: "nav.agent",      href: "/dashboard/agent",        active: false },
-            { labelKey: "nav.reports",    href: "/dashboard/reports",      active: false },
-            { labelKey: "nav.layout",     href: "/layout-editor",          active: false },
-            { labelKey: "nav.forum",      href: "/forum",                  active: false },
+            { labelKey: "nav.dashboard",   href: "/dashboard",              active: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg> },
+            { labelKey: "nav.analysis",    href: "/dashboard/analysis",     active: true,  icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg> },
+            { labelKey: "nav.visionAgent", href: "/dashboard/vision-agent", active: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> },
+            { labelKey: "nav.agent",       href: "/dashboard/agent",        active: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> },
+            { labelKey: "nav.reports",     href: "/dashboard/reports",      active: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+            { labelKey: "nav.layout",      href: "/layout-editor",          active: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg> },
+            { labelKey: "nav.forum",       href: "/forum",                  active: false, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> },
           ].map(item => (
-            <Link key={item.href} href={item.href} style={{ display: "block", padding: "9px 12px", borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: item.active ? 600 : 400, background: item.active ? "rgba(124,58,237,0.12)" : "transparent", color: item.active ? "#a78bfa" : "#666", border: item.active ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent" }}>
+            <Link key={item.href} href={item.href} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: item.active ? 600 : 400, background: item.active ? "rgba(124,58,237,0.15)" : "transparent", color: item.active ? "#a78bfa" : "#555", border: item.active ? "1px solid rgba(124,58,237,0.25)" : "1px solid transparent" }}>
+              <span style={{ flexShrink: 0, color: item.active ? "#a78bfa" : "#3a3a5a" }}>{item.icon}</span>
               {t(item.labelKey)}
             </Link>
           ))}
         </nav>
-        {/* Profile button — bottom left */}
-        <div style={{ padding: "10px 10px 14px", borderTop: "1px solid #1f1f1f" }}>
+        {/* Bottom section */}
+        <div style={{ padding: "10px 10px 14px", borderTop: "1px solid #14142a", display: "flex", flexDirection: "column", gap: 8 }}>
           {circleSession && (
-            <button
-              onClick={() => setShowProfile(true)}
-              style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 12px", borderRadius: 12, cursor: "pointer",
-                background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)",
-                transition: "background 0.2s, border-color 0.2s", textAlign: "left",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(124,58,237,0.12)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.3)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(124,58,237,0.06)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.15)"; }}
-            >
-              {/* Avatar */}
-              <div style={{
-                width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
-                background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 13, fontWeight: 700, color: "#a78bfa",
-              }}>
+            <button onClick={() => setShowProfile(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, cursor: "pointer", background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)", transition: "background 0.2s", textAlign: "left" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(124,58,237,0.12)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(124,58,237,0.06)"; }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#a78bfa" }}>
                 {(profile?.username ?? circleSession.userId).slice(0, 1).toUpperCase()}
               </div>
               <div style={{ overflow: "hidden" }}>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#e0e0e0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {profile?.username ?? "Set up profile"}
-                </p>
-                <p style={{ margin: 0, fontSize: 11, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {circleSession.userId}
-                </p>
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#e0e0e0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{profile?.username ?? "Set up profile"}</p>
+                <p style={{ margin: 0, fontSize: 11, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circleSession.userId}</p>
               </div>
-              {!profile && (
-                <span style={{ marginLeft: "auto", flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: "#f59e0b" }} title="Profile incomplete" />
-              )}
+              {!profile && <span style={{ marginLeft: "auto", flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: "#f59e0b" }} />}
             </button>
           )}
-          <Link href="/" style={{ display: "block", padding: "8px 12px", marginTop: 4, fontSize: 12, color: "#555", textDecoration: "none" }}>{t("analysis.logout")}</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px rgba(74,222,128,0.7)", flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#d0d0d0" }}>Arc Testnet</div>
+              <div style={{ fontSize: 10, color: "#555" }}>Connected</div>
+            </div>
+          </div>
+          <div style={{ padding: "0 4px" }}>
+            <LanguageSwitcher variant="sidebar" />
+          </div>
         </div>
       </aside>
 
@@ -926,121 +915,170 @@ export default function AnalysisPage() {
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
         {/* Header */}
-        <header style={{ borderBottom: "1px solid #1f1f1f", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <header style={{ borderBottom: "1px solid #14142a", padding: "16px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: "#06060f" }}>
           <div>
-            <div className="analysis-page-tag" style={{ fontSize: 10, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 3 }}>{t("analysis.pageTag")}</div>
-            <h2 className="analysis-page-title" style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>{t("analysis.pageTitle")}</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
+              <h2 className="analysis-page-title" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em" }}>AI Shelf Intelligence</h2>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#7c3aed" style={{ flexShrink: 0 }}><path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74z"/></svg>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: "#555", lineHeight: 1.5 }}>
+              Upload shelf images and convert retail execution into AI insights and on-chain proof.
+            </p>
             {onChainTx && (
-              <a
-                href={`https://testnet.arcscan.app/tx/${onChainTx}`}
-                target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, fontSize: 10, color: "#4ade80", textDecoration: "none", fontFamily: "monospace" }}
-              >
+              <a href={`https://testnet.arcscan.app/tx/${onChainTx}`} target="_blank" rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 5, fontSize: 10, color: "#4ade80", textDecoration: "none", fontFamily: "monospace" }}>
                 ✓ On-chain: {onChainTx.slice(0, 18)}... ↗ ArcScan
               </a>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {anonUser && <AnonBadge user={anonUser} onSignOut={() => setAnonUser(null)} />}
             <CircleWalletButton onDisconnect={() => setCircleSession(null)} />
             <WalletButton />
+            <Link href="/dashboard/reports" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 10, border: "1px solid #2a2a3e", color: "#888", fontSize: 13, textDecoration: "none" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+              View Reports
+            </Link>
           </div>
         </header>
 
-        <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ padding: "20px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
 
-          {/* Top grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}>
+          {/* Main two-column grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 390px", gap: 20, alignItems: "start" }}>
 
-            {/* Left: upload + controls */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Left: upload + pipeline cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
               {/* Upload zone */}
-              <div onDragOver={e => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop}
-                onClick={() => !running && fileRef.current?.click()}
-                style={{ border: `2px dashed ${dragging ? "#7c3aed" : "#2a2a2a"}`, borderRadius: 16, cursor: running ? "default" : "pointer", overflow: "hidden", background: dragging ? "rgba(124,58,237,0.05)" : "#0a0a0a", minHeight: 180, transition: "border-color 0.2s" }}>
+              <div
+                onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => !running && !imageUrl && fileRef.current?.click()}
+                style={{
+                  border: `1.5px solid ${dragging ? "#7c3aed" : imageUrl ? "rgba(124,58,237,0.35)" : "rgba(124,58,237,0.25)"}`,
+                  borderRadius: 18, cursor: running || imageUrl ? "default" : "pointer",
+                  overflow: "hidden",
+                  background: dragging ? "rgba(124,58,237,0.06)" : "linear-gradient(135deg, #0c0c1e 0%, #0f0f2a 50%, #0c0c1e 100%)",
+                  minHeight: imageUrl ? 220 : 300,
+                  transition: "border-color 0.2s",
+                  position: "relative",
+                  boxShadow: "0 0 40px rgba(124,58,237,0.08) inset",
+                }}>
+                {/* Corner accents */}
+                <div style={{ position: "absolute", top: 0, left: 0, width: 20, height: 20, borderTop: "2px solid rgba(124,58,237,0.5)", borderLeft: "2px solid rgba(124,58,237,0.5)", borderRadius: "4px 0 0 0" }} />
+                <div style={{ position: "absolute", top: 0, right: 0, width: 20, height: 20, borderTop: "2px solid rgba(124,58,237,0.5)", borderRight: "2px solid rgba(124,58,237,0.5)", borderRadius: "0 4px 0 0" }} />
+                <div style={{ position: "absolute", bottom: 0, left: 0, width: 20, height: 20, borderBottom: "2px solid rgba(124,58,237,0.5)", borderLeft: "2px solid rgba(124,58,237,0.5)", borderRadius: "0 0 0 4px" }} />
+                <div style={{ position: "absolute", bottom: 0, right: 0, width: 20, height: 20, borderBottom: "2px solid rgba(124,58,237,0.5)", borderRight: "2px solid rgba(124,58,237,0.5)", borderRadius: "0 0 4px 0" }} />
+
                 {imageUrl ? (
-                  <img src={imageUrl} alt="shelf" style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
+                  <div style={{ position: "relative" }}>
+                    <img src={imageUrl} alt="shelf" style={{ width: "100%", height: 220, objectFit: "cover", display: "block" }} />
+                    <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "#4ade80", background: "rgba(0,0,0,0.7)", border: "1px solid rgba(74,222,128,0.3)", padding: "3px 10px", borderRadius: 999 }}>
+                        {imageName}
+                      </span>
+                      <button onClick={e => { e.stopPropagation(); setImageUrl(null); setImageName(""); setDone(false); setApproved(false); }}
+                        style={{ fontSize: 11, color: "#888", background: "rgba(0,0,0,0.7)", border: "1px solid #333", padding: "3px 10px", borderRadius: 999, cursor: "pointer" }}>
+                        Change
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, gap: 12 }}>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 40px", gap: 18 }}>
+                    {/* Holographic upload icon */}
+                    <div style={{ position: "relative", width: 88, height: 88 }}>
+                      <div style={{ position: "absolute", inset: -18, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%)" }} />
+                      <div style={{ width: 88, height: 88, borderRadius: "50%", background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(99,102,241,0.1))", border: "1px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(99,102,241,0.2))", border: "1px solid rgba(124,58,237,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8">
+                            <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                     <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>{t("analysis.drop")}</div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.formats")}</div>
+                      <h3 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: "#e0e0e0", letterSpacing: "-0.02em" }}>Upload shelf image</h3>
+                      <p style={{ margin: 0, fontSize: 13, color: "#555", lineHeight: 1.6 }}>
+                        Drop a retail shelf photo here<br />or <span style={{ color: "#7c3aed" }}>click to browse</span>
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                      {["JPG", "PNG", "WEBP", "Max 10MB"].map(f => (
+                        <span key={f} style={{ fontSize: 11, color: "#666", background: "rgba(255,255,255,0.04)", border: "1px solid #2a2a3e", padding: "3px 10px", borderRadius: 999 }}>{f}</span>
+                      ))}
                     </div>
                   </div>
                 )}
                 <input ref={fileRef} type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) loadFile(f); }} style={{ display: "none" }} />
               </div>
 
-              {/* File + budget */}
-              {imageUrl && (
-                <div style={{ ...card, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.file")}: <span style={{ color: "#e0e0e0", fontWeight: 500 }}>{imageName}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{t("analysis.cost")}</div>
-                      <div className="analysis-cost-text" style={{ fontSize: 20, fontWeight: 800 }}>${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</div>
+              {/* Budget bar when running */}
+              {imageUrl && (running || done) && (
+                <div style={{ background: "#0c0c1e", border: "1px solid #14142a", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#555", marginBottom: 6 }}>
+                      <span>{completedTasks} / {ANALYSIS_TASKS.length} tasks</span>
+                      <span style={{ color: done ? "#4ade80" : "#a78bfa" }}>{Math.round((completedTasks / ANALYSIS_TASKS.length) * 100)}%</span>
                     </div>
-                    {running && (
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{t("analysis.spent")}</div>
-                        <div className="spent-amount-text" style={{ fontSize: 18, fontWeight: 700 }}>${spentTotal.toFixed(3)}</div>
-                      </div>
-                    )}
-                    {done && (
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 10, color: "#4ade80", marginBottom: 2 }}>{t("analysis.paidOk")}</div>
-                        <div className="done-amount-text" style={{ fontSize: 18, fontWeight: 700 }}>${spentTotal.toFixed(3)}</div>
-                      </div>
-                    )}
+                    <div style={{ height: 5, background: "#1a1a2e", borderRadius: 99, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${(completedTasks / ANALYSIS_TASKS.length) * 100}%`, background: done ? "#4ade80" : "linear-gradient(90deg, #7c3aed, #a78bfa)", borderRadius: 99, transition: "width 0.4s ease" }} />
+                    </div>
                   </div>
-
-                  {/* Progress bar */}
-                  {(running || done) && (
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#555", marginBottom: 4 }}>
-                        <span>{completedTasks}/{ANALYSIS_TASKS.length} tasks</span>
-                        <span>{Math.round((completedTasks / ANALYSIS_TASKS.length) * 100)}%</span>
-                      </div>
-                      <div style={{ height: 6, background: "#1f1f1f", borderRadius: 99, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${(completedTasks / ANALYSIS_TASKS.length) * 100}%`, background: done ? "#4ade80" : "#7c3aed", borderRadius: 99, transition: "width 0.4s ease" }} />
-                      </div>
-                    </div>
-                  )}
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 10, color: "#555", marginBottom: 2 }}>{done ? "Paid" : "Spent"}</div>
+                    <div className={done ? "done-amount-text" : "spent-amount-text"} style={{ fontSize: 16, fontWeight: 700 }}>${spentTotal.toFixed(3)}</div>
+                  </div>
                 </div>
               )}
 
-              {/* Run button */}
+              {/* CTA buttons */}
               <button onClick={handleRunClick} disabled={!imageUrl || running}
                 style={{
-                  background: !imageUrl || running ? "#1a1a1a" : done ? "#16a34a" : "#7c3aed",
+                  background: !imageUrl || running ? "rgba(124,58,237,0.1)" : done ? "linear-gradient(135deg, #16a34a, #15803d)" : "linear-gradient(135deg, #7c3aed, #6d28d9)",
                   color: !imageUrl || running ? "#555" : "#fff",
-                  border: "none", borderRadius: 12, padding: "13px 0",
-                  fontSize: 13, fontWeight: 600, cursor: imageUrl && !running ? "pointer" : "not-allowed",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.2s",
+                  border: !imageUrl || running ? "1px solid rgba(124,58,237,0.2)" : "none",
+                  borderRadius: 12, padding: "14px 0",
+                  fontSize: 14, fontWeight: 600, cursor: imageUrl && !running ? "pointer" : "not-allowed",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 9, transition: "opacity 0.2s",
+                  boxShadow: imageUrl && !running && !done ? "0 4px 20px rgba(124,58,237,0.35)" : "none",
                 }}
-                onMouseEnter={e => { if (imageUrl && !running) e.currentTarget.style.background = done ? "#15803d" : "#6d28d9"; }}
-                onMouseLeave={e => { if (imageUrl && !running) e.currentTarget.style.background = done ? "#16a34a" : "#7c3aed"; }}>
-                {running ? <><Spinner /> {t("analysis.running")} {ANALYSIS_TASKS.find(task => taskStates[task.id].status === "paying" || taskStates[task.id].status === "processing")?.label ?? "…"}</> :
-                 done ? t("analysis.done") :
-                 !isConnected ? t("analysis.connectRun") :
-                 wrongChain ? t("analysis.switchNet") :
-                 `${t("analysis.run")} · $${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC`}
+                onMouseEnter={e => { if (imageUrl && !running) e.currentTarget.style.opacity = "0.88"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}>
+                {running ? (
+                  <><Spinner /> {ANALYSIS_TASKS.find(task => taskStates[task.id].status === "paying" || taskStates[task.id].status === "processing")?.label ?? "Processing…"}</>
+                ) : done ? (
+                  "✓ Analysis Complete"
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    {!imageUrl ? "Upload Image to Continue" : !isConnected ? "Connect Wallet & Run Analysis" : wrongChain ? "Switch to ARC Testnet" : "Connect Wallet & Run Analysis"}
+                  </>
+                )}
               </button>
 
-              {imageUrl && !isConnected && (
-                <div style={{ fontSize: 11, color: "#555", textAlign: "center" }}>
-                  Connect wallet in the header to pay on ARC Testnet
-                </div>
+              {!imageUrl && (
+                <button
+                  onClick={async () => {
+                    const res = await fetch("/shelf-hero.png");
+                    const blob = await res.blob();
+                    const file = new File([blob], "demo-shelf.png", { type: "image/png" });
+                    loadFile(file);
+                  }}
+                  style={{ background: "transparent", border: "1px solid #2a2a3e", color: "#888", borderRadius: 12, padding: "12px 0", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4a4a6e"; e.currentTarget.style.color = "#ccc"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a3e"; e.currentTarget.style.color = "#888"; }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                  Try Demo Image
+                </button>
               )}
 
-              {/* Proof on ArcScan — chỉ hiện khi có TX on-chain thật */}
+              {/* On-chain proof (shown after done) */}
               {done && (onChainTx || resultTx) && (
-                <div style={{ ...card, padding: "14px 16px", borderColor: "rgba(34,197,94,0.2)", background: "rgba(34,197,94,0.04)" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", marginBottom: 10 }}>
-                    On-chain Proof — AnalysisRegistry
-                  </div>
+                <div style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 12, padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", marginBottom: 10 }}>On-chain Proof — AnalysisRegistry</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {onChainTx && (
                       <div>
@@ -1060,119 +1098,163 @@ export default function AnalysisPage() {
                         </a>
                       </div>
                     ) : done && (
-                      <div style={{ fontSize: 10, color: "#555", fontStyle: "italic" }}>
-                        Stage 3 · submitResult() — recording on-chain...
-                      </div>
+                      <div style={{ fontSize: 10, color: "#555", fontStyle: "italic" }}>Stage 3 · submitResult() — recording on-chain...</div>
                     )}
                   </div>
                 </div>
               )}
+
+              {/* Pipeline cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, position: "relative" }}>
+                {[
+                  {
+                    num: "01", title: "Upload Image", desc: "Upload a shelf image in seconds.",
+                    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.6"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>,
+                  },
+                  {
+                    num: "02", title: "AI Retail Detection", desc: "Multi-model AI analyzes shelf execution.",
+                    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.6"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 12h8M8 8h8M8 16h5"/><circle cx="18" cy="18" r="4" fill="#06060f" stroke="#a78bfa"/><path d="M16 18h4M18 16v4" strokeWidth="1.4"/></svg>,
+                  },
+                  {
+                    num: "03", title: "On-chain Proof Report", desc: "Verified insights with on-chain proof.",
+                    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>,
+                  },
+                ].map((step, i) => (
+                  <div key={i} style={{ background: "#0c0c1e", border: "1px solid #14142a", borderRadius: 14, padding: "20px 18px", position: "relative" }}>
+                    {/* Connector dot line between cards */}
+                    {i < 2 && (
+                      <div style={{ position: "absolute", right: -12, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: 2, zIndex: 1 }}>
+                        {[0,1,2].map(d => <div key={d} style={{ width: 3, height: 3, borderRadius: "50%", background: "#3a3a5a" }} />)}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 12 }}>{step.num}</div>
+                    <div style={{ marginBottom: 12 }}>{step.icon}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#d0d0d0", marginBottom: 6 }}>{step.title}</div>
+                    <div style={{ fontSize: 11, color: "#555", lineHeight: 1.5 }}>{step.desc}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Right: task list */}
-            <div style={{ ...card, overflow: "hidden" }}>
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f1f1f", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div className="tasks-header-text" style={{ fontSize: 13, fontWeight: 600 }}>{t("analysis.tasksHeader")}</div>
-                <div style={{ fontSize: 11, color: "#555" }}>{t("analysis.tasksSub")}</div>
+            {/* Right: 10 Micro-Tasks panel */}
+            <div style={{ background: "#0c0c1e", border: "1px solid #14142a", borderRadius: 16, overflow: "hidden" }}>
+              {/* Panel header */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #14142a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="tasks-header-text" style={{ fontSize: 14, fontWeight: 700 }}>10 Micro-Tasks</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#7c3aed"><path d="M12 2l1.5 4.5H18l-3.75 2.75 1.5 4.5L12 11l-3.75 2.75 1.5-4.5L6 6.5h4.5z"/></svg>
+                </div>
+                <span style={{ fontSize: 10, color: "#444", letterSpacing: "0.02em" }}>Each task = 1 on-chain transaction</span>
               </div>
 
-              <div>
+              {/* Task rows */}
+              <div style={{ overflowY: "auto", maxHeight: 520 }}>
                 {ANALYSIS_TASKS.map((task, i) => {
                   const ts = taskStates[task.id];
                   const isActive = ts.status === "paying" || ts.status === "processing";
+                  const shortLabels: Record<string, { label: string; desc: string }> = {
+                    upload:       { label: "Image Registration",    desc: "Record image on-chain for tracking" },
+                    quality:      { label: "Image Quality Audit",   desc: "Detect blur, low-light, wrong angle" },
+                    shelf_detect: { label: "Shelf Object Detection", desc: "AI detects shelves, coolers, displays" },
+                    sku_detect:   { label: "SKU Recognition",        desc: "AI identifies products, brands, SKUs" },
+                    competitor:   { label: "Competitor Visibility",  desc: "Compare company vs competitor" },
+                    stock_risk:   { label: "Stock Risk Detection",   desc: "Alert on out-of-stock conditions" },
+                    layout_sim:   { label: "Layout Simulation Sync", desc: "Update store simulation from data" },
+                    recommend:    { label: "AI Recommendation",      desc: "Suggest display & restocking actions" },
+                    human_review: { label: "Human Review Flag",      desc: "Flag tasks needing human review" },
+                    report:       { label: "Proof Report Generation",desc: "Generate report & write proof" },
+                  };
+                  const { label: shortLabel, desc: shortDesc } = shortLabels[task.id] ?? { label: task.label, desc: task.desc };
                   return (
                     <div key={task.id} style={{
-                      display: "grid", gridTemplateColumns: "36px 1fr 70px 40px",
-                      gap: 12, padding: "14px 20px", alignItems: "flex-start",
-                      borderBottom: i < ANALYSIS_TASKS.length - 1 ? "1px solid #111" : "none",
-                      background: isActive ? "rgba(124,58,237,0.04)" : "transparent",
+                      display: "flex", alignItems: "center", gap: 12, padding: "13px 20px",
+                      borderBottom: i < ANALYSIS_TASKS.length - 1 ? "1px solid #0e0e1e" : "none",
+                      background: isActive ? "rgba(124,58,237,0.05)" : "transparent",
                       transition: "background 0.3s",
                     }}>
-                      {/* Status icon */}
-                      <div style={{ display: "flex", justifyContent: "center", paddingTop: 2 }}>
-                        {ts.status === "waiting" && (
-                          <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#444", fontWeight: 700 }}>{i + 1}</div>
-                        )}
-                        {ts.status === "paying" && (
-                          <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid #fbbf24", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Spinner />
-                          </div>
-                        )}
-                        {ts.status === "processing" && (
-                          <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid #7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Spinner />
-                          </div>
-                        )}
-                        {ts.status === "done" && (
-                          <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(34,197,94,0.15)", border: "2px solid #4ade80", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#4ade80" }}>✓</div>
-                        )}
+                      {/* Number badge */}
+                      <div style={{
+                        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+                        background: ts.status === "done" ? "rgba(34,197,94,0.12)" : isActive ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${ts.status === "done" ? "rgba(74,222,128,0.3)" : isActive ? "rgba(124,58,237,0.35)" : "#1e1e2e"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: ts.status === "done" ? 12 : 10, fontWeight: 700,
+                        color: ts.status === "done" ? "#4ade80" : isActive ? "#a78bfa" : "#444",
+                      }}>
+                        {ts.status === "done" ? "✓" : (ts.status === "paying" || ts.status === "processing") ? <Spinner /> : i + 1}
                       </div>
 
                       {/* Task info */}
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                          <span
-                            className={isActive ? "task-label-active" : ""}
-                            style={{ fontSize: 13, fontWeight: 600, color: ts.status === "done" ? "#f0f0f0" : isActive ? "#a78bfa" : "#888", transition: "color 0.3s ease" }}
-                          >{TASK_I18N[task.id]?.label ?? task.label}</span>
-                          {ts.status === "paying" && (
-                            <span className="badge-pop" style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", padding: "1px 8px", borderRadius: 999, display: "inline-flex", alignItems: "center" }}>
-                              <span className="dot-amber" />{t("task.paying") || "Paying…"}
-                            </span>
-                          )}
-                          {ts.status === "processing" && (
-                            <span className="badge-pop" style={{ fontSize: 10, color: "#a78bfa", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", padding: "1px 8px", borderRadius: 999, display: "inline-flex", alignItems: "center" }}>
-                              <span className="dot-purple" />{t("task.processing") || "Processing…"}
-                            </span>
-                          )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: ts.status === "done" ? "#d0d0d0" : isActive ? "#a78bfa" : "#888", marginBottom: 2, transition: "color 0.3s" }}>
+                          <span className={isActive ? "task-label-active" : ""}>{shortLabel}</span>
                         </div>
-                        <div style={{ fontSize: 11, color: "#555", transition: "color 0.3s" }}>{TASK_I18N[task.id]?.desc ?? task.desc}</div>
-                        {ts.result && <div key={ts.result} className="task-result-text" style={{ fontSize: 11, color: "#4ade80", marginTop: 4 }}>{ts.result}</div>}
-                        {ts.status === "done" && (
-                          ts.txHash
-                            ? <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
-                                style={{ fontSize: 10, color: "#7c3aed", fontFamily: "monospace", textDecoration: "none", marginTop: 3, display: "block" }}>
-                                tx: {ts.txHash.slice(0, 16)}… ↗
-                              </a>
-                            : <span style={{ fontSize: 10, color: "#444", marginTop: 3, display: "block" }}>
-                                recording on-chain…
-                              </span>
-                        )}
+                        <div style={{ fontSize: 11, color: "#3a3a5a", lineHeight: 1.4 }}>{shortDesc}</div>
+                        {ts.result && <div className="task-result-text" style={{ fontSize: 10, color: "#4ade80", marginTop: 2 }}>{ts.result}</div>}
                       </div>
+
+                      {/* Status badge */}
+                      {ts.status === "waiting" && (
+                        <span style={{ fontSize: 10, color: "#555", background: "rgba(255,255,255,0.03)", border: "1px solid #1e1e2e", padding: "2px 8px", borderRadius: 999, flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                          <span className="dot-amber" style={{ opacity: 0.4 }} />Pending
+                        </span>
+                      )}
+                      {ts.status === "paying" && (
+                        <span className="badge-pop" style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)", padding: "2px 8px", borderRadius: 999, flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                          <span className="dot-amber" />Paying
+                        </span>
+                      )}
+                      {ts.status === "processing" && (
+                        <span className="badge-pop" style={{ fontSize: 10, color: "#a78bfa", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", padding: "2px 8px", borderRadius: 999, flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                          <span className="dot-purple" />Processing
+                        </span>
+                      )}
+                      {ts.status === "done" && ts.txHash && (
+                        <a href={`https://testnet.arcscan.app/tx/${ts.txHash}`} target="_blank" rel="noreferrer"
+                          style={{ fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(74,222,128,0.2)", padding: "2px 8px", borderRadius: 999, flexShrink: 0, textDecoration: "none" }}>
+                          ✓ Done
+                        </a>
+                      )}
+                      {ts.status === "done" && !ts.txHash && (
+                        <span style={{ fontSize: 10, color: "#4ade80", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(74,222,128,0.2)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>✓ Done</span>
+                      )}
 
                       {/* Price */}
-                      <div style={{ textAlign: "right", paddingTop: 2 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: ts.status === "done" ? "#4ade80" : isActive ? "#fbbf24" : "#555" }}>
-                          ${task.price.toFixed(3)}
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: ts.status === "done" ? "#4ade80" : isActive ? "#fbbf24" : "#444" }}>
+                          {task.price.toFixed(3)}
                         </div>
-                        <div style={{ fontSize: 9, color: "#444", marginTop: 2 }}>USDC</div>
-                      </div>
-
-                      {/* Mini status bar */}
-                      <div style={{ paddingTop: 4 }}>
-                        {isActive && (
-                          <div style={{ width: "100%", height: 4, background: "#1f1f1f", borderRadius: 99, overflow: "hidden" }}>
-                            <TaskProgressBar />
-                          </div>
-                        )}
-                        {ts.status === "done" && (
-                          <div style={{ width: "100%", height: 4, background: "rgba(34,197,94,0.2)", borderRadius: 99 }} />
-                        )}
+                        <div style={{ fontSize: 9, color: "#333", marginTop: 1 }}>USDC</div>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Footer total */}
-              <div style={{ padding: "14px 20px", borderTop: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0a0a0a" }}>
-                <span style={{ fontSize: 12, color: "#555" }}>{completedTasks} / {ANALYSIS_TASKS.length} {t("analysis.tasksOf")}</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontSize: 12, color: "#555" }}>{t("analysis.total")}:</span>
-                  <span className={done ? "total-price-green" : "total-price-purple"} style={{ fontSize: 18, fontWeight: 800, color: done ? "#4ade80" : "#a78bfa" }}>
-                    ${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC
-                  </span>
+              {/* Panel footer */}
+              <div style={{ padding: "14px 20px", borderTop: "1px solid #14142a", background: "#08081a" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>Estimated on-chain execution cost</div>
+                    <div style={{ fontSize: 11, color: "#444" }}>{completedTasks} / {ANALYSIS_TASKS.length} tasks completed</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div className={done ? "total-price-green" : "total-price-purple"} style={{ fontSize: 20, fontWeight: 800, color: done ? "#2dd4bf" : "#2dd4bf", lineHeight: 1.1 }}>
+                      ${TOTAL_ANALYSIS_PRICE.toFixed(3)}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#555", fontWeight: 600, marginTop: 1 }}>USDC</div>
+                  </div>
                 </div>
+                {(running || done) && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ height: 3, background: "#14142a", borderRadius: 99, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${(completedTasks / ANALYSIS_TASKS.length) * 100}%`, background: done ? "#2dd4bf" : "linear-gradient(90deg, #7c3aed, #a78bfa)", borderRadius: 99, transition: "width 0.4s ease" }} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1340,17 +1422,6 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* Empty state */}
-          {!imageUrl && (
-            <div style={{ ...card, padding: 48, textAlign: "center" }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2a2a2a" strokeWidth="1.5" style={{ margin: "0 auto 16px", display: "block" }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
-              <div style={{ fontSize: 14, color: "#555", marginBottom: 8, animation: "fade-up 0.5s ease 0.1s both" }}>{t("analysis.noImage")}</div>
-              <div style={{ fontSize: 12, color: "#333", lineHeight: 1.6, animation: "fade-up 0.5s ease 0.2s both" }}>
-                {t("analysis.noImageSub")}<br/>
-                {t("analysis.total")}: <strong className="analysis-cost-text">${TOTAL_ANALYSIS_PRICE.toFixed(3)} USDC</strong>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>
