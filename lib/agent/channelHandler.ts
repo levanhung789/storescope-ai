@@ -53,16 +53,25 @@ export async function handleImageMessage(
     const result = await analyzeImage(imageBase64, mimeType, false);
 
     // Charge Circle wallet
-    fetch(`${getBaseUrl()}/api/circle/transfer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        walletId:           user.circleWalletId,
-        destinationAddress: process.env.SERVICE_WALLET ?? "0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c",
-        amount:             ANALYSIS_COST.toString(),
-        taskName:           `shelf-analysis-${channel}`,
-      }),
-    }).catch(() => {}); // fire-and-forget
+    let txId: string | null = null;
+    let txHash: string | null = null;
+    try {
+      const transferRes = await fetch(`${getBaseUrl()}/api/circle/transfer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletId:           user.circleWalletId,
+          destinationAddress: process.env.SERVICE_WALLET ?? "0x68e51fb0A433caBe0d4f17AEe537676d925Cb35c",
+          amount:             ANALYSIS_COST.toString(),
+          taskName:           `shelf-analysis-${channel}`,
+        }),
+      });
+      const transferData = await transferRes.json() as { txId?: string; txHash?: string | null };
+      txId   = transferData.txId ?? null;
+      txHash = transferData.txHash ?? null;
+    } catch {
+      // payment record is best-effort — analysis result is still delivered
+    }
 
     // Update stats
     updateUserStats(channel, userId, ANALYSIS_COST);
@@ -70,8 +79,8 @@ export async function handleImageMessage(
     // Format response
     const text = formatAnalysisResult(result, ANALYSIS_COST, balance - ANALYSIS_COST);
 
-    updateMessage(inMsg.id, { status: "done", analysisId: result.id, cost: ANALYSIS_COST });
-    addMessage({ channel, userId, username, type: "result", content: text, analysisId: result.id, cost: ANALYSIS_COST, status: "done" });
+    updateMessage(inMsg.id, { status: "done", analysisId: result.id, cost: ANALYSIS_COST, txId, txHash });
+    addMessage({ channel, userId, username, type: "result", content: text, analysisId: result.id, cost: ANALYSIS_COST, txId, txHash, status: "done" });
 
     return { success: true, messageId: inMsg.id, text, cost: ANALYSIS_COST, analysisId: result.id };
 

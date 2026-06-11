@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   Bot, Shield, Zap, Play, Pause, Activity,
@@ -23,6 +23,7 @@ const S = { color: "#555", fontSize: 12 } as const;
 export default function AgentPage() {
   const [policy, setPolicy]     = useState<AgentPolicy | null>(null);
   const [logs, setLogs]         = useState<AgentTx[]>([]);
+  const [channelTxs, setChannelTxs] = useState<AgentTx[]>([]);
   const [balance, setBalance]   = useState<string>("--");
   const [running, setRunning]       = useState(false);
   const [status, setStatus]         = useState("");
@@ -63,15 +64,26 @@ export default function AgentPage() {
       const res  = await fetch(`/api/circle/transfer?txId=${circleTxId}`);
       const data = await res.json() as { txHash?: string | null };
       if (data.txHash) {
-        const updated = loadAgentLog().map(t =>
-          t.id === logId ? { ...t, txHash: data.txHash! } : t
-        );
-        localStorage.setItem("storescope-agent-log", JSON.stringify(updated));
-        setLogs(updated);
+        if (logs.some(t => t.id === logId)) {
+          const updated = loadAgentLog().map(t =>
+            t.id === logId ? { ...t, txHash: data.txHash! } : t
+          );
+          localStorage.setItem("storescope-agent-log", JSON.stringify(updated));
+          setLogs(updated);
+        } else {
+          setChannelTxs(prev => prev.map(t => t.id === logId ? { ...t, txHash: data.txHash! } : t));
+        }
       }
     } finally {
       setFetchingHash(null);
     }
+  };
+
+  const fetchChannelTx = (walletId: string) => {
+    fetch(`/api/agent/channels?type=tx&walletId=${walletId}`)
+      .then(r => r.json())
+      .then((d: { transactions?: AgentTx[] }) => setChannelTxs(d.transactions ?? []))
+      .catch(() => setChannelTxs([]));
   };
 
   // Current Circle session — luon dung vi nay de thanh toan, khong phu thuoc vao policy
@@ -91,8 +103,16 @@ export default function AgentPage() {
         .then(r => r.json())
         .then(d => setBalance(d.usdc ?? "--"))
         .catch(() => setBalance("--"));
+      fetchChannelTx(cs.walletId);
     }
   }, []);
+
+  // Merge manual-run logs (localStorage) with channel-triggered transactions
+  // (Telegram/Zalo/WebChat analyses), newest first.
+  const displayLogs = useMemo(
+    () => [...logs, ...channelTxs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    [logs, channelTxs]
+  );
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -481,14 +501,14 @@ export default function AgentPage() {
         {/* Transaction log */}
         {activeTab === "log" && <div style={card}>
           <p style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Agent Transaction Log</p>
-          {logs.length === 0 ? (
+          {displayLogs.length === 0 ? (
             <div style={{ textAlign: "center", padding: "32px 0", color: "#555" }}>
               <Clock size={28} style={{ marginBottom: 8 }} />
               <p style={{ margin: 0, fontSize: 13 }}>No transactions yet. Run the agent to start.</p>
             </div>
           ) : (
             <div ref={logRef} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {logs.map(tx => (
+              {displayLogs.map(tx => (
                 <div key={tx.id} style={{ padding: "12px 14px", background: "#0a0a0a", borderRadius: 10 }}>
                   {/* Row 1: status + note + amount */}
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

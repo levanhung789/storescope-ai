@@ -23,6 +23,8 @@ export interface ChannelMessage {
   content:    string;       // text or base64 image
   analysisId? : string;
   cost?:      number;
+  txId?:      string | null;
+  txHash?:    string | null;
   timestamp:  number;
   status:     "pending" | "analyzing" | "done" | "error" | "insufficient_funds";
 }
@@ -91,6 +93,21 @@ export function updateMessage(id: string, patch: Partial<ChannelMessage>) {
 export function getMessages(channel?: Channel, limit = 50): ChannelMessage[] {
   const all = g.__channelMessages!;
   return (channel ? all.filter(m => m.channel === channel) : all).slice(0, limit);
+}
+
+// Returns "result" messages (completed analyses) for all (channel, userId) pairs
+// linked to the given Circle wallet — used to surface channel-triggered
+// transactions in the dashboard's Agent Transaction Log.
+export function getMessagesByWallet(walletId: string, limit = 50): ChannelMessage[] {
+  const keys = new Set(
+    getAllUsers()
+      .filter(u => u.circleWalletId === walletId)
+      .map(u => userKey(u.channel, u.userId))
+  );
+  if (keys.size === 0) return [];
+  return g.__channelMessages!
+    .filter(m => m.type === "result" && keys.has(userKey(m.channel, m.userId)))
+    .slice(0, limit);
 }
 
 // ── Personal bot registry ─────────────────────────────────────────────────────

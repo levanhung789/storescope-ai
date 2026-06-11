@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getChannelStats, getAllUsers, getMessages, linkUser, type Channel } from "../../../../lib/agent/channelStore";
+import { getChannelStats, getAllUsers, getMessages, getMessagesByWallet, linkUser, type Channel } from "../../../../lib/agent/channelStore";
 import { handleImageMessage } from "../../../../lib/agent/channelHandler";
 
 // GET — stats + messages
@@ -12,6 +12,22 @@ export async function GET(req: NextRequest) {
   }
   if (type === "users") {
     return NextResponse.json({ users: getAllUsers() });
+  }
+  if (type === "tx") {
+    const walletId = req.nextUrl.searchParams.get("walletId");
+    if (!walletId) return NextResponse.json({ error: "walletId is required" }, { status: 400 });
+
+    const txs = getMessagesByWallet(walletId, 50).map(m => ({
+      id:        m.id,
+      timestamp: new Date(m.timestamp).toISOString(),
+      type:      "analysis" as const,
+      amount:    m.cost ?? 0,
+      txId:      m.txId ?? null,
+      txHash:    m.txHash ?? null,
+      status:    m.status === "done" ? "success" as const : "failed" as const,
+      note:      `${m.channel} analysis — ${m.analysisId ?? m.id}`,
+    }));
+    return NextResponse.json({ transactions: txs });
   }
   return NextResponse.json({
     stats: getChannelStats(),
