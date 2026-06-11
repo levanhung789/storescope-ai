@@ -163,7 +163,7 @@ function formatInsufficientFunds(balance: number, required: number, address: str
 }
 
 function getBaseUrl(): string {
-  return process.env.NEXTAUTH_URL ?? process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
+  if (process.env.VERCEL_ENV === "production") return "https://storescope-ai.vercel.app";
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
 }
