@@ -1,7 +1,7 @@
 // Personal Telegram Bot registration — each user connects their own @BotFather bot
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import { registerBot, getBotByWallet, removeBot, linkUser, getUser } from "../../../../lib/agent/channelStore";
+import { encodeBotSecret } from "../../../../lib/agent/botSecret";
 
 // GET ?walletId=... — returns current bot connection status
 export async function GET(req: NextRequest) {
@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bot token không hợp lệ" }, { status: 400 });
     }
 
-    const secret  = randomBytes(16).toString("hex");
+    const secret = encodeBotSecret({
+      channel: "telegram",
+      token,
+      walletId,
+      walletAddress,
+      botUsername: me.result.username,
+    });
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
     const webhookUrl = `${baseUrl}/api/agent/telegram/${secret}`;
 
